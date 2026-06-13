@@ -177,10 +177,14 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
 
     # --- Value-Bet-Portfolio ueber alle Spiele ----------------------------
     all_value = []
+    all_opps = []
     for m in match_results:
         for vb in m.get("value", {}).get("value_bets", []):
             all_value.append({**vb, "match": m["title"], "slug": m["slug"]})
+        for op in m.get("value", {}).get("opportunities", []):
+            all_opps.append({**op, "match": m["title"], "slug": m["slug"]})
     portfolio = value_betting.portfolio(all_value)
+    opp_portfolio = value_betting.opportunity_portfolio(all_opps)
     log["value"] = {"n_value_bets": portfolio["n_value_bets"],
                     "total_stake_pct": portfolio["total_stake_pct"]}
     print(f"  Value-Bets: {portfolio['n_value_bets']} (Gesamteinsatz {portfolio['total_stake_pct']}% Bankroll)")
@@ -213,6 +217,7 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
         "calibration": calib,
         "weights_suggestion": weights_suggestion,
         "value_portfolio": portfolio,
+        "opportunity_portfolio": opp_portfolio,
         "matches": match_results,
     }
 

@@ -86,6 +86,8 @@ def _row(market, selection, odds, book, p_model, p_market, band_width, n_books):
         "is_value": (p_cons > breakeven) and liquid,
         "risk": tier,
         "stake_pct": _stake_pct(ev, odds, p_cons, tier) if liquid else 0.0,
+        # Einsatz auf Basis unserer zentralen Schätzung (Ensemble/MC), Viertel-Kelly
+        "stake_central": _stake_pct(p_model * odds - 1.0, odds, p_model, tier) if liquid else 0.0,
     }
 
 
@@ -154,6 +156,10 @@ def evaluate_match(match: dict, best_prices: dict | None) -> dict:
     out["rows"] = rows
     out["value_bets"] = sorted([r for r in rows if r["is_value"]],
                                key=lambda r: -r["ev"])[:4]
+    # Chancen-Ranking: positiver EV auf zentraler Schätzung (Ensemble/MC) — immer
+    # befüllt, klar getrennt von der ultrastrengen konservativen Value-Liste.
+    out["opportunities"] = sorted([r for r in rows if r["ev_at_model"] > 0],
+                                  key=lambda r: -r["ev_at_model"])
 
     # Modell-Fairquoten fuer Zusatzmaerkte ohne Live-API-Quote (BTTS/DC/DNB).
     # Reine Orientierung — echte EV nur mit recherchierten/gelieferten Quoten.
@@ -198,6 +204,7 @@ def apply_quality_gate(value: dict, dq: dict) -> dict:
     tier = dq.get("tier", "amber")
     for r in value.get("rows", []):
         r["stake_pct"] = round(r["stake_pct"] * mult, 2)
+        r["stake_central"] = round(r.get("stake_central", 0.0) * mult, 2)
         if tier == "red":
             r["is_value"] = False  # rote Ampel: keine Empfehlung
     if tier == "red":
@@ -205,8 +212,6 @@ def apply_quality_gate(value: dict, dq: dict) -> dict:
         value["gate_note"] = "Value-Flags unterdrückt (Datenqualität rot)."
     else:
         value["value_bets"] = [r for r in value.get("value_bets", []) if r.get("is_value")]
-        for r in value["value_bets"]:
-            r["stake_pct"] = round(r["stake_pct"] * mult, 2)
     value["data_quality_tier"] = tier
     return value
 
@@ -233,4 +238,26 @@ def portfolio(value_bets_all: list, bankroll_note: bool = True) -> dict:
     plan = [{**b, "stake_pct_final": round(b["_corr"] * scale, 2)} for b in bets]
     return {"n_value_bets": len(bets), "total_stake_pct": round(total * scale, 2),
             "scaled_down": scale < 1.0, "per_match_capped": any(v >= PER_MATCH_CAP for v in per_match.values()),
+            "plan": plan}
+
+
+def opportunity_portfolio(opps_all: list) -> dict:
+    """Einsatzverteilung über das Chancen-Ranking (positiver EV auf zentraler
+    Ensemble/MC-Schätzung). Gleiche Korrelations-/Gesamt-Caps, Viertel-Kelly auf
+    zentraler Wahrscheinlichkeit. Klar getrennt von der strengen Value-Liste."""
+    # Nach empfohlenem Einsatz sortiert (Kelly-risiko-adjustiert) — solide Wetten oben,
+    # Außenseiter-Longshots mit hoher Roh-EV aber Mini-Einsatz landen unten.
+    opps = sorted(opps_all, key=lambda r: (-r.get("stake_central", 0.0), -r["ev_at_model"]))
+    per_match: dict[str, float] = {}
+    for o in opps:
+        s = o.get("slug", "?")
+        used = per_match.get(s, 0.0)
+        o["_corr"] = round(max(0.0, min(o.get("stake_central", 0.0), PER_MATCH_CAP - used)), 2)
+        per_match[s] = used + o["_corr"]
+    total = sum(o["_corr"] for o in opps)
+    scale = min(1.0, PORTFOLIO_CAP / total) if total > PORTFOLIO_CAP else 1.0
+    plan = [{**o, "stake_pct_final": round(o["_corr"] * scale, 2)} for o in opps]
+    n_strict = sum(1 for o in opps if o.get("is_value"))
+    return {"n_opportunities": len(opps), "n_strict_value": n_strict,
+            "total_stake_pct": round(total * scale, 2), "scaled_down": scale < 1.0,
             "plan": plan}

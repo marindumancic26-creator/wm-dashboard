@@ -11,6 +11,10 @@
   body { margin:0; background:var(--bg); color:var(--tx); font:13px/1.45 "Segoe UI",system-ui,sans-serif; }
   header { display:flex; gap:16px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   header h1 { font-size:16px; margin:0; }
+  nav.tabs { display:flex; gap:2px; padding:0 16px; border-bottom:1px solid var(--line); background:var(--bg); position:sticky; top:0; z-index:20; flex-wrap:wrap; }
+  .tabbtn { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--dim); padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:0; }
+  .tabbtn:hover { color:var(--tx); }
+  .tabbtn.active { color:var(--acc); border-bottom-color:var(--acc); }
   select,button { background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:4px; padding:5px 9px; font-size:13px; }
   button:hover { border-color:var(--acc); cursor:pointer; }
   .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:10px; padding:12px 16px; max-width:1500px; margin:0 auto; }
@@ -47,6 +51,13 @@
   <span id="status"></span>
 </header>
 
+<nav class="tabs" id="tabbar" style="display:none">
+  <button class="tabbtn active" data-tab="cockpit">📊 Cockpit</button>
+  <button class="tabbtn" data-tab="detail">🔍 Spiel-Detail</button>
+  <button class="tabbtn" data-tab="value">💰 Value &amp; Wetten</button>
+  <button class="tabbtn" data-tab="calib">🎯 Kalibrierung</button>
+</nav>
+
 <div class="grid" id="content" style="display:none">
   <div class="card c12 disclaimer">
     ⚠️ <b>Keine Finanz- oder Wettberatung.</b> Prognosemärkte können fehlerhaft, illiquide, manipuliert oder unvollständig sein.
@@ -63,7 +74,7 @@
   </div>
 
   <div class="card c12" id="valueRankCard">
-    <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">konservativ</span></h2>
+    <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">Ensemble-Chancen</span></h2>
     <table id="valueRankTable"></table>
     <div class="dim" id="valueRankNote" style="margin-top:6px"></div>
   </div>
@@ -189,9 +200,34 @@ async function load(){
   const sel=$('matchSel'); sel.innerHTML='';
   DATA.matches.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m.title+' ('+m.date+')'; sel.appendChild(o); });
   $('content').style.display='grid';
+  $('tabbar').style.display='flex';
+  assignTabs();
   renderCockpit();
   renderValueRanking();
   show(0);
+  showTab('cockpit');
+}
+
+let activeTab='cockpit';
+function assignTabs(){
+  document.querySelectorAll('#content > .card').forEach(card=>{
+    let tab='detail';
+    if(card.classList.contains('disclaimer')) tab='all';
+    else { const h=card.querySelector('h2'); const t=h?h.textContent:'';
+      if(t.includes('Cockpit')) tab='cockpit';
+      else if(t.includes('Value-Ranking')||t.includes('Wettmarkt & Expected')) tab='value';
+      else if(t.includes('Kalibrierung')) tab='calib'; }
+    card.dataset.tab=tab;
+  });
+}
+function showTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('#content > .card').forEach(card=>{
+    const t=card.dataset.tab;
+    card.style.display=(t==='all'||t===tab)?'':'none';
+  });
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  if(M) render();   // Charts im jetzt sichtbaren Tab korrekt dimensionieren
 }
 
 const AMPEL={green:'#3ecf8e',amber:'#f0b35e',red:'#e36b6b'};
@@ -225,16 +261,23 @@ function renderCockpit(){
   $('cockpitTable').innerHTML=html;
 }
 function setCockpitSort(k){ if(cockpitSort.key===k)cockpitSort.dir*=-1; else {cockpitSort.key=k;cockpitSort.dir=-1;} renderCockpit(); }
-function selectMatch(i){ $('matchSel').value=i; show(i); document.getElementById('headline').scrollIntoView({behavior:'smooth',block:'center'}); }
+function selectMatch(i){ $('matchSel').value=i; show(i); showTab('detail'); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function renderValueRanking(){
-  const pf=DATA.value_portfolio||{}; const plan=pf.plan||[];
-  if(!plan.length){ $('valueRankTable').innerHTML=''; $('valueRankNote').textContent='Aktuell keine Value Bets über der konservativen Schwelle (Datenqualität + σ-Grenze + Liquidität). Das ist die ehrliche Antwort — kein erzwungenes Wetten.'; return; }
-  $('valueRankTable').innerHTML='<tr><th>Spiel</th><th>Markt</th><th>Auswahl</th><th>Quote</th><th>Anbieter</th><th>Break-even</th><th>Konservativ</th><th>EV</th><th>Risiko</th><th>Einsatz %</th></tr>'+
-    plan.map(b=>'<tr><td>'+b.match+'</td><td>'+b.market+'</td><td>'+b.selection+'</td><td class="mono">'+b.best_odds.toFixed(2)+'</td><td class="dim">'+b.book+
-      '</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_conservative)+'</td><td class="mono" style="color:var(--good)">'+(b.ev*100).toFixed(1)+
-      '%</td><td>'+b.risk+'</td><td class="mono"><b>'+(b.stake_pct_final||b.stake_pct).toFixed(2)+'%</b></td></tr>').join('');
-  $('valueRankNote').textContent='Gesamteinsatz '+pf.total_stake_pct+'% Bankroll'+(pf.scaled_down?' (auf 6% gedeckelt)':'')+'. Viertel-Kelly, gekappt nach Risiko/Datenqualität. Keine Wettberatung.';
+  const op=DATA.opportunity_portfolio||{}; const plan=(op.plan||[]).filter(b=>b.stake_pct_final>0);
+  if(!plan.length){ $('valueRankTable').innerHTML=''; $('valueRankNote').textContent='Aktuell keine Chancen mit positivem Erwartungswert gefunden.'; return; }
+  $('valueRankTable').innerHTML='<tr><th>#</th><th>Spiel</th><th>Markt</th><th>Auswahl</th><th>Bestquote</th><th>Anbieter</th><th>Break-even</th><th>Modell-p</th><th>EV</th><th>Risiko</th><th>Einsatz %</th></tr>'+
+    plan.map((b,i)=>{
+      const star=b.is_value?' ⭐':'';
+      return '<tr><td class="dim">'+(i+1)+'</td><td>'+b.match+'</td><td>'+b.market+'</td><td>'+b.selection+star+'</td><td class="mono">'+b.best_odds.toFixed(2)+
+      '</td><td class="dim">'+b.book+'</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_model)+
+      '</td><td class="mono" style="color:var(--good)">+'+(b.ev_at_model*100).toFixed(0)+'%</td><td>'+b.risk+
+      '</td><td class="mono"><b>'+b.stake_pct_final.toFixed(2)+'%</b></td></tr>';
+    }).join('');
+  const ns=op.n_strict_value||0;
+  $('valueRankNote').innerHTML='Ranking nach empfohlenem Einsatz. EV/Wahrscheinlichkeit basieren auf unserer <b>Ensemble-Schätzung</b> (Modell+Markt), nicht auf der ultrastrengen Grenze. '+
+    '<b>Gesamteinsatz '+op.total_stake_pct+'% der Bankroll</b>'+(op.scaled_down?' (auf 6% gedeckelt)':'')+', Viertel-Kelly × Risiko/Datenqualität, max. 2%/Spiel. '+
+    '⭐ = erreicht auch die strenge konservative Schwelle ('+ns+'/'+plan.length+'). <b>Keine Wettberatung</b> — Einsätze klein halten.';
 }
 
 function exportCSV(){
@@ -518,6 +561,7 @@ function mkBand(id,labels,lo,hi,mid){
 
 $('matchSel').addEventListener('change',e=>show(+e.target.value));
 $('csvBtn').addEventListener('click',exportCSV);
+document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 ['wMarket','wBooks','wKalshi','wModel','wWhale'].forEach(id=>$(id).addEventListener('input',e=>{
   e.target.nextElementSibling.value=e.target.value+'%'; render();
 }));

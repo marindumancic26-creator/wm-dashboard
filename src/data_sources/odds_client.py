@@ -62,6 +62,22 @@ def _devig(odds: dict[str, float]) -> dict[str, float]:
     return {k: v / s for k, v in inv.items()} if s > 0 else {}
 
 
+def _filtered_best(pairs: list, outlier_ratio: float = 1.5):
+    """Beste Quote über alle Bücher MIT Ausreißer-Filter (gegen fehlerhafte/stale
+    Einzelquoten beim Line-Shopping): Quoten über Median × outlier_ratio werden
+    verworfen, dann das Maximum der validen genommen. Verhindert absurden EV aus
+    Datenfehlern. Rückgabe (preis, buch); (0.0, None) wenn leer."""
+    if not pairs:
+        return (0.0, None)
+    prices = [p for p, _ in pairs]
+    if len(prices) >= 3:
+        med = statistics.median(prices)
+        valid = [(p, b) for p, b in pairs if p <= med * outlier_ratio]
+    else:
+        valid = pairs
+    return max(valid or pairs, key=lambda x: x[0])
+
+
 def _team_match(a: str, b: str) -> bool:
     ca = config.canonical_team(a).lower()
     cb = config.canonical_team(b).lower()
@@ -95,7 +111,7 @@ def best_prices_for_match(team1: str, team2: str, all_odds: dict) -> dict | None
     home, away = ev.get("home_team", ""), ev.get("away_team", "")
 
     # ---- 1X2 (h2h): beste Quote je Auswahl + scharfer Konsens ----
-    best_h2h = {"team1_win": (0.0, None, []), "draw": (0.0, None, []), "team2_win": (0.0, None, [])}
+    quotes_h2h = {"team1_win": [], "draw": [], "team2_win": []}  # (preis, buch)-Paare
     per_book_h2h, pinnacle_h2h = [], None
     book_titles = set()
     for bm in ev.get("bookmakers", []):
@@ -118,10 +134,7 @@ def best_prices_for_match(team1: str, team2: str, all_odds: dict) -> dict | None
                 else:
                     continue
                 prices[sel] = pr
-                cur = best_h2h[sel]
-                best_h2h[sel][2].append(pr)
-                if pr > cur[0]:
-                    best_h2h[sel] = (pr, title, cur[2])
+                quotes_h2h[sel].append((pr, title))
             if len(prices) == 3:
                 per_book_h2h.append(prices)
                 if bm.get("key") == "pinnacle":
@@ -134,7 +147,9 @@ def best_prices_for_match(team1: str, team2: str, all_odds: dict) -> dict | None
 
     h2h = {}
     for sel in ("team1_win", "draw", "team2_win"):
-        odds, book, allo = best_h2h[sel]
+        pairs = quotes_h2h[sel]
+        odds, book = _filtered_best(pairs)
+        allo = [p for p, _ in pairs]
         h2h[sel] = {"best_odds": round(odds, 3), "book": book, "n_books": len(allo),
                     "consensus_prob": round(consensus.get(sel, 0.0), 4),
                     "max_implied": round(1.0 / max(allo), 4) if allo else None,
@@ -158,8 +173,8 @@ def best_prices_for_match(team1: str, team2: str, all_odds: dict) -> dict | None
     for line, slot in lines.items():
         if not slot["over"] or not slot["under"]:
             continue
-        bo = max(slot["over"], key=lambda x: x[0])
-        bu = max(slot["under"], key=lambda x: x[0])
+        bo = _filtered_best(slot["over"])
+        bu = _filtered_best(slot["under"])
         # scharfer Konsens je Linie: Median der Quoten -> entviggen
         mo, mu = statistics.median(p for p, _ in slot["over"]), statistics.median(p for p, _ in slot["under"])
         cons = _devig({"over": mo, "under": mu})

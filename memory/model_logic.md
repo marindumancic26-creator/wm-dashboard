@@ -82,6 +82,13 @@ Stand: 2026-06-13. Quellenstatus siehe [[data_sources]].
   nur als modell-faire Referenz, BTTS/Handicap on-demand per Web ([[data_sources]] §11).
 - **Staking:** Viertel-Kelly, gekappt (low 2 % / med 1,5 % / high 0,75 % je Wette) × Datenqualitäts-
   Multiplikator, Gesamtexposure 6 % gedeckelt. Kein Martingale. Tests `test_value_betting_*`.
+- **Chancen-Ranking** (`opportunities` + `opportunity_portfolio`, seit 14.06.): immer befülltes
+  Ranking aller Auswahlen mit positivem EV auf der **Ensemble**-Schätzung (nicht der strengen
+  Grenze), sortiert nach empfohlenem Einsatz. ⭐ markiert die, die auch die konservative Schwelle
+  erreichen. Dashboard-Tab „Value & Wetten". Ehrlich getrennt von der (oft leeren) Strict-Liste.
+- **Ausreißer-Filter** (`odds_client._filtered_best`): Best-Line-Shopping verwirft Quoten über
+  Median × 1,5 (fehlerhafte/stale Einzelquoten) — verhindert absurden EV aus Datenfehlern.
+- Dashboard ist in **Tabs** organisiert: Cockpit / Spiel-Detail / Value & Wetten / Kalibrierung.
 
 ## 8. Datenqualitäts-Score (src/model/data_quality.py)
 Composite 0..1 aus Elo-Status, StatsBomb-Verfügbarkeit, Form-Spielen, Liquidität (n Bücher),
