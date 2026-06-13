@@ -1,0 +1,25 @@
+# === GEHEIMNISSE — NIEMALS COMMITTEN ===
+api_keys.json
+*.key
+.env
+
+# Daten (Caches, Snapshots, lokale Konfig) — reproduzierbar / nicht öffentlich nötig.
+# Das Dashboard fürs Handy ist self-contained in docs/index.html (Daten inline).
+data/
+
+# Lokale Tooling-Konfig (enthält absolute Pfade)
+.claude/
+
+# soccerdata / seleniumbase Artefakte
+downloaded_files/
+latest_logs/
+assets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db

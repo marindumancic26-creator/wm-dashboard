@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>WM 2026 — Prognose-Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#11141a; --panel:#1a1f29; --line:#2a3140; --tx:#d8dee9; --dim:#8893a5;
+          --acc:#4fa3ff; --good:#3ecf8e; --warn:#f0b35e; --bad:#e36b6b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--tx); font:13px/1.45 "Segoe UI",system-ui,sans-serif; }
+  header { display:flex; gap:16px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0; }
+  select,button { background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:4px; padding:5px 9px; font-size:13px; }
+  button:hover { border-color:var(--acc); cursor:pointer; }
+  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:10px; padding:12px 16px; max-width:1500px; margin:0 auto; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 12px; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 0 8px; }
+  .c3{grid-column:span 3} .c4{grid-column:span 4} .c6{grid-column:span 6} .c8{grid-column:span 8} .c12{grid-column:span 12}
+  table { border-collapse:collapse; width:100%; font-size:12.5px; }
+  th,td { padding:3px 7px; text-align:right; border-bottom:1px solid var(--line); }
+  th:first-child,td:first-child { text-align:left; }
+  th { color:var(--dim); font-weight:600; }
+  .big { font-size:22px; font-weight:700; }
+  .tag { display:inline-block; padding:1px 7px; border-radius:9px; font-size:10.5px; font-weight:600; margin-left:6px; vertical-align:middle; }
+  .tag.live{background:#1d4030;color:var(--good)} .tag.historical{background:#3a3320;color:var(--warn)}
+  .tag.estimated{background:#3a2a3a;color:#d39ad3} .tag.unavailable{background:#402626;color:var(--bad)}
+  .tag.cached{background:#22304a;color:var(--acc)}
+  .matrix td { width:34px; text-align:center; padding:4px 2px; font-size:11px; border:1px solid var(--bg); }
+  .disclaimer { background:#33231d; border:1px solid #5c3b2a; color:#e8b48f; padding:8px 12px; border-radius:6px; font-size:12px; }
+  .slider-row { display:flex; align-items:center; gap:8px; margin:4px 0; }
+  .slider-row label { width:130px; color:var(--dim); }
+  .slider-row output { width:38px; text-align:right; }
+  input[type=range]{ flex:1; accent-color:var(--acc); }
+  .src-link { color:var(--acc); text-decoration:none; }
+  .dim { color:var(--dim); } .mono { font-variant-numeric:tabular-nums; }
+  #status { font-size:12px; color:var(--dim); }
+  .bar { height:18px; display:flex; border-radius:4px; overflow:hidden; margin:6px 0; font-size:11px; color:#fff; }
+  .bar div { display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚽ WM 2026 Prognosen</h1>
+  <select id="matchSel"></select>
+  <button id="refreshBtn" title="Pipeline neu ausführen (1–2 min)">⟳ Daten aktualisieren</button>
+  <span id="status"></span>
+</header>
+
+<div class="grid" id="content" style="display:none">
+  <div class="card c12 disclaimer">
+    ⚠️ <b>Keine Finanz- oder Wettberatung.</b> Prognosemärkte können fehlerhaft, illiquide, manipuliert oder unvollständig sein.
+    Modellwerte sind Schätzungen mit Unsicherheit. Whale-Scores sind heuristisch (keine verifizierte Nutzer-Historie öffentlich).
+    StatsBomb Open Data ist historisch (WM 2018/2022), nicht tagesaktuell für 2026.
+  </div>
+
+  <div class="card c12">
+    <h2>Cockpit — alle Spiele
+      <button id="csvBtn" style="float:right;font-size:11px;padding:3px 8px">⬇ CSV-Export</button>
+    </h2>
+    <table id="cockpitTable"></table>
+    <div class="dim" style="margin-top:6px">Klick auf eine Zeile öffnet das Spiel unten im Detail. Sortierbar per Klick auf Spaltenkopf. DQ = Datenqualität.</div>
+  </div>
+
+  <div class="card c12" id="valueRankCard">
+    <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">konservativ</span></h2>
+    <table id="valueRankTable"></table>
+    <div class="dim" id="valueRankNote" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card c4">
+    <h2>1X2 — Ensemble <span class="tag estimated">blend</span></h2>
+    <div id="headline"></div>
+    <div class="bar" id="probBar"></div>
+    <table id="probTable"></table>
+  </div>
+
+  <div class="card c4">
+    <h2>Modellgewichte (live verstellbar)</h2>
+    <div class="slider-row"><label>Polymarket-Preis</label><input type="range" id="wMarket" min="0" max="100" value="30"><output>30%</output></div>
+    <div class="slider-row"><label>Buchmacher-Quoten</label><input type="range" id="wBooks" min="0" max="100" value="25"><output>25%</output></div>
+    <div class="slider-row"><label>Kalshi-Preis</label><input type="range" id="wKalshi" min="0" max="100" value="10"><output>10%</output></div>
+    <div class="slider-row"><label>StatsBomb/Elo-Modell</label><input type="range" id="wModel" min="0" max="100" value="20"><output>20%</output></div>
+    <div class="slider-row"><label>Whale-Signal</label><input type="range" id="wWhale" min="0" max="100" value="15"><output>15%</output></div>
+    <div class="dim" id="weightNote" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card c4">
+    <h2>Datenquellen-Status</h2>
+    <table id="sourceTable"></table>
+  </div>
+
+  <div class="card c4">
+    <h2>Monte-Carlo: Gesamttore <span class="tag estimated">simuliert</span></h2>
+    <canvas id="totalChart" height="170"></canvas>
+  </div>
+  <div class="card c4">
+    <h2>Tore pro Team</h2>
+    <canvas id="teamGoalsChart" height="170"></canvas>
+  </div>
+  <div class="card c4">
+    <h2>Over / Under</h2>
+    <table id="ouTable"></table>
+  </div>
+
+  <div class="card c4">
+    <h2>Scoreline-Matrix (P in %)</h2>
+    <table class="matrix" id="matrixTable"></table>
+  </div>
+  <div class="card c4">
+    <h2>Top-Ergebnisse</h2>
+    <table id="topScores"></table>
+  </div>
+  <div class="card c4">
+    <h2>Spielereignisse <span class="tag estimated">simuliert</span></h2>
+    <table id="eventTable"></table>
+    <div class="dim" style="margin-top:6px">Abgeleitet aus der Tor-Simulation; keine Karten-/Ecken-Daten öffentlich verfügbar.</div>
+  </div>
+
+  <div class="card c6">
+    <h2>Markt vs. Modell vs. Whale</h2>
+    <canvas id="srcChart" height="180"></canvas>
+  </div>
+  <div class="card c6">
+    <h2>Unsicherheit (5–95 % Band, Parameter-Resampling)</h2>
+    <canvas id="bandChart" height="180"></canvas>
+  </div>
+
+  <div class="card c12">
+    <h2>Wettmarkt & Expected Value <span class="tag live">echte Quoten</span></h2>
+    <div id="evMeta" class="dim" style="margin-bottom:6px"></div>
+    <table id="evTable"></table>
+    <div id="evWatch" style="margin-top:8px"></div>
+    <h2 style="margin-top:14px">Zusatzmärkte (BTTS / Doppelte Chance / DNB)</h2>
+    <div id="extraMeta" class="dim" style="margin-bottom:4px"></div>
+    <table id="extraTable"></table>
+    <div class="dim" style="margin-top:6px">EV = konservative Wahrscheinlichkeit × Bestquote − 1. Konservativ = min(Modell, scharfer Markt) − Sicherheitsabschlag (low −3 / med −6 / high −10 pp). Zusatzmärkte ohne API-Quote: Modell-Fairquote ist nur Orientierung; recherchierte Web-/manuelle Quoten sind als Quelle markiert. <b>Keine Wettberatung.</b></div>
+  </div>
+
+  <div class="card c4">
+    <h2>Spielort & Kontext</h2>
+    <table id="venueTable"></table>
+  </div>
+  <div class="card c4">
+    <h2>Quotenverlauf — Sieg Favorit (Modell vs. Markt)</h2>
+    <canvas id="oddsHistChart" height="170"></canvas>
+    <div class="dim" id="oddsHistNote" style="margin-top:4px"></div>
+  </div>
+  <div class="card c4">
+    <h2>Kalibrierung über Zeit (Ø Brier kumuliert)</h2>
+    <canvas id="calibTimeChart" height="170"></canvas>
+    <div class="dim" id="calibTimeNote" style="margin-top:4px"></div>
+  </div>
+
+  <div class="card c12" id="lineupCard" style="display:none">
+    <h2>Aufstellungen (ESPN, inoffiziell) <span class="tag cached">pre-match</span></h2>
+    <div id="lineupBody" style="display:flex;gap:24px;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="card c4">
+    <h2>Kalibrierung (Brier Score je Quelle)</h2>
+    <table id="calibTable"></table>
+    <div class="dim" id="calibNote" style="margin-top:6px"></div>
+  </div>
+  <div class="card c8">
+    <h2>Top-Wallets (Whale-Scoring, heuristisch) <span class="tag estimated">heuristic</span></h2>
+    <table id="whaleTable"></table>
+  </div>
+</div>
+
+<script>
+let DATA=null, M=null, charts={};
+const $=id=>document.getElementById(id);
+const pct=x=>x==null?'–':(100*x).toFixed(1)+'%';
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+async function load(){
+  if(window.__STATIC_DATA__){           // statischer Export (GitHub Pages / Handy)
+    DATA=window.__STATIC_DATA__;
+    $('status').textContent='Stand: '+DATA.generated_at+' (statisch)';
+    const rb=$('refreshBtn'); if(rb)rb.style.display='none';
+  } else {
+    $('status').textContent='lade…';
+    const r=await fetch('/api/dashboard-data');
+    if(!r.ok){ $('status').textContent='Kein Daily Run vorhanden — bitte "python -m src.pipeline.daily_matchday_run" ausführen.'; return; }
+    DATA=await r.json();
+    $('status').textContent='Stand: '+DATA.generated_at;
+  }
+  const sel=$('matchSel'); sel.innerHTML='';
+  DATA.matches.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m.title+' ('+m.date+')'; sel.appendChild(o); });
+  $('content').style.display='grid';
+  renderCockpit();
+  renderValueRanking();
+  show(0);
+}
+
+const AMPEL={green:'#3ecf8e',amber:'#f0b35e',red:'#e36b6b'};
+function dot(tier){ return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(AMPEL[tier]||'#566173')+'"></span>'; }
+
+let cockpitSort={key:'ev',dir:-1};
+function cockpitRows(){
+  return DATA.matches.map((m,i)=>{
+    const ens=m.ensemble.probs, pick=['team1_win','draw','team2_win'].reduce((a,b)=>ens[a]>=ens[b]?a:b);
+    const pickLbl=pick==='draw'?'X':(pick==='team1_win'?m.team1:m.team2);
+    const v=m.value||{}, vb=(v.value_bets||[])[0];
+    const bestEv=(v.rows||[]).reduce((mx,r)=>Math.max(mx,r.ev),-1);
+    const dq=m.data_quality||{};
+    return {i,title:m.title,date:m.date,pick:pickLbl,pickp:ens[pick],
+      mkt:m.market?m.market.probs[pick]:null, bestEv, nvalue:(v.value_bets||[]).length,
+      dq:dq.tier||'amber', dqscore:dq.score||0, risk:vb?vb.risk:'', state:(m.match_info||{}).state||'pre'};
+  });
+}
+function renderCockpit(){
+  const rows=cockpitRows();
+  rows.sort((a,b)=>{const k=cockpitSort.key; let va=a[k],vb=b[k]; if(typeof va==='string'){return cockpitSort.dir*va.localeCompare(vb);} return cockpitSort.dir*((va||0)-(vb||0));});
+  const hdr=[['title','Spiel'],['pick','Favorit'],['pickp','p'],['mkt','Markt'],['bestEv','bester EV'],['nvalue','Value'],['risk','Risiko'],['dqscore','DQ']];
+  let html='<tr>'+hdr.map(([k,l])=>'<th style="cursor:pointer" onclick="setCockpitSort(\''+k+'\')">'+l+(cockpitSort.key===k?(cockpitSort.dir<0?' ▼':' ▲'):'')+'</th>').join('')+'<th>Status</th></tr>';
+  html+=rows.map(r=>{
+    const evc=r.bestEv>0?'var(--good)':'var(--bad)';
+    const st=r.state==='post'?'beendet':(r.state==='in'?'LIVE':'offen');
+    return '<tr style="cursor:pointer" onclick="selectMatch('+r.i+')"><td>'+r.title+'</td><td>'+r.pick+'</td><td class="mono">'+pct(r.pickp)+
+      '</td><td class="mono">'+pct(r.mkt)+'</td><td class="mono" style="color:'+evc+'">'+(r.bestEv*100).toFixed(1)+'%</td>'+
+      '<td class="mono">'+(r.nvalue||'–')+'</td><td>'+(r.risk||'–')+'</td><td>'+dot(r.dq)+' <span class="mono">'+r.dqscore.toFixed(2)+'</span></td><td class="dim">'+st+'</td></tr>';
+  }).join('');
+  $('cockpitTable').innerHTML=html;
+}
+function setCockpitSort(k){ if(cockpitSort.key===k)cockpitSort.dir*=-1; else {cockpitSort.key=k;cockpitSort.dir=-1;} renderCockpit(); }
+function selectMatch(i){ $('matchSel').value=i; show(i); document.getElementById('headline').scrollIntoView({behavior:'smooth',block:'center'}); }
+
+function renderValueRanking(){
+  const pf=DATA.value_portfolio||{}; const plan=pf.plan||[];
+  if(!plan.length){ $('valueRankTable').innerHTML=''; $('valueRankNote').textContent='Aktuell keine Value Bets über der konservativen Schwelle (Datenqualität + σ-Grenze + Liquidität). Das ist die ehrliche Antwort — kein erzwungenes Wetten.'; return; }
+  $('valueRankTable').innerHTML='<tr><th>Spiel</th><th>Markt</th><th>Auswahl</th><th>Quote</th><th>Anbieter</th><th>Break-even</th><th>Konservativ</th><th>EV</th><th>Risiko</th><th>Einsatz %</th></tr>'+
+    plan.map(b=>'<tr><td>'+b.match+'</td><td>'+b.market+'</td><td>'+b.selection+'</td><td class="mono">'+b.best_odds.toFixed(2)+'</td><td class="dim">'+b.book+
+      '</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_conservative)+'</td><td class="mono" style="color:var(--good)">'+(b.ev*100).toFixed(1)+
+      '%</td><td>'+b.risk+'</td><td class="mono"><b>'+(b.stake_pct_final||b.stake_pct).toFixed(2)+'%</b></td></tr>').join('');
+  $('valueRankNote').textContent='Gesamteinsatz '+pf.total_stake_pct+'% Bankroll'+(pf.scaled_down?' (auf 6% gedeckelt)':'')+'. Viertel-Kelly, gekappt nach Risiko/Datenqualität. Keine Wettberatung.';
+}
+
+function exportCSV(){
+  const rows=cockpitRows();
+  const head=['Spiel','Datum','Favorit','p_Favorit','Markt','bester_EV','n_Value','Risiko','Datenqualitaet','DQ_Score','Status'];
+  const lines=[head.join(';')].concat(rows.map(r=>[r.title,r.date,r.pick,(r.pickp*100).toFixed(1),r.mkt!=null?(r.mkt*100).toFixed(1):'',(r.bestEv*100).toFixed(1),r.nvalue,r.risk,r.dq,r.dqscore.toFixed(2),r.state].join(';')));
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wm_cockpit_'+(DATA.generated_at||'').slice(0,10)+'.csv'; a.click();
+}
+
+function weights(){
+  let m=+$('wMarket').value, b=+$('wBooks').value, k=+$('wKalshi').value, mo=+$('wModel').value, w=+$('wWhale').value;
+  const s=m+b+k+mo+w||1; return {market:m/s, books:b/s, kalshi:k/s, model:mo/s, whale:w/s};
+}
+
+function blend(){
+  const w=weights(), src={market:M.market.probs, books:M.books&&M.books.probs,
+                          kalshi:M.kalshi&&M.kalshi.probs,
+                          model:M.model.probs, whale:M.whale&&M.whale.probs};
+  const out={}; let tot=0;
+  for(const o of ['team1_win','draw','team2_win']){
+    let v=0,ws=0;
+    for(const s in src){ if(src[s]){ v+=w[s]*src[s][o]; ws+=w[s]; } }
+    out[o]=ws?v/ws:0; tot+=out[o];
+  }
+  for(const o in out) out[o]/=tot;
+  return out;
+}
+
+function show(i){
+  M=DATA.matches[i];
+  render();
+}
+
+function render(){
+  const b=blend(), mc=M.monte_carlo;
+  const t1=M.team1, t2=M.team2;
+  let statusBadge='';
+  if(M.match_info){
+    const mi=M.match_info, cls=mi.state==='post'?'unavailable':(mi.state==='in'?'live':'cached');
+    const lbl=mi.state==='post'?'beendet '+(mi.home.score??'')+':'+(mi.away.score??'')
+            :(mi.state==='in'?'LIVE '+(mi.home.score??'')+':'+(mi.away.score??'')+' '+(mi.clock||'')
+            :'Anstoß '+new Date(mi.kickoff_utc).toLocaleString('de-DE',{weekday:'short',hour:'2-digit',minute:'2-digit'})+' Uhr');
+    statusBadge='<span class="tag '+cls+'">'+lbl+'</span>';
+  }
+  let dqBadge='';
+  if(M.data_quality){ const d=M.data_quality; dqBadge=' '+dot(d.tier)+' <span class="dim" title="'+(d.reasons||[]).join(' · ')+'">DQ '+d.score.toFixed(2)+'</span>'; }
+  $('headline').innerHTML='<span class="big">'+t1+' '+pct(b.team1_win)+'</span>'+
+    '<span class="dim"> · Remis '+pct(b.draw)+' · '+t2+' '+pct(b.team2_win)+'</span> '+statusBadge+dqBadge;
+  $('probBar').innerHTML=
+    '<div style="background:#3b78c4;width:'+(b.team1_win*100)+'%">'+t1.slice(0,3).toUpperCase()+'</div>'+
+    '<div style="background:#566173;width:'+(b.draw*100)+'%">X</div>'+
+    '<div style="background:#c46a3b;width:'+(b.team2_win*100)+'%">'+t2.slice(0,3).toUpperCase()+'</div>';
+
+  const u=mc.uncertainty;
+  $('probTable').innerHTML='<tr><th>Ausgang</th><th>Blend</th><th>Markt</th><th>Bücher</th><th>Kalshi</th><th>Modell</th><th>Whale</th><th>MC 5–95%</th></tr>'+
+    [['team1_win','Sieg '+t1],['draw','Unentschieden'],['team2_win','Sieg '+t2]].map(([k,l])=>
+      '<tr><td>'+l+'</td><td class="mono"><b>'+pct(b[k])+'</b></td><td class="mono">'+pct(M.market.probs[k])+
+      '</td><td class="mono">'+pct(M.books&&M.books.probs?M.books.probs[k]:null)+
+      '</td><td class="mono">'+pct(M.kalshi&&M.kalshi.probs?M.kalshi.probs[k]:null)+
+      '</td><td class="mono">'+pct(M.model.probs[k])+'</td><td class="mono">'+pct(M.whale&&M.whale.probs?M.whale.probs[k]:null)+
+      '</td><td class="mono dim">'+pct(u[k].p05)+'–'+pct(u[k].p95)+'</td></tr>').join('');
+
+  const wn=$('weightNote'); const wl=weights();
+  let wtxt='Normalisiert: Markt '+pct(wl.market)+', Bücher '+pct(wl.books)+', Kalshi '+pct(wl.kalshi)+', Modell '+pct(wl.model)+', Whale '+pct(wl.whale)+
+    '. Server-Default: 30/25/10/20/15.';
+  const sug=DATA.weights_suggestion;
+  if(sug){ wtxt += sug.status==='data-driven'
+    ? ' <b>Datenbasierte Empfehlung (n='+sug.n+'):</b> '+Object.entries(sug.weights).map(([s,w])=>s+' '+(w*100).toFixed(0)+'%').join(', ')+'.'
+    : ' Gewichts-Empfehlung: '+sug.note; }
+  wn.innerHTML=wtxt;
+
+  // Quellen-Status
+  const sb=DATA.run_log.statsbomb;
+  $('sourceTable').innerHTML=
+    '<tr><td>Polymarket 1X2</td><td><span class="tag live">live</span></td><td class="mono">'+M.market.fetched_at+'</td></tr>'+
+    '<tr><td><a class="src-link" href="'+M.market.url+'" target="_blank">Markt öffnen ↗</a></td><td class="mono">Vol $'+Number(M.market.volume_usd).toLocaleString()+'</td><td class="mono">Σraw '+M.market.raw_sum+'</td></tr>'+
+    '<tr><td>Buchmacher ('+(M.books?M.books.basis:'–')+')</td><td><span class="tag '+(M.books?'live':'unavailable')+'">'+(M.books?'live':'unavailable')+'</span></td><td class="mono">'+(M.books?M.books.n_bookmakers+' Bücher, OR '+M.books.overround:'Key fehlt')+'</td></tr>'+
+    '<tr><td>StatsBomb ('+sb.mode+')</td><td><span class="tag '+sb.status+'">'+sb.status+'</span></td><td class="mono">'+sb.teams+' Teams</td></tr>'+
+    '<tr><td>Elo (eloratings.net)</td><td><span class="tag '+(DATA.config.elo_status==='live'?'live':'estimated')+'">'+DATA.config.elo_status+'</span></td><td class="mono">'+DATA.config.elo_as_of+'</td></tr>'+
+    '<tr><td>Kalshi'+(M.kalshi?' <a class="src-link" href="'+M.kalshi.url+'" target="_blank">↗</a>':'')+'</td><td><span class="tag '+(M.kalshi?'live':'unavailable')+'">'+(M.kalshi?'live':'unavailable')+'</span></td><td class="mono">'+(M.kalshi?M.kalshi.volume_contracts.toLocaleString()+' Kontrakte':'–')+'</td></tr>'+
+    '<tr><td>ESPN-Status</td><td><span class="tag '+(M.match_info?'live':'unavailable')+'">'+(M.match_info?'live (unofficial)':'unavailable')+'</span></td><td class="mono">'+(M.match_info?M.match_info.status:'–')+'</td></tr>'+
+    '<tr><td>FBref-Turnierform</td><td><span class="tag '+(M.model.tournament_form?'live':'unavailable')+'">'+(M.model.tournament_form?'live':'keine Spiele')+'</span></td><td class="mono">'+(M.model.tournament_form?Object.values(M.model.tournament_form).map(f=>f.matches+' Sp. ('+f.basis+')').join(' / '):'–')+'</td></tr>'+
+    '<tr><td>Whale-Signal</td><td><span class="tag estimated">heuristic</span></td><td class="mono">'+(M.whale?M.whale.n_wallets_scored+' Wallets':'–')+'</td></tr>'+
+    '<tr><td>Monte Carlo</td><td><span class="tag cached">'+DATA.config.mc_runs.toLocaleString()+' Läufe</span></td><td class="mono">λ '+M.lambdas.lambda1+' / '+M.lambdas.lambda2+'</td></tr>';
+
+  // Charts
+  mkBar('totalChart', mc.total_goals_dist.map((_,i)=>i<9?String(i):'9+'), mc.total_goals_dist, 'P(Gesamttore)');
+  mkGrouped('teamGoalsChart', mc.goals_team1_dist.map((_,i)=>i<6?String(i):'6+'),
+    [{label:t1,data:mc.goals_team1_dist,color:'#3b78c4'},{label:t2,data:mc.goals_team2_dist,color:'#c46a3b'}]);
+
+  $('ouTable').innerHTML='<tr><th>Linie</th><th>Over</th><th>Under</th></tr>'+
+    Object.entries(mc.over_under).map(([l,v])=>'<tr><td>'+l+'</td><td class="mono">'+pct(v.over)+'</td><td class="mono">'+pct(v.under)+'</td></tr>').join('');
+
+  // Matrix-Heatmap
+  let mt='<tr><th>'+t1.slice(0,3)+'\\'+t2.slice(0,3)+'</th>'+mc.score_matrix[0].slice(0,6).map((_,j)=>'<th>'+j+'</th>').join('')+'</tr>';
+  for(let i=0;i<6;i++){
+    mt+='<tr><th>'+i+'</th>'+mc.score_matrix[i].slice(0,6).map(p=>{
+      const a=Math.min(1,p*8);
+      return '<td style="background:rgba(79,163,255,'+a.toFixed(2)+')">'+(p*100).toFixed(1)+'</td>';
+    }).join('')+'</tr>';
+  }
+  $('matrixTable').innerHTML=mt;
+
+  $('topScores').innerHTML='<tr><th>Ergebnis</th><th>P</th></tr>'+
+    mc.top_scorelines.map(s=>'<tr><td>'+s.score+'</td><td class="mono">'+pct(s.prob)+'</td></tr>').join('');
+
+  const ev=mc.events;
+  $('eventTable').innerHTML=[['Beide Teams treffen',ev.btts],['Zu Null: '+t1,ev.clean_sheet_team1],
+    ['Zu Null: '+t2,ev.clean_sheet_team2],[t1+' ≥2 Tore',ev.team1_scores_2plus],
+    [t2+' ≥2 Tore',ev.team2_scores_2plus],['Siegmarge ≥2',ev.win_margin_2plus]]
+    .map(([l,v])=>'<tr><td>'+l+'</td><td class="mono">'+pct(v)+'</td></tr>').join('');
+
+  // Markt vs Modell vs Whale
+  mkGrouped('srcChart',['Sieg '+t1,'Remis','Sieg '+t2],[
+    {label:'Markt',data:['team1_win','draw','team2_win'].map(k=>M.market.probs[k]),color:'#4fa3ff'},
+    {label:'Bücher',data:['team1_win','draw','team2_win'].map(k=>M.books&&M.books.probs?M.books.probs[k]:0),color:'#6ee0d8'},
+    {label:'Kalshi',data:['team1_win','draw','team2_win'].map(k=>M.kalshi&&M.kalshi.probs?M.kalshi.probs[k]:0),color:'#9b8cff'},
+    {label:'Modell',data:['team1_win','draw','team2_win'].map(k=>M.model.probs[k]),color:'#3ecf8e'},
+    {label:'Whale',data:['team1_win','draw','team2_win'].map(k=>M.whale&&M.whale.probs?M.whale.probs[k]:0),color:'#d39ad3'},
+    {label:'Blend',data:['team1_win','draw','team2_win'].map(k=>b[k]),color:'#f0b35e'}]);
+
+  // Kalibrierung
+  const cal=DATA.calibration;
+  if(cal&&cal.status==='live'&&cal.summary&&Object.keys(cal.summary).length){
+    $('calibTable').innerHTML='<tr><th>Quelle</th><th>Ø Brier ↓</th><th>Ø LogLoss ↓</th><th>Hit ↑</th><th>n</th></tr>'+
+      Object.entries(cal.summary).sort((a,b2)=>a[1].mean_brier-b2[1].mean_brier)
+        .map(([s,v])=>'<tr><td>'+s+'</td><td class="mono">'+v.mean_brier.toFixed(3)+
+          '</td><td class="mono">'+(v.mean_log_loss!=null?v.mean_log_loss.toFixed(3):'–')+
+          '</td><td class="mono">'+(v.hit_rate!=null?(v.hit_rate*100).toFixed(0)+'%':'–')+
+          '</td><td class="mono">'+v.n+'</td></tr>').join('');
+    const bet=cal.betting||{};
+    let betLine='';
+    if(bet.n_bets){ betLine=' · Referenz-Policy ('+bet.n_bets+' Wetten): ROI <b>'+(bet.roi*100>=0?'+':'')+(bet.roi*100).toFixed(1)+'%</b>'+
+      (bet.avg_clv_odds!=null?', Ø CLV '+(bet.avg_clv_odds*100>=0?'+':'')+(bet.avg_clv_odds*100).toFixed(2)+'%':', CLV noch nicht messbar'); }
+    $('calibNote').innerHTML='Brier 0.667 / LogLoss 1.099 = Zufall. '+cal.n_resolved+' Spiele aufgelöst.'+betLine;
+  } else {
+    $('calibTable').innerHTML='';
+    $('calibNote').textContent=cal&&cal.note?cal.note:'Noch keine aufgelösten Spiele oder kein football-data.org-Key.';
+  }
+
+  // Unsicherheitsband
+  mkBand('bandChart',['Sieg '+t1,'Remis','Sieg '+t2],
+    ['team1_win','draw','team2_win'].map(k=>u[k].p05),
+    ['team1_win','draw','team2_win'].map(k=>u[k].p95),
+    ['team1_win','draw','team2_win'].map(k=>mc.probs[k]));
+
+  // Wettmarkt & EV
+  const v = M.value;
+  if(v && v.has_live_odds){
+    $('evMeta').innerHTML = v.n_bookmakers+' Buchmacher · beste Quote je Auswahl (Line-Shopping). '+
+      (v.value_bets.length? '<b style="color:var(--good)">'+v.value_bets.length+' Value Bet(s)</b>' : '<b>Keine Value Bets</b> bei konservativer Schwelle.');
+    $('evTable').innerHTML='<tr><th>Markt</th><th>Auswahl</th><th>Bestquote</th><th>Anbieter</th><th>Break-even</th><th>Modell</th><th>Markt</th><th>Konservativ</th><th>EV (kons.)</th><th>EV (Modell)</th><th>Risiko</th></tr>'+
+      v.rows.map(r=>{
+        const evc = r.ev>0?'var(--good)':'var(--bad)';
+        const star = r.is_value?' ⭐':'';
+        return '<tr><td>'+r.market+'</td><td>'+r.selection+star+'</td><td class="mono">'+r.best_odds.toFixed(2)+
+          '</td><td class="dim">'+r.book+'</td><td class="mono">'+pct(r.breakeven_prob)+'</td><td class="mono">'+pct(r.p_model)+
+          '</td><td class="mono">'+pct(r.p_market_consensus)+'</td><td class="mono">'+pct(r.p_conservative)+
+          '</td><td class="mono" style="color:'+evc+'">'+(r.ev*100).toFixed(1)+'%</td><td class="mono dim">'+(r.ev_at_model*100).toFixed(1)+'%</td><td>'+r.risk+'</td></tr>';
+      }).join('');
+    // Watchlist: positiver Modell-EV, aber konservativ verworfen
+    const watch = v.rows.filter(r=>!r.is_value && r.ev_at_model>0.05).sort((a,b)=>b.ev_at_model-a.ev_at_model).slice(0,3);
+    $('evWatch').innerHTML = watch.length? '<span class="dim">Beobachtungsliste (Modell sieht Edge, konservativ verworfen — Modell ist empirisch die schwächste Quelle): '+
+      watch.map(r=>r.selection+' @'+r.best_odds.toFixed(2)+' (Modell-EV '+(r.ev_at_model*100).toFixed(0)+'%)').join(' · ')+'</span>' : '';
+  } else {
+    $('evMeta').textContent = 'Keine Live-Buchmacherquoten für dieses Spiel.';
+    $('evTable').innerHTML=''; $('evWatch').innerHTML='';
+  }
+
+  // Zusatzmärkte: Modell-Fairquoten + (falls vorhanden) recherchierte Quoten mit EV
+  const mm = (v && v.model_markets) || [];
+  const research = (M.extra_research && M.extra_research.rows) || [];
+  const resBySel = {}; research.forEach(r=>{ resBySel[r.selection]=r; });
+  if(mm.length || research.length){
+    $('extraMeta').innerHTML = research.length
+      ? 'Recherchierte Quoten vorhanden — Quelle: <b>'+(M.extra_research.source||'?')+'</b> · Stand '+(M.extra_research.researched_at||'?')+' <span class="tag estimated">ungeprüft</span>'
+      : 'Nur Modell-Fairquoten (keine Live-/recherchierten Quoten — auf Zuruf nachholbar).';
+    let rows='<tr><th>Markt</th><th>Auswahl</th><th>Modell-p</th><th>Modell-fair</th><th>Recherch. Quote</th><th>Quelle</th><th>Konservativ</th><th>EV</th><th>Risiko</th></tr>';
+    mm.forEach(m=>{
+      const r=resBySel[m.selection];
+      const evc = r? (r.ev>0?'var(--good)':'var(--bad)') : 'var(--dim)';
+      rows+='<tr><td>'+m.market+'</td><td>'+m.selection+(r&&r.is_value?' ⭐':'')+'</td><td class="mono">'+pct(m.p_model)+
+        '</td><td class="mono dim">'+(m.fair_odds?m.fair_odds.toFixed(2):'–')+
+        '</td><td class="mono">'+(r?r.odds.toFixed(2):'–')+'</td><td class="dim">'+(r?(r.book||r.source||'Web'):'–')+
+        '</td><td class="mono">'+(r&&r.p_conservative!=null?pct(r.p_conservative):'–')+
+        '</td><td class="mono" style="color:'+evc+'">'+(r&&r.ev!=null?(r.ev*100).toFixed(1)+'%':'–')+'</td><td>'+(r?r.risk||'':'')+'</td></tr>';
+    });
+    $('extraTable').innerHTML=rows;
+  } else { $('extraTable').innerHTML=''; $('extraMeta').textContent=''; }
+
+  // Spielort & Kontext
+  const ve=M.venue||{};
+  let vrows='<tr><td>Stadt</td><td class="mono">'+(ve.city||'–')+'</td></tr>'+
+    '<tr><td>Höhe</td><td class="mono">'+(ve.altitude_m!=null?ve.altitude_m+' m':'–')+'</td></tr>'+
+    '<tr><td>Tor-Multiplikator</td><td class="mono">×'+(ve.total_goals_mult||1)+'</td></tr>';
+  if(ve.weather){ vrows+='<tr><td>Wetter</td><td class="mono">'+(ve.weather.temp_c)+'°C, Wind '+ve.weather.wind_kmh+' km/h'+(ve.weather.rain?', Regen':'')+'</td></tr>'; }
+  else { vrows+='<tr><td>Wetter</td><td><span class="tag unavailable">kein Key</span></td></tr>'; }
+  const inj=(M.model&&M.model.venue_context&&M.model.venue_context.injury_override);
+  if(inj){ vrows+='<tr><td>Override</td><td>⚠️ '+inj.note+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
+  if(ve.notes&&ve.notes.length){ vrows+='<tr><td>Notizen</td><td class="dim">'+ve.notes.join('; ')+'</td></tr>'; }
+  $('venueTable').innerHTML=vrows;
+
+  // Quotenverlauf (asynchron)
+  renderOddsHistory(M.slug,t1,t2);
+  // Kalibrierung über Zeit
+  renderCalibTime();
+
+  // Aufstellungen
+  if(M.lineups&&Object.keys(M.lineups).length){
+    $('lineupCard').style.display='block';
+    $('lineupBody').innerHTML=Object.entries(M.lineups).map(([team,l])=>
+      '<div><b>'+team+'</b>'+(l.formation?' <span class="dim">('+l.formation+')</span>':'')+
+      '<ol style="margin:6px 0 0;padding-left:20px">'+l.starting_xi.map(p=>'<li>'+p+'</li>').join('')+'</ol></div>').join('');
+  } else {
+    $('lineupCard').style.display='none';
+  }
+
+  // Whale-Tabelle
+  if(M.whale&&M.whale.wallets&&M.whale.wallets.length){
+    $('whaleTable').innerHTML='<tr><th>Wallet</th><th>Score</th><th>Konfidenz</th><th>Fußball-Trades</th><th>Fußball-Vol $</th><th>Hit-Rate (heur.)</th><th>Ø Einsatz $</th><th>Aktivität (Tage)</th><th>Spezialist</th><th>Exposure</th></tr>'+
+      M.whale.wallets.map(w=>'<tr><td class="mono"><a class="src-link" target="_blank" href="https://polymarket.com/profile/'+w.wallet+'">'+w.wallet.slice(0,10)+'…</a></td>'+
+        '<td class="mono"><b>'+w.score.toFixed(3)+'</b></td><td class="mono">'+w.confidence.toFixed(2)+'</td><td class="mono">'+w.n_trades_football+
+        '</td><td class="mono">'+Number(w.volume_usd_football).toLocaleString()+'</td><td class="mono">'+(w.resolved_hit_rate_heuristic!=null?w.resolved_hit_rate_heuristic.toFixed(2):'–')+
+        '</td><td class="mono">'+Number(w.avg_stake_usd).toLocaleString()+'</td><td class="mono">'+(w.recency_days!=null?w.recency_days:'–')+
+        '</td><td>'+(w.football_specialist?'⚽ ja':'nein')+'</td><td class="mono dim">'+Object.entries(w.exposure||{}).map(([k,v])=>k.replace('_win','')+':'+Number(v).toLocaleString()).join(' ')+'</td></tr>').join('');
+  } else {
+    $('whaleTable').innerHTML='<tr><td class="dim">Kein Whale-Signal verfügbar (Lauf mit --skip-whales oder API-Fehler).</td></tr>';
+  }
+}
+
+function mkChart(id,cfg){ if(charts[id])charts[id].destroy(); charts[id]=new Chart($(id),cfg); }
+
+async function renderOddsHistory(slug,t1,t2){
+  try{
+    let s;
+    if(window.__STATIC_ODDS__){ s=window.__STATIC_ODDS__[slug]||[]; }
+    else { const r=await fetch('/api/odds-history?slug='+encodeURIComponent(slug)); const d=await r.json(); s=d.series||[]; }
+    const labels=s.map(p=>(p.t||'').slice(5,16).replace('T',' '));
+    const mkt=s.map(p=>p.market?p.market.team1_win:null);
+    const ens=s.map(p=>p.ensemble?p.ensemble.team1_win:null);
+    const imp=s.map(p=>p.odds&&p.odds.team1_win?1/p.odds.team1_win:null);
+    mkChart('oddsHistChart',{type:'line',data:{labels,datasets:[
+      {label:'Markt '+t1,data:mkt,borderColor:'#4fa3ff',tension:.2,spanGaps:true},
+      {label:'Ensemble '+t1,data:ens,borderColor:'#f0b35e',tension:.2,spanGaps:true},
+      {label:'Bestquote-implied',data:imp,borderColor:'#6ee0d8',borderDash:[4,3],tension:.2,spanGaps:true}]},
+      options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100).toFixed(0)+'%'}}}}});
+    $('oddsHistNote').textContent=s.length<=1?'Nur 1 Snapshot — Verlauf füllt sich, sobald der 09:00-Job Tage im Voraus läuft.':s.length+' Snapshots.';
+  }catch(e){ $('oddsHistNote').textContent='Verlauf nicht verfügbar.'; }
+}
+
+function renderCalibTime(){
+  const cal=DATA.calibration;
+  if(!cal||cal.status!=='live'||!cal.matches||!cal.matches.length){ if(charts['calibTimeChart'])charts['calibTimeChart'].destroy(); $('calibTimeNote').textContent='Noch keine aufgelösten Spiele.'; return; }
+  const ms=[...cal.matches].sort((a,b)=>(a.forecast_at||'').localeCompare(b.forecast_at||''));
+  const labels=ms.map((m,i)=>'#'+(i+1));
+  const cum=(src)=>{let sum=0,n=0; return ms.map(m=>{if(m.brier&&m.brier[src]!=null){sum+=m.brier[src];n++;} return n?sum/n:null;});};
+  mkChart('calibTimeChart',{type:'line',data:{labels,datasets:[
+    {label:'Markt',data:cum('market'),borderColor:'#4fa3ff',tension:.2,spanGaps:true},
+    {label:'Ensemble',data:cum('ensemble'),borderColor:'#f0b35e',tension:.2,spanGaps:true},
+    {label:'Modell',data:cum('model'),borderColor:'#3ecf8e',tension:.2,spanGaps:true}]},
+    options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}}},scales:{x:axis,y:axis}}});
+  $('calibTimeNote').textContent=ms.length+' Spiel(e). Reliability-Diagramm folgt ab ~20 Spielen.';
+}
+const axis={ticks:{color:'#8893a5'},grid:{color:'#2a3140'}};
+function mkBar(id,labels,data,label){
+  mkChart(id,{type:'bar',data:{labels,datasets:[{label,data,backgroundColor:'#4fa3ff'}]},
+    options:{plugins:{legend:{display:false}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
+}
+function mkGrouped(id,labels,sets){
+  mkChart(id,{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.label,data:s.data,backgroundColor:s.color}))},
+    options:{plugins:{legend:{labels:{color:'#d8dee9'}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
+}
+function mkBand(id,labels,lo,hi,mid){
+  mkChart(id,{type:'bar',data:{labels,datasets:[
+    {label:'P05',data:lo,backgroundColor:'rgba(79,163,255,0.25)'},
+    {label:'Punkt',data:mid,backgroundColor:'#4fa3ff'},
+    {label:'P95',data:hi,backgroundColor:'rgba(79,163,255,0.55)'}]},
+    options:{plugins:{legend:{labels:{color:'#d8dee9'}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
+}
+
+$('matchSel').addEventListener('change',e=>show(+e.target.value));
+$('csvBtn').addEventListener('click',exportCSV);
+['wMarket','wBooks','wKalshi','wModel','wWhale'].forEach(id=>$(id).addEventListener('input',e=>{
+  e.target.nextElementSibling.value=e.target.value+'%'; render();
+}));
+$('refreshBtn').addEventListener('click',async()=>{
+  $('status').textContent='Pipeline läuft… (1–2 min)';
+  try{ await fetch('/api/refresh',{method:'POST'}); await load(); }
+  catch(e){ $('status').textContent='Refresh fehlgeschlagen: '+e; }
+});
+load();
+</script>
+</body>
+</html>

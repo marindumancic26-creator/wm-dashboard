@@ -1,0 +1,245 @@
+"""Sanity-Tests fuer die Kernrechnungen.  Ausfuehren:  python -m tests.test_model"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.model import features, monte_carlo, ensemble
+from src.model.whale_scoring import score_wallet
+
+
+def approx(a, b, tol=1e-6):
+    assert abs(a - b) < tol, f"{a} != {b}"
+
+
+def test_poisson_1x2_sums_to_one():
+    p1, pd, p2 = features.poisson_1x2(1.5, 1.1)
+    approx(p1 + pd + p2, 1.0)
+    assert p1 > p2, "staerkeres Team muss hoehere Siegquote haben"
+
+
+def test_market_implied_lambda_roundtrip():
+    # Bekannte lambdas -> 1X2 -> Solver muss aehnliche lambdas finden
+    p1, pd, p2 = features.poisson_1x2(1.8, 0.9)
+    sol = features.market_implied_lambdas(p1, pd, p2)
+    assert abs(sol["lambda1"] - 1.8) < 0.15, sol
+    assert abs(sol["lambda2"] - 0.9) < 0.15, sol
+
+
+def test_monte_carlo_plausible():
+    # rho=0 isoliert den reinen Poisson-Pfad von der Dixon-Coles-Korrektur
+    mc = monte_carlo.simulate(1.6, 1.0, runs=30000, seed=7, rho=0.0)
+    p = mc["probs"]
+    approx(p["team1_win"] + p["draw"] + p["team2_win"], 1.0, 1e-9)
+    # MC muss nahe an analytischem Poisson liegen (Parameterunsicherheit verbreitert leicht)
+    a1, ad, a2 = features.poisson_1x2(1.6, 1.0, rho=0.0)
+    assert abs(p["team1_win"] - a1) < 0.03
+    # Verteilungssummen
+    assert abs(sum(mc["total_goals_dist"]) - 1.0) < 0.01
+    assert abs(sum(mc["goals_team1_dist"]) - 1.0) < 0.01
+    matrix_sum = sum(sum(r) for r in mc["score_matrix"])
+    assert abs(matrix_sum - 1.0) < 0.01
+    # O/U-Konsistenz: Over0.5 = 1 - P(0 Tore)
+    approx(mc["over_under"]["0.5"]["over"], 1 - mc["total_goals_dist"][0], 0.01)
+    assert mc["over_under"]["2.5"]["over"] + mc["over_under"]["2.5"]["under"] <= 1.0 + 1e-9
+
+
+def test_ensemble_normalizes_and_handles_missing():
+    market = {"probs": {"team1_win": 0.5, "draw": 0.3, "team2_win": 0.2}}
+    model = {"probs": {"team1_win": 0.4, "draw": 0.3, "team2_win": 0.3}}
+    b = ensemble.blend_probs(market, model, None)
+    approx(sum(b["probs"].values()), 1.0, 1e-6)
+    assert "whale" not in b["weights_used"]
+    # Gewichte renormalisiert auf market+model (aus config, nicht hartkodiert)
+    from src.config import ENSEMBLE_WEIGHTS as W
+    approx(b["weights_used"]["market"], W["market"] / (W["market"] + W["model"]), 1e-3)
+
+
+def test_whale_small_sample_not_overweighted():
+    # Wallet A: 3 Treffer aus 3 Fussball-Trades (Glueckstreffer)
+    lucky = [{"type": "TRADE", "title": "World Cup x", "usdcSize": 1000, "conditionId": f"c{i}",
+              "timestamp": 1781280000} for i in range(3)]
+    lucky += [{"type": "REDEEM", "title": "World Cup x", "usdcSize": 2000, "conditionId": f"c{i}",
+               "timestamp": 1781280000} for i in range(3)]
+    # Wallet B: 60 Trades, 60% Treffer, konsistent
+    big = [{"type": "TRADE", "title": "World Cup y", "usdcSize": 1000, "conditionId": f"d{i}",
+            "timestamp": 1781280000} for i in range(60)]
+    big += [{"type": "REDEEM", "title": "World Cup y", "usdcSize": 1500, "conditionId": f"d{i}",
+             "timestamp": 1781280000} for i in range(36)]
+    a = score_wallet("0xA", lucky)
+    b = score_wallet("0xB", big)
+    assert a["resolved_hit_rate_heuristic"] == 1.0
+    assert b["score"] > a["score"], f"Konsistenz muss schlagen: {b['score']} <= {a['score']}"
+
+
+def test_devig_removes_overround():
+    from src.data_sources.odds_client import _devig
+    # Typische 3-Weg-Quoten mit ~5% Overround
+    p = _devig({"home": 2.0, "draw": 3.4, "away": 4.2})
+    approx(sum(p.values()), 1.0, 1e-9)
+    assert p["home"] > p["draw"] > p["away"]
+
+
+def test_brier_score():
+    from src.model.calibration import brier
+    perfekt = brier({"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}, "team1_win")
+    approx(perfekt, 0.0)
+    gleich = brier({"team1_win": 1/3, "draw": 1/3, "team2_win": 1/3}, "draw")
+    approx(gleich, 2/3, 1e-6)
+    falsch = brier({"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}, "team2_win")
+    approx(falsch, 2.0)
+
+
+def test_ensemble_with_books():
+    market = {"probs": {"team1_win": 0.5, "draw": 0.3, "team2_win": 0.2}}
+    books = {"probs": {"team1_win": 0.55, "draw": 0.28, "team2_win": 0.17}}
+    model = {"probs": {"team1_win": 0.4, "draw": 0.3, "team2_win": 0.3}}
+    from src.model.ensemble import blend_probs
+    b = blend_probs(market, model, None, books=books)
+    approx(sum(b["probs"].values()), 1.0, 1e-6)
+    assert "books" in b["weights_used"]
+    # Blend muss zwischen den Quellen liegen
+    assert 0.4 <= b["probs"]["team1_win"] <= 0.55
+
+
+def test_elo_fallback_static():
+    from src.data_sources.elo_client import rating_for
+    # leeres Live-Payload -> statischer Fallback greift
+    r = rating_for("Brazil", {"ratings": {}})
+    assert r == 2030, r
+    assert rating_for("Niemandsland", {"ratings": {}}) == 1650
+
+
+def test_dixon_coles_raises_draws_analytic():
+    # Moderater Favorit: DC (rho<0) muss die Remis-Wahrscheinlichkeit anheben
+    _, pd_plain, _ = features.poisson_1x2(1.6, 1.0, rho=0.0)
+    _, pd_dc, _ = features.poisson_1x2(1.6, 1.0, rho=-0.10)
+    assert pd_dc > pd_plain, f"DC muss Remis anheben: {pd_dc} <= {pd_plain}"
+    # Effektgroesse plausibel (wenige Prozentpunkte, nicht entgleist)
+    assert 0.0 < (pd_dc - pd_plain) < 0.06
+
+
+def test_mc_dixon_coles_matches_analytic():
+    # Importance-gewichtetes MC muss die analytische DC-Verteilung reproduzieren
+    a1, ad, a2 = features.poisson_1x2(1.6, 1.0, rho=-0.10)
+    mc = monte_carlo.simulate(1.6, 1.0, runs=40000, seed=11, rho=-0.10)
+    approx(sum(mc["probs"].values()), 1.0, 1e-9)
+    assert abs(mc["probs"]["draw"] - ad) < 0.03, (mc["probs"]["draw"], ad)
+    # und mehr Remis als ohne Korrektur
+    mc0 = monte_carlo.simulate(1.6, 1.0, runs=40000, seed=11, rho=0.0)
+    assert mc["probs"]["draw"] > mc0["probs"]["draw"]
+
+
+def test_kalshi_probs_normalized_and_flipped():
+    from src.data_sources.kalshi_client import probs_for_match
+    events = {"status": "live", "events": [{
+        "title": "Paraguay vs United States", "event_ticker": "KXWCGAME-TEST",
+        "markets": [
+            {"yes_sub_title": "Paraguay", "yes_bid": 20, "yes_ask": 24, "volume": 100},
+            {"yes_sub_title": "United States", "yes_bid": 44, "yes_ask": 48, "volume": 100},
+            {"yes_sub_title": "Tie", "yes_bid": 28, "yes_ask": 32, "volume": 100},
+        ]}]}
+    # Anfrage in umgekehrter Reihenfolge (unsere team1 = USA) -> muss flippen
+    res = probs_for_match("United States", "Paraguay", events)
+    assert res is not None
+    approx(sum(res["probs"].values()), 1.0, 1e-9)
+    assert res["probs"]["team1_win"] > res["probs"]["team2_win"], res["probs"]
+
+
+def test_form_factor_damped_and_capped():
+    from src.data_sources.fbref_client import form_factor
+    # Extreme Form (5:0) nach nur 1 Spiel darf max. +25% Angriff geben
+    form = {"status": "live", "teams": {"Testland": {"matches": 1, "gf_pm": 5.0, "ga_pm": 0.0}}}
+    f = form_factor("Testland", form)
+    assert f["attack"] <= 1.25, f
+    assert f["concede"] >= 0.75, f
+    assert form_factor("Unbekannt", form) is None
+
+
+def test_venue_altitude_and_weather_off():
+    from src.data_sources import venue_client
+    ctx = venue_client.get_context("Mexico City", "Mexico", "Brazil")
+    assert ctx["altitude_m"] == 2240
+    assert ctx["total_goals_mult"] > 1.0          # Höhe hebt Tore leicht
+    assert ctx["team1_mult"] > 1.0                # Mexiko höhenadaptiert
+    assert ctx["team2_mult"] == 1.0               # Brasilien nicht
+    # Unbekannter Ort -> neutral
+    flat = venue_client.get_context("Atlantis", "A", "B")
+    assert flat["total_goals_mult"] == 1.0 and flat["status"] == "unavailable"
+
+
+def test_injury_override_weakens_team():
+    from src.model import injuries
+    base = {"total_goals_mult": 1.0, "team1_mult": 1.0, "team2_mult": 1.0, "notes": []}
+    ov = {"team1_mult": 0.85, "team2_mult": 1.0, "total_mult": 0.97, "note": "Stürmer out"}
+    res = injuries.apply(base, ov)
+    assert res["team1_mult"] < 1.0 and res["total_goals_mult"] < 1.0
+    assert res["injury_override"]["note"] == "Stürmer out"
+    # Kappung: extremer Override bleibt begrenzt
+    extreme = injuries.apply(base, {"team1_mult": 0.1})
+    assert extreme["team1_mult"] >= 0.7
+
+
+def test_portfolio_correlation_cap():
+    from src.model.value_betting import portfolio
+    bets = [{"slug": "g1", "ev": 0.1, "stake_pct": 1.5, "selection": "A"},
+            {"slug": "g1", "ev": 0.08, "stake_pct": 1.5, "selection": "B"},
+            {"slug": "g2", "ev": 0.05, "stake_pct": 1.0, "selection": "C"}]
+    pf = portfolio(bets)
+    g1 = sum(b["stake_pct_final"] for b in pf["plan"] if b["slug"] == "g1")
+    assert g1 <= 2.0 + 1e-9          # Korrelations-Cap pro Spiel
+    assert pf["per_match_capped"] is True
+
+
+def test_log_loss_and_hit():
+    from src.model.calibration import log_loss, brier, argmax_outcome
+    perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}
+    approx(log_loss(perfect, "team1_win"), 0.0, 1e-6)
+    uniform = {"team1_win": 1/3, "draw": 1/3, "team2_win": 1/3}
+    approx(log_loss(uniform, "draw"), 1.0986, 1e-3)  # ln(3)
+    # LogLoss bestraft selbstsichere Fehlprognose härter als Brier (gedeckelt bei 2)
+    wrong = {"team1_win": 0.999, "draw": 0.0005, "team2_win": 0.0005}
+    assert log_loss(wrong, "team2_win") > 5.0
+    assert argmax_outcome(perfect) == "team1_win"
+
+
+def test_model_version_stable():
+    from src import config
+    assert config.MODEL_VERSION.startswith("m-") and len(config.MODEL_VERSION) == 10
+
+
+def test_value_betting_sigma_and_conservative():
+    from src.model import value_betting as vb
+    # sigma steigt mit Bandbreite und Diskrepanz
+    s_low = vb.estimate_sigma(band_width=0.05, disagreement=0.02)
+    s_high = vb.estimate_sigma(band_width=0.25, disagreement=0.15)
+    assert s_high > s_low > 0
+    # konservative Grenze liegt unter dem Anker min(Modell, Markt)
+    pc = vb.conservative_prob(0.60, 0.55, s_low)
+    assert pc < 0.55
+    # klarer Value bei großzügiger Quote + genug Büchern
+    r = vb._row("1X2", "Sieg A", 3.0, "Pinnacle", 0.55, 0.52, band_width=0.05, n_books=20)
+    assert abs(r["breakeven_prob"] - 1/3) < 1e-3
+    assert r["is_value"] is True and r["stake_pct"] > 0
+    # Liquiditäts-Gate: dieselbe Wette mit zu wenig Büchern -> kein Value, kein Einsatz
+    r2 = vb._row("1X2", "Sieg A", 3.0, "X", 0.55, 0.52, band_width=0.05, n_books=2)
+    assert r2["is_value"] is False and r2["stake_pct"] == 0.0
+    # niedrige Quote -> kein Value
+    r3 = vb._row("1X2", "Sieg A", 1.30, "X", 0.55, 0.55, band_width=0.05, n_books=20)
+    assert r3["is_value"] is False
+
+
+def test_value_betting_stake_capped():
+    from src.model import value_betting as vb
+    # Selbst bei riesigem Edge bleibt der Einsatz unter dem high-Tier-Cap (0.75%)
+    r = vb._row("1X2", "Sieg A", 5.0, "X", 0.90, 0.90, band_width=0.50, n_books=20)
+    assert r["risk"] == "high"
+    assert r["stake_pct"] <= 0.75 + 1e-9
+
+
+if __name__ == "__main__":
+    for name, fn in sorted(globals().items()):
+        if name.startswith("test_"):
+            fn()
+            print(f"OK  {name}")
+    print("Alle Tests bestanden.")
