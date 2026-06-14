@@ -192,6 +192,22 @@ def test_portfolio_correlation_cap():
     assert pf["per_match_capped"] is True
 
 
+def test_knockout_advancement():
+    from src.model.knockout import advancement_probs
+    from src.data_sources.results_client import is_knockout
+    # Gleichstarke Teams -> ~50/50 Weiterkommen, summiert zu 1
+    r = advancement_probs(1.3, 1.3, 0.40, 0.20, 0.40)
+    approx(r["team1_advance"] + r["team2_advance"], 1.0, 1e-6)
+    approx(r["team1_advance"], 0.5, 0.02)
+    # Stärkeres Team1: Weiterkommen > 90-Min-Sieg (Remis-Anteil geht überwiegend an Favorit)
+    r2 = advancement_probs(1.8, 0.9, 0.55, 0.25, 0.20)
+    assert r2["team1_advance"] > 0.55
+    assert r2["team1_advance"] > r2["team2_advance"]
+    # Stage-Erkennung
+    assert is_knockout("LAST_16") and is_knockout("FINAL")
+    assert not is_knockout("GROUP_STAGE") and not is_knockout(None)
+
+
 def test_whale_gate_caps_influence():
     from src.model.ensemble import blend_probs
     agree = {"probs": {"team1_win": 0.30, "draw": 0.30, "team2_win": 0.40}}

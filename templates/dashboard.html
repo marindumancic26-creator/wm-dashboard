@@ -85,6 +85,7 @@
     <div id="headline"></div>
     <div class="bar" id="probBar"></div>
     <table id="probTable"></table>
+    <div id="koNote" style="margin-top:6px"></div>
   </div>
 
   <div class="card c4">
@@ -360,6 +361,13 @@ function render(){
       '</td><td class="mono">'+pct(M.kalshi&&M.kalshi.probs?M.kalshi.probs[k]:null)+
       '</td><td class="mono">'+pct(M.model.probs[k])+'</td><td class="mono">'+pct(M.whale&&M.whale.probs?M.whale.probs[k]:null)+
       '</td><td class="mono dim">'+pct(u[k].p05)+'–'+pct(u[k].p95)+'</td></tr>').join('');
+
+  // K.o.-Weiterkommen (Verlängerung + Elfmeter), nur in K.o.-Spielen vorhanden
+  if(M.knockout){ const ko=M.knockout;
+    $('koNote').innerHTML='<span class="tag estimated">'+esc(ko.stage||'K.o.')+'</span> <b>Weiterkommen:</b> '+
+      esc(t1)+' '+pct(ko.team1_advance)+' · '+esc(t2)+' '+pct(ko.team2_advance)+
+      ' <span class="dim">(inkl. Verlängerung + Elfmeter ~50/50, geschätzt; oben = 90-Min-Ergebnis)</span>';
+  } else { $('koNote').innerHTML=''; }
 
   const wn=$('weightNote'); const wl=weights();
   let wtxt='Normalisiert: Markt '+pct(wl.market)+', Bücher '+pct(wl.books)+', Kalshi '+pct(wl.kalshi)+', Modell '+pct(wl.model)+', Whale '+pct(wl.whale)+

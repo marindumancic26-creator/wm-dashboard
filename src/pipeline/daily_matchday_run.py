@@ -27,7 +27,8 @@ from src.data_sources import results_client
 from src.data_sources import statsbomb_client as sb
 from src.data_sources import venue_client
 from src.model import (calibration, closing_loop, data_quality, ensemble, features,
-                       injuries, monte_carlo, value_betting, weight_optimizer, whale_scoring)
+                       injuries, knockout, monte_carlo, value_betting, weight_optimizer,
+                       whale_scoring)
 
 
 def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
@@ -107,6 +108,9 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     if injury_overrides:
         log["injury_overrides"] = list(injury_overrides.keys())
 
+    # K.o.-Stage-Info (für Verlängerung/Elfmeter-Weiterkommen); ohne Key leer
+    fixtures = results_client.fetch_fixtures()
+
     match_results = []
     for ev in events:
         slug = ev.get("slug")
@@ -148,13 +152,22 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
             lams = ensemble.blend_lambdas(market, model, blend.get("weights_used", {}))
             mc = monte_carlo.simulate(lams["lambda1"], lams["lambda2"])
 
+            # K.o.-Phase: Weiterkommen (Verlängerung + Elfmeter) zusätzlich zum 90-Min-1X2
+            ko = None
+            stage = results_client.stage_for(market["team1"], market["team2"], fixtures)
+            if results_client.is_knockout(stage) and blend.get("probs"):
+                bp = blend["probs"]
+                ko = knockout.advancement_probs(lams["lambda1"], lams["lambda2"],
+                                                bp["team1_win"], bp["draw"], bp["team2_win"])
+                ko["stage"] = stage
+
             entry = {
                 "slug": slug, "title": market["title"], "date": market["date"],
                 "team1": market["team1"], "team2": market["team2"],
                 "market": market, "books": books, "kalshi": kalshi,
                 "model": model, "whale": whale,
                 "match_info": espn, "lineups": lineup, "venue": venue_ctx,
-                "ensemble": blend, "lambdas": lams, "monte_carlo": mc,
+                "ensemble": blend, "lambdas": lams, "monte_carlo": mc, "knockout": ko,
             }
             # Echte Buchmacherquoten + EV/Value-Bewertung
             best_prices = odds_client.best_prices_for_match(market["team1"], market["team2"], all_odds)

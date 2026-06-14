@@ -8,10 +8,16 @@ Public-Export), ehrlicher Value-Tab (Warn-Banner), RPS-Metrik, Shin-De-Vig, Ausr
 Whale-Shift-Cap (max 8pp), UTC-aware Snapshots, Wetter-Forecast statt aktuell, Dependency-Pins,
 GitHub-Actions-CI, LICENSE, Parser-/Mapping-Tests (28 Tests). **Elo wird live täglich aktualisiert**
 (eloratings.net) → alter „Elo-Snapshot"-Gap gelöst.
-**Bewusst offen (datengebunden / Tuning erst nach Validierung):** K.o.-Verlängerung/Elfmeter
-(Modell = 90-Minuten-1X2, wie Polymarket-Match-Markt; als Limitation dokumentiert), Lineup/
-Verletzung nur manuell (`adjustments.json`, keine Spieler-Stärkedaten), Ensemble-Gewichte-Retuning
-(erst wenn Kalibrierung n≥~15 einen echten Edge zeigt).
+**K.o.-Weiterkommen (14.06. gebaut, `knockout.py`):** 90-Min-1X2 + Verlängerung (1/3 Tor-Erwartung)
++ Elfmeter (~50/50). Stage-Erkennung über football-data.org-Fixtures (`results_client.fetch_fixtures`,
+104 Spiele, Stages GROUP_STAGE…FINAL). Aktiviert sich automatisch ab den K.o.-Spielen; Dashboard
+zeigt dann eine „Weiterkommen"-Zeile zusätzlich zum 90-Min-Ergebnis. Tests vorhanden.
+
+**Echte Datengrenzen (bleiben offen — extern bedingt):**
+- Lineup/Verletzung automatisch: keine freie Spieler-Stärkequelle → manuelles Override (`adjustments.json`).
+- Wetter live: braucht OpenWeather-Key (Integration + Forecast-Logik fertig, inaktiv bis Key).
+- Ensemble-Gewichte-Retuning: erst wenn Kalibrierung n≥~15 einen Edge belegt (aktuell n=5;
+  Optimizer feuert ab n=8, sonst Prior — Schutz vor Overfitting).
 
 ## Ziel
 Lokales Dashboard mit Prognosen für WM-2026-Spiele: 1X2, exaktes Ergebnis, Tore pro Team,

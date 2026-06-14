@@ -14,11 +14,52 @@ import requests
 from src import config
 
 _CACHE = config.DATA_RAW / "wc_results.json"
+_FIXTURES_CACHE = config.DATA_RAW / "wc_fixtures.json"
 _CACHE_TTL = 6 * 3600
+_FIXTURES_TTL = 12 * 3600
 
 
 def available() -> bool:
     return bool(config.FOOTBALL_DATA_KEY)
+
+
+def fetch_fixtures(force: bool = False) -> dict:
+    """ALLE WM-Spiele inkl. Stage (GROUP_STAGE/LAST_16/…) für die K.o.-Erkennung."""
+    if not available():
+        return {"status": "unavailable", "fixtures": []}
+    if not force and _FIXTURES_CACHE.exists() and (time.time() - _FIXTURES_CACHE.stat().st_mtime) < _FIXTURES_TTL:
+        try:
+            return json.loads(_FIXTURES_CACHE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    try:
+        r = requests.get(f"{config.FOOTBALL_DATA_BASE}/competitions/WC/matches",
+                         headers={"X-Auth-Token": config.FOOTBALL_DATA_KEY}, timeout=25)
+        r.raise_for_status()
+        fixtures = [{"date": (m.get("utcDate") or "")[:10],
+                     "home": m.get("homeTeam", {}).get("name", ""),
+                     "away": m.get("awayTeam", {}).get("name", ""),
+                     "stage": m.get("stage", "")} for m in r.json().get("matches", [])]
+        payload = {"status": "live", "fixtures": fixtures,
+                   "as_of": dt.datetime.now().isoformat(timespec="seconds")}
+        _FIXTURES_CACHE.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        return payload
+    except Exception as exc:
+        return {"status": "unavailable", "fixtures": [], "note": f"football-data.org-Fehler: {exc}"}
+
+
+def stage_for(team1: str, team2: str, fixtures: dict) -> str | None:
+    """Stage eines Spiels (über Teamnamen, zeitzonen-/datumsunabhängig)."""
+    from src.model.calibration import _team_eq
+    for f in fixtures.get("fixtures", []):
+        if ((_team_eq(team1, f["home"]) and _team_eq(team2, f["away"])) or
+                (_team_eq(team1, f["away"]) and _team_eq(team2, f["home"]))):
+            return f.get("stage")
+    return None
+
+
+def is_knockout(stage: str | None) -> bool:
+    return bool(stage) and stage.upper() not in ("GROUP_STAGE", "GROUP", "")
 
 
 def fetch_results(force: bool = False) -> dict:

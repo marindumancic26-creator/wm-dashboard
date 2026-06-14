@@ -1,17 +1,15 @@
 # Netherlands vs. Japan
 
-Datum: 2026-06-14  |  Stand: 2026-06-14T17:53:44
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-nld-jpn-2026-06-14) (Volumen $3,528,015)
+Datum: 2026-06-14  |  Stand: 2026-06-14T18:03:59
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-nld-jpn-2026-06-14) (Volumen $3,556,454)
 
-Ensemble: Netherlands 42.4% / Remis 24.2% / Japan 33.4%
-Erwartete Tore: 1.601 : 1.171
+Ensemble: Netherlands 46.0% / Remis 26.9% / Japan 27.1%
+Erwartete Tore: 1.6 : 1.178
 
 Top-Scorelines:
 
 - 1:1 — 12.4%
-- 2:1 — 9.2%
-- 1:0 — 8.9%
+- 2:1 — 9.3%
+- 1:0 — 8.7%
 - 2:0 — 7.8%
-- 0:0 — 7.7%
-
-Whale-Signal (10 Wallets, heuristisch): team1_win 18.2%, draw 7.0%, team2_win 74.9%
+- 0:0 — 7.8%
