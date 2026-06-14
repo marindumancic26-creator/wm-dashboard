@@ -192,6 +192,81 @@ def test_portfolio_correlation_cap():
     assert pf["per_match_capped"] is True
 
 
+def test_whale_gate_caps_influence():
+    from src.model.ensemble import blend_probs
+    agree = {"probs": {"team1_win": 0.30, "draw": 0.30, "team2_win": 0.40}}
+    whale = {"probs": {"team1_win": 0.95, "draw": 0.03, "team2_win": 0.02},
+             "n_wallets_scored": 10, "wallets": [{"confidence": 1.0}]}
+    b = blend_probs(agree, dict(agree), whale, books=dict(agree))
+    # Ohne Gate würde Whale (0.95) team1_win weit über 0.30 ziehen; mit Gate max +0.08
+    assert b["probs"]["team1_win"] <= 0.30 + 0.085
+    assert abs(sum(b["probs"].values()) - 1.0) < 1e-6
+
+
+def test_devig_shin_reduces_favorite_bias():
+    from src.data_sources.odds_client import _devig, _devig_shin
+    odds = {"home": 1.5, "draw": 4.5, "away": 8.0}
+    prop, shin = _devig(odds), _devig_shin(odds)
+    approx(sum(shin.values()), 1.0, 1e-6)
+    # Favorite-Longshot-Bias-Korrektur: Außenseiter sind überbewertet -> Shin senkt
+    # den Außenseiter und hebt den Favoriten leicht ggü. proportionalem Entviggen.
+    assert shin["away"] < prop["away"]
+    assert shin["home"] > prop["home"]
+
+
+def test_odds_filtered_best_outlier():
+    from src.data_sources.odds_client import _filtered_best
+    odds, book = _filtered_best([(1.80, "A"), (1.85, "B"), (1.82, "C"), (3.95, "D")])
+    assert odds == 1.85 and book == "B"           # 3.95-Ausreißer verworfen
+    o2, _ = _filtered_best([(2.0, "X"), (3.5, "Y")])
+    assert o2 == 3.5                              # <3 Quoten -> kein Filter
+
+
+def test_team_mapping_edge_cases():
+    from src import config
+    from src.data_sources.polymarket_client import parse_slug
+    # Namens-Aliase (Buchmacher/Markt-Schreibweisen -> kanonisch)
+    assert config.canonical_team("Curaçao") == "Curacao"
+    assert config.canonical_team("IR Iran") == "Iran"
+    assert config.canonical_team("Türkiye") == "Turkey"
+    assert config.canonical_team("Côte d'Ivoire") == "Ivory Coast"
+    assert config.canonical_team("USA") == "United States"
+    # Slug-Codes (Polymarket) -> Klarname, inkl. Schweiz=che, Elfenbeinküste=civ
+    assert parse_slug("fifwc-che-bra-2026-06-13")["team1"] == "Switzerland"
+    assert parse_slug("fifwc-civ-ecu-2026-06-14")["team1"] == "Ivory Coast"
+    assert parse_slug("fifwc-kor-ger-2026-06-14")["team1"] == "South Korea"
+
+
+def test_polymarket_extract_1x2_minimal():
+    from src.data_sources.polymarket_client import extract_1x2
+    event = {"slug": "fifwc-bra-mar-2026-06-13", "title": "Brazil vs. Morocco",
+             "markets": [
+                 {"question": "Will Brazil win on 2026-06-13?", "outcomePrices": '["0.55","0.45"]',
+                  "conditionId": "c1", "volumeNum": 100},
+                 {"question": "Will Morocco win on 2026-06-13?", "outcomePrices": '["0.20","0.80"]',
+                  "conditionId": "c2", "volumeNum": 100},
+                 {"question": "Will Brazil vs. Morocco end in a draw?", "outcomePrices": '["0.25","0.75"]',
+                  "conditionId": "c3", "volumeNum": 100}]}
+    res = extract_1x2(event)
+    assert res and res["team1"] == "Brazil" and res["team2"] == "Morocco"
+    approx(sum(res["probs"].values()), 1.0, 1e-6)
+    assert res["probs"]["team1_win"] > res["probs"]["team2_win"]
+
+
+def test_calibration_timezone_and_leakage():
+    import datetime as dt
+    from src.model.calibration import _to_utc, _parse_kickoff
+    utc = dt.timezone.utc
+    # aware UTC-String bleibt korrekt UTC
+    assert _to_utc("2026-06-13T01:00:00+00:00") == dt.datetime(2026, 6, 13, 1, 0, tzinfo=utc)
+    # Kickoff mit Z-Suffix
+    k = _parse_kickoff("2026-06-13T01:00:00Z")
+    assert k == dt.datetime(2026, 6, 13, 1, 0, tzinfo=utc)
+    # Pre-Kickoff-Snapshot liegt korrekt vor Anstoß (Leakage-Filter)
+    assert _to_utc("2026-06-12T22:33:00+00:00") < k
+    assert not (_to_utc("2026-06-13T02:00:00+00:00") < k)  # nach Anstoß -> ausgeschlossen
+
+
 def test_rps_ordinal():
     from src.model.calibration import rps
     perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}

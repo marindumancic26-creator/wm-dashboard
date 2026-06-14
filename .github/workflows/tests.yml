@@ -1,0 +1,21 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        # Minimal: die Tests nutzen nur numpy/requests; statsbombpy/soccerdata/flask
+        # werden im Code lazy importiert und sind fuer die Unit-Tests nicht noetig.
+        run: pip install numpy pandas requests pytest
+      - name: Run tests
+        run: python -m pytest -q

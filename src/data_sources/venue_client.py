@@ -98,17 +98,51 @@ def get_context(city: str, team1: str, team2: str, kickoff_utc: str | None = Non
     return out
 
 
-def _fetch_weather(lat: float, lon: float, kickoff_utc: str | None) -> dict | None:
-    """Aktuelle/Forecast-Bedingungen via OpenWeather (free current weather)."""
+def _parse_kickoff_ts(kickoff_utc: str | None):
+    if not kickoff_utc:
+        return None
     try:
+        return dt.datetime.fromisoformat(kickoff_utc.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _slot(temp, wind_ms, weather, rain_flag, source):
+    return {"temp_c": temp,
+            "wind_kmh": round((wind_ms or 0) * 3.6, 1),
+            "rain": rain_flag,
+            "desc": (weather or [{}])[0].get("description"),
+            "source": source,
+            "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+
+
+def _fetch_weather(lat: float, lon: float, kickoff_utc: str | None) -> dict | None:
+    """Wetter zum ANSTOSS via OpenWeather 5-Tage/3-Stunden-Forecast; der Slot mit
+    minimalem Zeitabstand zum Kickoff wird gewählt. Liegt der Anstoß außerhalb des
+    Forecast-Fensters (>5 Tage) oder ist unbekannt, Fallback auf aktuelles Wetter
+    (klar als 'current' gelabelt). Vorher wurde fälschlich immer das Jetzt-Wetter genutzt."""
+    ko = _parse_kickoff_ts(kickoff_utc)
+    now = dt.datetime.now(dt.timezone.utc)
+    try:
+        if ko and now <= ko <= now + dt.timedelta(days=5):
+            r = requests.get("https://api.openweathermap.org/data/2.5/forecast",
+                             params={"lat": lat, "lon": lon, "appid": config.OPENWEATHER_KEY,
+                                     "units": "metric"}, timeout=15)
+            r.raise_for_status()
+            items = r.json().get("list", [])
+            if items:
+                ko_ts = ko.timestamp()
+                best = min(items, key=lambda it: abs((it.get("dt") or 0) - ko_ts))
+                return _slot(best.get("main", {}).get("temp"),
+                             best.get("wind", {}).get("speed"),
+                             best.get("weather"), "rain" in best, "forecast")
+        # Fallback: aktuelles Wetter
         r = requests.get("https://api.openweathermap.org/data/2.5/weather",
                          params={"lat": lat, "lon": lon, "appid": config.OPENWEATHER_KEY,
                                  "units": "metric"}, timeout=15)
         r.raise_for_status()
         d = r.json()
-        return {"temp_c": d.get("main", {}).get("temp"),
-                "wind_kmh": round((d.get("wind", {}).get("speed") or 0) * 3.6, 1),
-                "rain": "rain" in d, "desc": (d.get("weather") or [{}])[0].get("description"),
-                "fetched_at": dt.datetime.now().isoformat(timespec="seconds")}
+        return _slot(d.get("main", {}).get("temp"), d.get("wind", {}).get("speed"),
+                     d.get("weather"), "rain" in d, "current")
     except Exception:
         return None

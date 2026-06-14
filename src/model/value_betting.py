@@ -106,9 +106,7 @@ def evaluate_match(match: dict, best_prices: dict | None) -> dict:
     ens = match["ensemble"]["probs"]
     mc = match["monte_carlo"]
     band = match["monte_carlo"]["uncertainty"]
-    form = match.get("model", {}).get("tournament_form")
-    sb_status = match.get("model", {}).get("statsbomb_status", "unavailable")
-    data_thin = (sb_status == "unavailable") and not form
+    form = match.get("model", {}).get("tournament_form")  # für n_form in der Totals-Schleife
 
     label = {"team1_win": f"Sieg {t1}", "draw": "Unentschieden", "team2_win": f"Sieg {t2}"}
     rows = []

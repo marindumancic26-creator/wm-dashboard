@@ -39,12 +39,30 @@ def blend_probs(market: dict | None, model: dict | None, whale: dict | None,
         return {"probs": None, "weights_used": {}, "note": "keine Quelle verfuegbar"}
     active = {k: v / wsum for k, v in active.items()}
 
-    blended = {}
-    for outcome in ("team1_win", "draw", "team2_win"):
-        blended[outcome] = sum(active[s] * sources[s][outcome] for s in active)
+    OUTCOMES = ("team1_win", "draw", "team2_win")
+    blended = {o: sum(active[s] * sources[s][o] for s in active) for o in OUTCOMES}
     s = sum(blended.values())
-    blended = {k: round(v / s, 4) for k, v in blended.items()}
+    blended = {k: v / s for k, v in blended.items()}
 
+    # Whale-Gate: ein einzelnes Extremsignal (hochvariant, unvalidiert) darf den Blend
+    # um max. WHALE_SHIFT_CAP gegenueber dem Blend OHNE Whale verschieben. Begrenzt die
+    # Whale-getriebenen Schein-Edges, ohne die Basisgewichte zu retunen.
+    WHALE_SHIFT_CAP = 0.08
+    if "whale" in active and len(active) > 1:
+        nw = {k: v for k, v in active.items() if k != "whale"}
+        z = sum(nw.values()) or 1.0
+        nw = {k: v / z for k, v in nw.items()}
+        base = {o: sum(nw[k] * sources[k][o] for k in nw) for o in OUTCOMES}
+        bs = sum(base.values()) or 1.0
+        base = {k: v / bs for k, v in base.items()}
+        # Delta (Whale-Effekt) summiert zu 0 -> skaliertes base+alpha*delta bleibt normiert
+        delta = {o: blended[o] - base[o] for o in OUTCOMES}
+        maxabs = max(abs(d) for d in delta.values())
+        if maxabs > WHALE_SHIFT_CAP:
+            alpha = WHALE_SHIFT_CAP / maxabs
+            blended = {o: base[o] + alpha * delta[o] for o in OUTCOMES}
+
+    blended = {k: round(v, 4) for k, v in blended.items()}
     return {"probs": blended, "weights_used": {k: round(v, 3) for k, v in active.items()},
             "sources": {k: {o: round(p, 4) for o, p in v.items()} for k, v in sources.items()}}
 

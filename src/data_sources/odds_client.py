@@ -62,6 +62,42 @@ def _devig(odds: dict[str, float]) -> dict[str, float]:
     return {k: v / s for k, v in inv.items()} if s > 0 else {}
 
 
+def _devig_shin(odds: dict[str, float]) -> dict[str, float]:
+    """Shin-Entviggen (Shin 1992): schätzt den Insider-Anteil z und korrigiert so den
+    Favorite-Longshot-Bias — Favoriten bekommen eine etwas niedrigere, Außenseiter eine
+    etwas höhere faire Wahrscheinlichkeit als beim rein proportionalen Entviggen.
+    Fällt auf proportional zurück, wenn keine Overround vorliegt oder <2 Quoten."""
+    inv = {k: 1.0 / v for k, v in odds.items() if v and v > 1.0}
+    if len(inv) < 2:
+        return _devig(odds)
+    S = sum(inv.values())
+    if S <= 1.0:                      # keine Overround -> nichts zu korrigieren
+        return _devig(odds)
+
+    def p_of(z):
+        out = {}
+        for k, pi in inv.items():
+            val = (z * z + 4 * (1 - z) * (pi * pi) / S) ** 0.5
+            out[k] = (val - z) / (2 * (1 - z)) if (1 - z) > 1e-9 else pi / S
+        return out
+
+    def sump(z):
+        return sum(p_of(z).values())
+
+    if sump(0.5) > 1.0:              # z außerhalb [0,0.5] -> defensiv proportional
+        return _devig(odds)
+    lo, hi = 0.0, 0.5               # sump(0)=sqrt(S)>1, monoton fallend -> Bisektion
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if sump(mid) > 1.0:
+            lo = mid
+        else:
+            hi = mid
+    p = p_of((lo + hi) / 2)
+    s = sum(p.values()) or 1.0
+    return {k: v / s for k, v in p.items()}
+
+
 def _filtered_best(pairs: list, outlier_ratio: float = 1.5):
     """Beste Quote über alle Bücher MIT Ausreißer-Filter (gegen fehlerhafte/stale
     Einzelquoten beim Line-Shopping): Quoten über Median × outlier_ratio werden
@@ -143,7 +179,7 @@ def best_prices_for_match(team1: str, team2: str, all_odds: dict) -> dict | None
         return None
     sharp = pinnacle_h2h or {
         s: statistics.median(b[s] for b in per_book_h2h) for s in ("team1_win", "draw", "team2_win")}
-    consensus = _devig(sharp)
+    consensus = _devig_shin(sharp)   # Shin korrigiert Favorite-Longshot-Bias (3-Wege)
 
     h2h = {}
     for sel in ("team1_win", "draw", "team2_win"):
@@ -233,7 +269,7 @@ def probs_for_match(team1: str, team2: str, date: str, all_odds: dict) -> dict |
             chosen = {k: statistics.median(b[k] for b in per_book) for k in ("home", "draw", "away")}
             basis = f"median({len(per_book)} books)"
 
-        p = _devig(chosen)
+        p = _devig_shin(chosen)   # Shin-Entviggen (Favorite-Longshot-Bias)
         if len(p) != 3:
             return None
         overround = sum(1.0 / v for v in chosen.values())

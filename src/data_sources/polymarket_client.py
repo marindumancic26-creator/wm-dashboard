@@ -127,7 +127,9 @@ def extract_1x2(event: dict) -> Optional[dict]:
         "probs": norm,
         "condition_ids": cond,
         "volume_usd": round(vol, 0), "liquidity_usd": round(liq, 0),
-        "fetched_at": dt.datetime.now().isoformat(timespec="seconds"),
+        # UTC-aware: maßgeblich für den Pre-Kickoff-/Leakage-Filter der Kalibrierung,
+        # damit die Abgrenzung unabhängig von Systemzeitzone/DST robust ist.
+        "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "source": "polymarket-gamma", "status": "live",
         "url": f"https://polymarket.com/event/{event.get('slug')}",
     }

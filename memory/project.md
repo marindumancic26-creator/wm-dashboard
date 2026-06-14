@@ -1,6 +1,17 @@
 # Projektgedächtnis — WM 2026 Prognose-Dashboard
 
-Stand: 2026-06-12
+Stand: 2026-06-14
+
+## Review-Abnahme (14.06.) — abgearbeitet
+Security (DOM-XSS `esc()`, `</script>`-Breakout-Fix, Chart-SRI, Wallet-Anonymisierung im
+Public-Export), ehrlicher Value-Tab (Warn-Banner), RPS-Metrik, Shin-De-Vig, Ausreißer-Filter,
+Whale-Shift-Cap (max 8pp), UTC-aware Snapshots, Wetter-Forecast statt aktuell, Dependency-Pins,
+GitHub-Actions-CI, LICENSE, Parser-/Mapping-Tests (28 Tests). **Elo wird live täglich aktualisiert**
+(eloratings.net) → alter „Elo-Snapshot"-Gap gelöst.
+**Bewusst offen (datengebunden / Tuning erst nach Validierung):** K.o.-Verlängerung/Elfmeter
+(Modell = 90-Minuten-1X2, wie Polymarket-Match-Markt; als Limitation dokumentiert), Lineup/
+Verletzung nur manuell (`adjustments.json`, keine Spieler-Stärkedaten), Ensemble-Gewichte-Retuning
+(erst wenn Kalibrierung n≥~15 einen echten Edge zeigt).
 
 ## Ziel
 Lokales Dashboard mit Prognosen für WM-2026-Spiele: 1X2, exaktes Ergebnis, Tore pro Team,

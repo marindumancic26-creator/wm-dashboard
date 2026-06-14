@@ -69,6 +69,13 @@ def export(out_path=None):
 
     template = (config.PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
     data = _load_dashboard_data()
+    # Whale-Wallets fuer die OEFFENTLICHE Datei anonymisieren (gekuerzt). On-chain ohnehin
+    # oeffentlich, aber wir baken keine vollen Adressen ins public GitHub Pages.
+    for m in data.get("matches", []):
+        for w in ((m.get("whale") or {}).get("wallets") or []):
+            full = w.get("wallet") or ""
+            if len(full) > 12:
+                w["wallet"] = full[:6] + "…" + full[-4:]
     slugs = {m["slug"] for m in data.get("matches", []) if m.get("slug")}
     odds = _build_odds_history(slugs)
 

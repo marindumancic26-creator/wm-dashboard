@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>WM 2026 — Prognose-Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
   :root { --bg:#11141a; --panel:#1a1f29; --line:#2a3140; --tx:#d8dee9; --dim:#8893a5;
           --acc:#4fa3ff; --good:#3ecf8e; --warn:#f0b35e; --bad:#e36b6b; }
@@ -495,7 +495,7 @@ function render(){
   let vrows='<tr><td>Stadt</td><td class="mono">'+esc(ve.city||'–')+'</td></tr>'+
     '<tr><td>Höhe</td><td class="mono">'+(ve.altitude_m!=null?ve.altitude_m+' m':'–')+'</td></tr>'+
     '<tr><td>Tor-Multiplikator</td><td class="mono">×'+(ve.total_goals_mult||1)+'</td></tr>';
-  if(ve.weather){ vrows+='<tr><td>Wetter</td><td class="mono">'+(ve.weather.temp_c)+'°C, Wind '+ve.weather.wind_kmh+' km/h'+(ve.weather.rain?', Regen':'')+'</td></tr>'; }
+  if(ve.weather){ vrows+='<tr><td>Wetter'+(ve.weather.source?' <span class="dim">('+esc(ve.weather.source==='forecast'?'Forecast z. Anstoß':'aktuell')+')</span>':'')+'</td><td class="mono">'+(ve.weather.temp_c)+'°C, Wind '+ve.weather.wind_kmh+' km/h'+(ve.weather.rain?', Regen':'')+'</td></tr>'; }
   else { vrows+='<tr><td>Wetter</td><td><span class="tag unavailable">kein Key</span></td></tr>'; }
   const inj=(M.model&&M.model.venue_context&&M.model.venue_context.injury_override);
   if(inj){ vrows+='<tr><td>Override</td><td>⚠️ '+esc(inj.note)+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
@@ -520,7 +520,7 @@ function render(){
   // Whale-Tabelle
   if(M.whale&&M.whale.wallets&&M.whale.wallets.length){
     $('whaleTable').innerHTML='<tr><th>Wallet</th><th>Score</th><th>Konfidenz</th><th>Fußball-Trades</th><th>Fußball-Vol $</th><th>Hit-Rate (heur.)</th><th>Ø Einsatz $</th><th>Aktivität (Tage)</th><th>Spezialist</th><th>Exposure</th></tr>'+
-      M.whale.wallets.map(w=>'<tr><td class="mono"><a class="src-link" target="_blank" href="https://polymarket.com/profile/'+w.wallet+'">'+w.wallet.slice(0,10)+'…</a></td>'+
+      M.whale.wallets.map(w=>'<tr><td class="mono">'+((/^0x[0-9a-fA-F]{20,}$/.test(w.wallet||''))?'<a class="src-link" target="_blank" rel="noopener noreferrer" href="https://polymarket.com/profile/'+encodeURIComponent(w.wallet)+'">'+esc(w.wallet.slice(0,10))+'…</a>':esc((w.wallet||'?').slice(0,12)))+'</td>'+
         '<td class="mono"><b>'+w.score.toFixed(3)+'</b></td><td class="mono">'+w.confidence.toFixed(2)+'</td><td class="mono">'+w.n_trades_football+
         '</td><td class="mono">'+Number(w.volume_usd_football).toLocaleString()+'</td><td class="mono">'+(w.resolved_hit_rate_heuristic!=null?w.resolved_hit_rate_heuristic.toFixed(2):'–')+
         '</td><td class="mono">'+Number(w.avg_stake_usd).toLocaleString()+'</td><td class="mono">'+(w.recency_days!=null?w.recency_days:'–')+

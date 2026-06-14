@@ -106,7 +106,10 @@ Gate: green ×1,0, amber ×0,5, red ×0 Einsatz. Sichtbar als Ampel im Dashboard
   Snapshot → Kalibrierungs-Drift einer Modelländerung zuordenbar.
 
 ## Bekannte Annahmen / Schwächen
-- Elo-Snapshot statisch und geschätzt; Markt korrigiert das im Blend.
-- Keine Aufstellungs-/Verletzungsdaten; kein Wetter; Ruhetage nicht modelliert
-  (Gruppenphase: für alle gleich, daher vertretbar).
-- Polymarket-1X2 bezieht sich auf 90 Minuten — konsistent mit Poisson-Simulation.
+- Elo wird live von eloratings.net geladen (täglich aktuell); Markt korrigiert Restfehler im Blend.
+- Aufstellungen/Verletzungen nur als manuelles Override (`adjustments.json`) — keine automatische
+  Spieler-Stärkemodellierung (keine freie Datenquelle). Wetter/Höhe als kleiner, gelabelter Faktor.
+- **K.o.-Runden:** Das Modell und die Polymarket-Match-Märkte prognostizieren das **90-Minuten-1X2**.
+  Verlängerung/Elfmeterschießen (Weiterkommen) werden NICHT modelliert. In der K.o.-Phase ist die
+  1X2-Prognose also das Ergebnis nach regulärer Spielzeit, nicht „wer kommt weiter" — bewusste Grenze.
+- Ruhetage/Reisen nicht modelliert (Gruppenphase: für alle ähnlich, vertretbar).
