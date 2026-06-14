@@ -1,4 +1,5 @@
 """Sanity-Tests fuer die Kernrechnungen.  Ausfuehren:  python -m tests.test_model"""
+import json
 import sys
 from pathlib import Path
 
@@ -189,6 +190,31 @@ def test_portfolio_correlation_cap():
     g1 = sum(b["stake_pct_final"] for b in pf["plan"] if b["slug"] == "g1")
     assert g1 <= 2.0 + 1e-9          # Korrelations-Cap pro Spiel
     assert pf["per_match_capped"] is True
+
+
+def test_rps_ordinal():
+    from src.model.calibration import rps
+    perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}
+    approx(rps(perfect, "team1_win"), 0.0)
+    # Ordinale Distanz: bei Heimsieg ist "alles auf Auswaerts" schlechter als "alles auf Remis"
+    away = {"team1_win": 0.0, "draw": 0.0, "team2_win": 1.0}
+    draw = {"team1_win": 0.0, "draw": 1.0, "team2_win": 0.0}
+    assert rps(away, "team1_win") > rps(draw, "team1_win")
+    approx(rps(away, "team1_win"), 1.0)
+    approx(rps(draw, "team1_win"), 0.5)
+    # Gleichverteilung auf Remis-Ergebnis
+    uni = {"team1_win": 1/3, "draw": 1/3, "team2_win": 1/3}
+    approx(rps(uni, "draw"), 1/9, 1e-6)
+
+
+def test_inline_json_escapes_script_breakout():
+    from src.pipeline.export_static import _inline_json
+    s = _inline_json({"x": "evil</script><img src=x onerror=alert(1)>", "y": "a b c"})
+    assert "</script>" not in s           # kein Breakout aus dem <script>-Tag
+    assert "\\u003c" in s                 # < wurde escaped
+    back = json.loads(s)                  # bleibt gueltiges JSON
+    assert back["x"] == "evil</script><img src=x onerror=alert(1)>"
+    assert back["y"] == "a b c"           # Leerzeichen unveraendert
 
 
 def test_log_loss_and_hit():

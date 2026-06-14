@@ -75,6 +75,7 @@
 
   <div class="card c12" id="valueRankCard">
     <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">Ensemble-Chancen</span></h2>
+    <div class="disclaimer" id="valueRankWarn" style="margin-bottom:8px"></div>
     <table id="valueRankTable"></table>
     <div class="dim" id="valueRankNote" style="margin-top:6px"></div>
   </div>
@@ -183,6 +184,8 @@
 let DATA=null, M=null, charts={};
 const $=id=>document.getElementById(id);
 const pct=x=>x==null?'–':(100*x).toFixed(1)+'%';
+// HTML-Escape fuer alle externen/manuell gepflegten Strings (XSS-Schutz im innerHTML)
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 async function load(){
@@ -254,7 +257,7 @@ function renderCockpit(){
   html+=rows.map(r=>{
     const evc=r.bestEv>0?'var(--good)':'var(--bad)';
     const st=r.state==='post'?'beendet':(r.state==='in'?'LIVE':'offen');
-    return '<tr style="cursor:pointer" onclick="selectMatch('+r.i+')"><td>'+r.title+'</td><td>'+r.pick+'</td><td class="mono">'+pct(r.pickp)+
+    return '<tr style="cursor:pointer" onclick="selectMatch('+r.i+')"><td>'+esc(r.title)+'</td><td>'+esc(r.pick)+'</td><td class="mono">'+pct(r.pickp)+
       '</td><td class="mono">'+pct(r.mkt)+'</td><td class="mono" style="color:'+evc+'">'+(r.bestEv*100).toFixed(1)+'%</td>'+
       '<td class="mono">'+(r.nvalue||'–')+'</td><td>'+(r.risk||'–')+'</td><td>'+dot(r.dq)+' <span class="mono">'+r.dqscore.toFixed(2)+'</span></td><td class="dim">'+st+'</td></tr>';
   }).join('');
@@ -265,12 +268,29 @@ function selectMatch(i){ $('matchSel').value=i; show(i); showTab('detail'); wind
 
 function renderValueRanking(){
   const op=DATA.opportunity_portfolio||{}; const plan=(op.plan||[]).filter(b=>b.stake_pct_final>0);
+  // Ehrliche Kalibrierungs-Realität prominent ÜBER der Rangliste
+  const cs=(DATA.calibration&&DATA.calibration.summary)||{};
+  const md=cs.model, wh=cs.whale, mk=cs.market;
+  const nres=(DATA.calibration&&DATA.calibration.n_resolved)||0;
+  let warn='⚠️ <b>Diese Rangliste ist KEIN belegtes Wettsignal.</b> Die „Chancen" entstehen, weil unsere '+
+    '<b>Ensemble-Schätzung</b> vom Markt abweicht — getrieben v.a. vom <b>unvalidierten Whale-Signal</b> '+
+    '(Positionen einzelner Wallets, hochvariant). ';
+  if(nres>0 && md){
+    warn+='Bisher aufgelöst: <b>'+nres+'</b> Spiele. Trefferquote — Modell <b>'+Math.round((md.hit_rate||0)*100)+'%</b>'+
+      (mk?', Markt '+Math.round((mk.hit_rate||0)*100)+'%':'')+'. Brier: Modell '+(md.mean_brier||0).toFixed(2)+
+      (mk?' vs. Markt '+(mk.mean_brier||0).toFixed(2):'')+' (niedriger=besser). ';
+    warn+='Das Modell ist aktuell <b>schlechter kalibriert als der Markt</b> — gegen den Markt zu wetten ist statistisch nicht gerechtfertigt. ';
+  } else {
+    warn+='Noch zu wenige aufgelöste Spiele für eine Validierung (n='+nres+'). ';
+  }
+  warn+='Betrachte die Liste als <b>Modell-Test</b>, nicht als Empfehlung. Einsätze winzig halten.';
+  $('valueRankWarn').innerHTML=warn;
   if(!plan.length){ $('valueRankTable').innerHTML=''; $('valueRankNote').textContent='Aktuell keine Chancen mit positivem Erwartungswert gefunden.'; return; }
   $('valueRankTable').innerHTML='<tr><th>#</th><th>Spiel</th><th>Markt</th><th>Auswahl</th><th>Bestquote</th><th>Anbieter</th><th>Break-even</th><th>Modell-p</th><th>EV</th><th>Risiko</th><th>Einsatz %</th></tr>'+
     plan.map((b,i)=>{
       const star=b.is_value?' ⭐':'';
-      return '<tr><td class="dim">'+(i+1)+'</td><td>'+b.match+'</td><td>'+b.market+'</td><td>'+b.selection+star+'</td><td class="mono">'+b.best_odds.toFixed(2)+
-      '</td><td class="dim">'+b.book+'</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_model)+
+      return '<tr><td class="dim">'+(i+1)+'</td><td>'+esc(b.match)+'</td><td>'+esc(b.market)+'</td><td>'+esc(b.selection)+star+'</td><td class="mono">'+b.best_odds.toFixed(2)+
+      '</td><td class="dim">'+esc(b.book)+'</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_model)+
       '</td><td class="mono" style="color:var(--good)">+'+(b.ev_at_model*100).toFixed(0)+'%</td><td>'+b.risk+
       '</td><td class="mono"><b>'+b.stake_pct_final.toFixed(2)+'%</b></td></tr>';
     }).join('');
@@ -359,7 +379,7 @@ function render(){
     '<tr><td>StatsBomb ('+sb.mode+')</td><td><span class="tag '+sb.status+'">'+sb.status+'</span></td><td class="mono">'+sb.teams+' Teams</td></tr>'+
     '<tr><td>Elo (eloratings.net)</td><td><span class="tag '+(DATA.config.elo_status==='live'?'live':'estimated')+'">'+DATA.config.elo_status+'</span></td><td class="mono">'+DATA.config.elo_as_of+'</td></tr>'+
     '<tr><td>Kalshi'+(M.kalshi?' <a class="src-link" href="'+M.kalshi.url+'" target="_blank">↗</a>':'')+'</td><td><span class="tag '+(M.kalshi?'live':'unavailable')+'">'+(M.kalshi?'live':'unavailable')+'</span></td><td class="mono">'+(M.kalshi?M.kalshi.volume_contracts.toLocaleString()+' Kontrakte':'–')+'</td></tr>'+
-    '<tr><td>ESPN-Status</td><td><span class="tag '+(M.match_info?'live':'unavailable')+'">'+(M.match_info?'live (unofficial)':'unavailable')+'</span></td><td class="mono">'+(M.match_info?M.match_info.status:'–')+'</td></tr>'+
+    '<tr><td>ESPN-Status</td><td><span class="tag '+(M.match_info?'live':'unavailable')+'">'+(M.match_info?'live (unofficial)':'unavailable')+'</span></td><td class="mono">'+esc(M.match_info?M.match_info.status:'–')+'</td></tr>'+
     '<tr><td>FBref-Turnierform</td><td><span class="tag '+(M.model.tournament_form?'live':'unavailable')+'">'+(M.model.tournament_form?'live':'keine Spiele')+'</span></td><td class="mono">'+(M.model.tournament_form?Object.values(M.model.tournament_form).map(f=>f.matches+' Sp. ('+f.basis+')').join(' / '):'–')+'</td></tr>'+
     '<tr><td>Whale-Signal</td><td><span class="tag estimated">heuristic</span></td><td class="mono">'+(M.whale?M.whale.n_wallets_scored+' Wallets':'–')+'</td></tr>'+
     '<tr><td>Monte Carlo</td><td><span class="tag cached">'+DATA.config.mc_runs.toLocaleString()+' Läufe</span></td><td class="mono">λ '+M.lambdas.lambda1+' / '+M.lambdas.lambda2+'</td></tr>';
@@ -403,9 +423,10 @@ function render(){
   // Kalibrierung
   const cal=DATA.calibration;
   if(cal&&cal.status==='live'&&cal.summary&&Object.keys(cal.summary).length){
-    $('calibTable').innerHTML='<tr><th>Quelle</th><th>Ø Brier ↓</th><th>Ø LogLoss ↓</th><th>Hit ↑</th><th>n</th></tr>'+
-      Object.entries(cal.summary).sort((a,b2)=>a[1].mean_brier-b2[1].mean_brier)
-        .map(([s,v])=>'<tr><td>'+s+'</td><td class="mono">'+v.mean_brier.toFixed(3)+
+    $('calibTable').innerHTML='<tr><th>Quelle</th><th>Ø Brier ↓</th><th>Ø RPS ↓</th><th>Ø LogLoss ↓</th><th>Hit ↑</th><th>n</th></tr>'+
+      Object.entries(cal.summary).sort((a,b2)=>(a[1].mean_rps??a[1].mean_brier)-(b2[1].mean_rps??b2[1].mean_brier))
+        .map(([s,v])=>'<tr><td>'+esc(s)+'</td><td class="mono">'+v.mean_brier.toFixed(3)+
+          '</td><td class="mono">'+(v.mean_rps!=null?v.mean_rps.toFixed(3):'–')+
           '</td><td class="mono">'+(v.mean_log_loss!=null?v.mean_log_loss.toFixed(3):'–')+
           '</td><td class="mono">'+(v.hit_rate!=null?(v.hit_rate*100).toFixed(0)+'%':'–')+
           '</td><td class="mono">'+v.n+'</td></tr>').join('');
@@ -434,15 +455,15 @@ function render(){
       v.rows.map(r=>{
         const evc = r.ev>0?'var(--good)':'var(--bad)';
         const star = r.is_value?' ⭐':'';
-        return '<tr><td>'+r.market+'</td><td>'+r.selection+star+'</td><td class="mono">'+r.best_odds.toFixed(2)+
-          '</td><td class="dim">'+r.book+'</td><td class="mono">'+pct(r.breakeven_prob)+'</td><td class="mono">'+pct(r.p_model)+
+        return '<tr><td>'+esc(r.market)+'</td><td>'+esc(r.selection)+star+'</td><td class="mono">'+r.best_odds.toFixed(2)+
+          '</td><td class="dim">'+esc(r.book)+'</td><td class="mono">'+pct(r.breakeven_prob)+'</td><td class="mono">'+pct(r.p_model)+
           '</td><td class="mono">'+pct(r.p_market_consensus)+'</td><td class="mono">'+pct(r.p_conservative)+
           '</td><td class="mono" style="color:'+evc+'">'+(r.ev*100).toFixed(1)+'%</td><td class="mono dim">'+(r.ev_at_model*100).toFixed(1)+'%</td><td>'+r.risk+'</td></tr>';
       }).join('');
     // Watchlist: positiver Modell-EV, aber konservativ verworfen
     const watch = v.rows.filter(r=>!r.is_value && r.ev_at_model>0.05).sort((a,b)=>b.ev_at_model-a.ev_at_model).slice(0,3);
     $('evWatch').innerHTML = watch.length? '<span class="dim">Beobachtungsliste (Modell sieht Edge, konservativ verworfen — Modell ist empirisch die schwächste Quelle): '+
-      watch.map(r=>r.selection+' @'+r.best_odds.toFixed(2)+' (Modell-EV '+(r.ev_at_model*100).toFixed(0)+'%)').join(' · ')+'</span>' : '';
+      watch.map(r=>esc(r.selection)+' @'+r.best_odds.toFixed(2)+' (Modell-EV '+(r.ev_at_model*100).toFixed(0)+'%)').join(' · ')+'</span>' : '';
   } else {
     $('evMeta').textContent = 'Keine Live-Buchmacherquoten für dieses Spiel.';
     $('evTable').innerHTML=''; $('evWatch').innerHTML='';
@@ -454,15 +475,15 @@ function render(){
   const resBySel = {}; research.forEach(r=>{ resBySel[r.selection]=r; });
   if(mm.length || research.length){
     $('extraMeta').innerHTML = research.length
-      ? 'Recherchierte Quoten vorhanden — Quelle: <b>'+(M.extra_research.source||'?')+'</b> · Stand '+(M.extra_research.researched_at||'?')+' <span class="tag estimated">ungeprüft</span>'
+      ? 'Recherchierte Quoten vorhanden — Quelle: <b>'+esc(M.extra_research.source||'?')+'</b> · Stand '+esc(M.extra_research.researched_at||'?')+' <span class="tag estimated">ungeprüft</span>'
       : 'Nur Modell-Fairquoten (keine Live-/recherchierten Quoten — auf Zuruf nachholbar).';
     let rows='<tr><th>Markt</th><th>Auswahl</th><th>Modell-p</th><th>Modell-fair</th><th>Recherch. Quote</th><th>Quelle</th><th>Konservativ</th><th>EV</th><th>Risiko</th></tr>';
     mm.forEach(m=>{
       const r=resBySel[m.selection];
       const evc = r? (r.ev>0?'var(--good)':'var(--bad)') : 'var(--dim)';
-      rows+='<tr><td>'+m.market+'</td><td>'+m.selection+(r&&r.is_value?' ⭐':'')+'</td><td class="mono">'+pct(m.p_model)+
+      rows+='<tr><td>'+esc(m.market)+'</td><td>'+esc(m.selection)+(r&&r.is_value?' ⭐':'')+'</td><td class="mono">'+pct(m.p_model)+
         '</td><td class="mono dim">'+(m.fair_odds?m.fair_odds.toFixed(2):'–')+
-        '</td><td class="mono">'+(r?r.odds.toFixed(2):'–')+'</td><td class="dim">'+(r?(r.book||r.source||'Web'):'–')+
+        '</td><td class="mono">'+(r?r.odds.toFixed(2):'–')+'</td><td class="dim">'+esc(r?(r.book||r.source||'Web'):'–')+
         '</td><td class="mono">'+(r&&r.p_conservative!=null?pct(r.p_conservative):'–')+
         '</td><td class="mono" style="color:'+evc+'">'+(r&&r.ev!=null?(r.ev*100).toFixed(1)+'%':'–')+'</td><td>'+(r?r.risk||'':'')+'</td></tr>';
     });
@@ -471,14 +492,14 @@ function render(){
 
   // Spielort & Kontext
   const ve=M.venue||{};
-  let vrows='<tr><td>Stadt</td><td class="mono">'+(ve.city||'–')+'</td></tr>'+
+  let vrows='<tr><td>Stadt</td><td class="mono">'+esc(ve.city||'–')+'</td></tr>'+
     '<tr><td>Höhe</td><td class="mono">'+(ve.altitude_m!=null?ve.altitude_m+' m':'–')+'</td></tr>'+
     '<tr><td>Tor-Multiplikator</td><td class="mono">×'+(ve.total_goals_mult||1)+'</td></tr>';
   if(ve.weather){ vrows+='<tr><td>Wetter</td><td class="mono">'+(ve.weather.temp_c)+'°C, Wind '+ve.weather.wind_kmh+' km/h'+(ve.weather.rain?', Regen':'')+'</td></tr>'; }
   else { vrows+='<tr><td>Wetter</td><td><span class="tag unavailable">kein Key</span></td></tr>'; }
   const inj=(M.model&&M.model.venue_context&&M.model.venue_context.injury_override);
-  if(inj){ vrows+='<tr><td>Override</td><td>⚠️ '+inj.note+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
-  if(ve.notes&&ve.notes.length){ vrows+='<tr><td>Notizen</td><td class="dim">'+ve.notes.join('; ')+'</td></tr>'; }
+  if(inj){ vrows+='<tr><td>Override</td><td>⚠️ '+esc(inj.note)+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
+  if(ve.notes&&ve.notes.length){ vrows+='<tr><td>Notizen</td><td class="dim">'+esc(ve.notes.join('; '))+'</td></tr>'; }
   $('venueTable').innerHTML=vrows;
 
   // Quotenverlauf (asynchron)
@@ -490,8 +511,8 @@ function render(){
   if(M.lineups&&Object.keys(M.lineups).length){
     $('lineupCard').style.display='block';
     $('lineupBody').innerHTML=Object.entries(M.lineups).map(([team,l])=>
-      '<div><b>'+team+'</b>'+(l.formation?' <span class="dim">('+l.formation+')</span>':'')+
-      '<ol style="margin:6px 0 0;padding-left:20px">'+l.starting_xi.map(p=>'<li>'+p+'</li>').join('')+'</ol></div>').join('');
+      '<div><b>'+esc(team)+'</b>'+(l.formation?' <span class="dim">('+esc(l.formation)+')</span>':'')+
+      '<ol style="margin:6px 0 0;padding-left:20px">'+l.starting_xi.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ol></div>').join('');
   } else {
     $('lineupCard').style.display='none';
   }

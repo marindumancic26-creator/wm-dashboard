@@ -1,5 +1,10 @@
+# Laufzeit
 statsbombpy>=1.14
 flask>=3.0
 requests>=2.31
 numpy>=1.26
 pandas>=2.0
+soccerdata>=1.8     # FBref-Turnierform (fbref_client.py)
+
+# Tests
+pytest>=7.0

@@ -51,13 +51,15 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     # --- Rollierende Bestenliste (Brier / LogLoss / Hit-Rate) -----------
     summary = calib.get("summary", {})
     lines += ["## Rollierende Bestenliste (alle aufgelösten Spiele)", "",
-              "| Rang | Quelle | Ø Brier | Ø LogLoss | Hit-Rate | n |",
-              "|---|---|---|---|---|---|"]
-    ranking = sorted(summary.items(), key=lambda kv: kv[1]["mean_brier"])
+              "| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | n |",
+              "|---|---|---|---|---|---|---|"]
+    ranking = sorted(summary.items(), key=lambda kv: kv[1].get("mean_rps") or kv[1]["mean_brier"])
     for rank, (src, s) in enumerate(ranking, 1):
         lines.append(f"| {rank} | {SOURCE_LABEL.get(src, src)} | {_fmt(s['mean_brier'])} "
-                     f"| {_fmt(s.get('mean_log_loss'))} | {s.get('hit_rate', 0)*100:.0f}% | {s['n']} |")
-    lines += ["", "_Brier 0.667 / LogLoss 1.099 = Zufall. Niedriger ist besser._", ""]
+                     f"| {_fmt(s.get('mean_rps'))} | {_fmt(s.get('mean_log_loss'))} "
+                     f"| {s.get('hit_rate', 0)*100:.0f}% | {s['n']} |")
+    lines += ["", "_RPS = Ranked Probability Score (ordinal, Fußball-Standard). "
+                  "Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._", ""]
 
     # --- Wett-Kennzahlen: ROI + CLV -------------------------------------
     bet = calib.get("betting", {})

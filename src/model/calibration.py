@@ -51,6 +51,20 @@ def log_loss(probs: dict, outcome: str) -> float:
     return -math.log(p)
 
 
+def rps(probs: dict, outcome: str) -> float:
+    """Ranked Probability Score fuer ordinale 1X2-Ausgaenge (Heim<Remis<Auswaerts).
+    Bestraft Fehlprognosen nach ordinaler Distanz — das Standardmass fuer Fussball-
+    1X2 (Constantinou & Fenton). 0 = perfekt; niedriger ist besser. Fuer r Ausgaenge:
+    RPS = 1/(r-1) * sum_i ( sum_{j<=i}(p_j - o_j) )^2."""
+    cum_p = cum_o = 0.0
+    total = 0.0
+    for o in OUTCOMES[:-1]:          # nur r-1 kumulative Schritte noetig
+        cum_p += probs.get(o, 0.0)
+        cum_o += 1.0 if o == outcome else 0.0
+        total += (cum_p - cum_o) ** 2
+    return total / (len(OUTCOMES) - 1)
+
+
 def argmax_outcome(probs: dict) -> str:
     return max(OUTCOMES, key=lambda o: probs.get(o, 0.0))
 
@@ -151,10 +165,11 @@ def evaluate(results: dict) -> dict:
         row = {"slug": slug, "result": f"{g1}:{g2}", "outcome": outcome,
                "snapshot_date": fc["snapshot_date"], "forecast_at": fc["generated_at"],
                "model_version": fc.get("model_version"),
-               "brier": {}, "log_loss": {}, "hit": {}}
+               "brier": {}, "log_loss": {}, "rps": {}, "hit": {}}
         for src, probs in fc["sources"].items():
             row["brier"][src] = round(brier(probs, outcome), 4)
             row["log_loss"][src] = round(log_loss(probs, outcome), 4)
+            row["rps"][src] = round(rps(probs, outcome), 4)
             row["hit"][src] = int(argmax_outcome(probs) == outcome)
 
         # Referenz-Wett-Policy: 1 Einheit flat auf Ensemble-Favorit zur besten Quote
@@ -170,15 +185,17 @@ def evaluate(results: dict) -> dict:
             row["clv"] = _clv(fc_open, fc, pick)
         rows.append(row)
 
-    # --- Quellen-Summary: Brier, LogLoss, Hit-Rate ---
+    # --- Quellen-Summary: Brier, LogLoss, RPS, Hit-Rate ---
     summary = {}
     for src in SOURCES:
         b = [r["brier"][src] for r in rows if src in r["brier"]]
         if b:
             ll = [r["log_loss"][src] for r in rows if src in r["log_loss"]]
+            rp = [r["rps"][src] for r in rows if src in r.get("rps", {})]
             h = [r["hit"][src] for r in rows if src in r["hit"]]
             summary[src] = {"mean_brier": round(sum(b) / len(b), 4),
                             "mean_log_loss": round(sum(ll) / len(ll), 4),
+                            "mean_rps": round(sum(rp) / len(rp), 4) if rp else None,
                             "hit_rate": round(sum(h) / len(h), 4), "n": len(b)}
 
     # --- Wett-Summary: ROI + CLV ---

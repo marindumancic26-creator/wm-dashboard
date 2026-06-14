@@ -52,6 +52,17 @@ def _build_odds_history(slugs: set[str]) -> dict:
     return hist
 
 
+def _inline_json(obj) -> str:
+    """JSON sicher in ein <script>-Tag einbetten: verhindert </script>-Breakout/XSS,
+    falls externe Daten (Buchmacher-/Teamnamen, Notizen) HTML-/JS-Sequenzen enthalten.
+    \\u003c ist gültiges JSON für '<', bricht das Skript-Tag aber nicht; U+2028/2029
+    würden JS-Stringliterale beenden und werden ebenfalls escaped."""
+    return (json.dumps(obj, ensure_ascii=False)
+            .replace("<", "\\u003c")
+            .replace(" ", "\\u2028")
+            .replace(" ", "\\u2029"))
+
+
 def export(out_path=None):
     out_path = out_path or (config.PROJECT_ROOT / "docs" / "index.html")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -61,8 +72,8 @@ def export(out_path=None):
     slugs = {m["slug"] for m in data.get("matches", []) if m.get("slug")}
     odds = _build_odds_history(slugs)
 
-    inject = ("<script>window.__STATIC_DATA__=" + json.dumps(data, ensure_ascii=False)
-              + ";window.__STATIC_ODDS__=" + json.dumps(odds, ensure_ascii=False) + ";</script>")
+    inject = ("<script>window.__STATIC_DATA__=" + _inline_json(data)
+              + ";window.__STATIC_ODDS__=" + _inline_json(odds) + ";</script>")
     html = template.replace("<body>", "<body>\n" + inject, 1)
     out_path.write_text(html, encoding="utf-8")
     return out_path
