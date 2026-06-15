@@ -385,7 +385,10 @@ def test_weight_optimizer_treats_market_sources_as_one_block():
     equal_out = weight_optimizer.suggest_weights(equal_skill)
     equal_weights = equal_out["weights"]
     equal_market_block = equal_weights["market"] + equal_weights["books"] + equal_weights["kalshi"]
-    approx(equal_market_block, equal_weights["model"], 0.05)
+    # Bei gleichem Skill zaehlt der Markt-Block wie EINE Stimme (~ Modell). Toleranz 0.08:
+    # der kleine Rest-Vorsprung des Blocks kommt aus dem bewusst markt-lastigen config-Prior
+    # (Variante A — Prior heilig, De-Korrelation nur in der Daten-Skill-Schaetzung).
+    approx(equal_market_block, equal_weights["model"], 0.08)
 
     small_n = weight_optimizer.suggest_weights(dict(calib, n_resolved=weight_optimizer.MIN_N - 1))
     assert small_n["status"] == "prior"

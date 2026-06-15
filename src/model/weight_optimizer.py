@@ -40,9 +40,10 @@ def _skill(log_loss: float) -> float:
 def _effective_prior(prior: dict, voices: tuple[str, ...]) -> dict:
     prior_eff = {}
     if "market_block" in voices:
-        # Der Block-Prior ist config-basiert, aber de-korreliert: drei Marktquellen
-        # duerfen nicht schon im Prior wie drei unabhaengige Stimmen zaehlen.
-        prior_eff["market_block"] = sum(prior[s] for s in MARKET_BLOCK) / len(MARKET_BLOCK)
+        # Block-Prior = SUMME der config-Markt-Gewichte (die bewusste Markt-Gewichtung des
+        # Nutzers), gebuendelt als EINE Stimme. Der Prior bleibt heilig — die Korrelations-
+        # Korrektur greift NUR in der datenbasierten Skill-Schaetzung, nicht im Prior.
+        prior_eff["market_block"] = sum(prior[s] for s in MARKET_BLOCK)
     for s in ("model", "whale"):
         if s in voices:
             prior_eff[s] = prior[s]
