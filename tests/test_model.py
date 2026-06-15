@@ -320,6 +320,34 @@ def test_log_loss_and_hit():
     assert argmax_outcome(perfect) == "team1_win"
 
 
+def test_calibration_reliability_gated_and_binned():
+    from src.model.calibration import OUTCOMES, _reliability
+
+    events = []
+    for i in range(20):
+        actual = "team1_win" if i < 10 else "team2_win"
+        for outcome in OUTCOMES:
+            events.append({"source": "ensemble",
+                           "prob": 0.70 if outcome == actual else 0.15,
+                           "actual": int(outcome == actual)})
+
+    gated = _reliability(events[:57], 19)
+    assert gated["status"] == "too_few"
+    assert gated["min_n"] == 20
+
+    live = _reliability(events, 20)
+    assert live["status"] == "live"
+    bins = live["sources"]["ensemble"]["bins"]
+    high = next(b for b in bins if b["lo"] == 0.6)
+    low = next(b for b in bins if b["lo"] == 0.0)
+    approx(high["avg_pred"], 0.70, 1e-9)
+    approx(high["observed"], 1.0, 1e-9)
+    assert high["n"] == 20
+    approx(low["avg_pred"], 0.15, 1e-9)
+    approx(low["observed"], 0.0, 1e-9)
+    assert low["n"] == 40
+
+
 def test_model_version_stable():
     from src import config
     assert config.MODEL_VERSION.startswith("m-") and len(config.MODEL_VERSION) == 10

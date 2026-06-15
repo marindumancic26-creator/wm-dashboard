@@ -188,6 +188,11 @@
     <div class="dim" id="calibNote" style="margin-top:6px"></div>
   </div>
   <div class="card c8">
+    <h2>Kalibrierung - Reliability-Plot <span class="tag estimated">ab n&gt;=20</span></h2>
+    <canvas id="reliabilityChart" height="180"></canvas>
+    <div class="dim" id="reliabilityNote" style="margin-top:6px"></div>
+  </div>
+  <div class="card c8">
     <h2>Top-Wallets (Whale-Scoring, heuristisch) <span class="tag estimated">heuristic</span></h2>
     <table id="whaleTable"></table>
   </div>
@@ -490,9 +495,12 @@ function render(){
     const rec=cal.record;
     const recLine=rec?('<b>✅ '+rec.hits+' richtig · ❌ '+rec.misses+' falsch</b> (Trefferquote '+Math.round((rec.hit_rate||0)*100)+'%, '+esc(rec.source)+'). '):'';
     $('calibNote').innerHTML=recLine+'Brier 0.667 / LogLoss 1.099 = Zufall. '+cal.n_resolved+' Spiele aufgelöst.'+betLine;
+    renderReliability();
   } else {
     $('calibTable').innerHTML='';
     $('calibNote').textContent=cal&&cal.note?cal.note:'Noch keine aufgelösten Spiele oder kein football-data.org-Key.';
+    if(charts['reliabilityChart'])charts['reliabilityChart'].destroy();
+    $('reliabilityNote').textContent='Noch keine aufgeloesten Spiele.';
   }
 
   // Unsicherheitsband
@@ -617,6 +625,35 @@ function renderCalibTime(){
     {label:'Modell',data:cum('model'),borderColor:'#3ecf8e',tension:.2,spanGaps:true}]},
     options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}}},scales:{x:axis,y:axis}}});
   $('calibTimeNote').textContent=ms.length+' Spiel(e). Reliability-Diagramm folgt ab ~20 Spielen.';
+}
+function renderReliability(){
+  const rel=DATA.calibration&&DATA.calibration.reliability;
+  if(!rel||rel.status!=='live'){
+    if(charts['reliabilityChart'])charts['reliabilityChart'].destroy();
+    $('reliabilityNote').textContent=rel&&rel.note?rel.note:'Reliability-Plot erst ab genug aufgeloesten Spielen.';
+    return;
+  }
+  const colors={market:'#4fa3ff',books:'#6ee0d8',kalshi:'#9b8cff',model:'#3ecf8e',whale:'#d39ad3',ensemble:'#f0b35e'};
+  const order=['market','books','kalshi','model','whale','ensemble'];
+  const datasets=[{label:'perfekt kalibriert',data:[{x:0,y:0},{x:1,y:1}],
+    borderColor:'#8893a5',borderDash:[5,4],pointRadius:0,tension:0,showLine:true}];
+  order.forEach(src=>{
+    const s=rel.sources&&rel.sources[src];
+    if(!s||!s.bins||!s.bins.length)return;
+    datasets.push({label:src,data:s.bins.map(b=>({x:b.avg_pred,y:b.observed,r:b.n})),
+      borderColor:colors[src],backgroundColor:colors[src],pointRadius:4,showLine:true,tension:.15});
+  });
+  mkChart('reliabilityChart',{type:'scatter',data:{datasets},
+    options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}},
+      tooltip:{callbacks:{label:ctx=>{
+        const r=ctx.raw&&ctx.raw.r;
+        return ctx.dataset.label+': p '+pct(ctx.parsed.x)+', Treffer '+pct(ctx.parsed.y)+(r?' (n='+r+')':'');
+      }}}},
+      scales:{x:{...axis,min:0,max:1,title:{display:true,text:'vorhergesagte Wahrscheinlichkeit',color:'#8893a5'},
+        ticks:{...axis.ticks,callback:v=>(v*100).toFixed(0)+'%'}},
+        y:{...axis,min:0,max:1,title:{display:true,text:'beobachtete Trefferquote',color:'#8893a5'},
+        ticks:{...axis.ticks,callback:v=>(v*100).toFixed(0)+'%'}}}}});
+  $('reliabilityNote').textContent=rel.n+' aufgeloeste Spiele. Punkte sind 1X2-Wahrscheinlichkeits-Bins je Quelle; Diagonale = perfekt kalibriert.';
 }
 const axis={ticks:{color:'#8893a5'},grid:{color:'#2a3140'}};
 function mkBar(id,labels,data,label){

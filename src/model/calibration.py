@@ -25,6 +25,8 @@ from src import config
 
 OUTCOMES = ("team1_win", "draw", "team2_win")
 SOURCES = ("market", "books", "kalshi", "model", "whale", "ensemble")
+RELIABILITY_MIN_N = 20
+RELIABILITY_BINS = ((0.0, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.0))
 
 
 def _team_eq(a: str, b: str) -> bool:
@@ -76,6 +78,46 @@ def rps(probs: dict, outcome: str) -> float:
 
 def argmax_outcome(probs: dict) -> str:
     return max(OUTCOMES, key=lambda o: probs.get(o, 0.0))
+
+
+def _reliability(events: list[dict], n_matches: int, min_n: int = RELIABILITY_MIN_N) -> dict:
+    """Reliability-Daten fuer den Plot: p-Vorhersage gegen beobachtete Trefferquote.
+
+    Gezählt werden 1X2-Event-Wahrscheinlichkeiten je Quelle: fuer jedes Spiel liefert eine
+    Quelle drei Punkte (team1_win/draw/team2_win), davon ist genau ein Outcome tatsaechlich 1.
+    Das Diagramm wird erst ab genug aufgeloesten Spielen aktiviert.
+    """
+    if n_matches < min_n:
+        return {"status": "too_few", "n": n_matches, "min_n": min_n, "sources": {},
+                "note": f"Reliability-Plot erst ab n>={min_n} aufgeloesten Spielen."}
+
+    sources = {}
+    for src in SOURCES:
+        vals = [e for e in events if e.get("source") == src]
+        if not vals:
+            continue
+        bins = [{"lo": lo, "hi": hi, "n": 0, "sum_pred": 0.0, "hits": 0}
+                for lo, hi in RELIABILITY_BINS]
+        for e in vals:
+            p = max(0.0, min(1.0, float(e.get("prob") or 0.0)))
+            idx = min(int(p * len(RELIABILITY_BINS)), len(RELIABILITY_BINS) - 1)
+            b = bins[idx]
+            b["n"] += 1
+            b["sum_pred"] += p
+            b["hits"] += int(bool(e.get("actual")))
+        out_bins = []
+        for b in bins:
+            if not b["n"]:
+                continue
+            out_bins.append({"lo": b["lo"], "hi": b["hi"],
+                             "mid": round((b["lo"] + b["hi"]) / 2, 3),
+                             "avg_pred": round(b["sum_pred"] / b["n"], 4),
+                             "observed": round(b["hits"] / b["n"], 4),
+                             "n": b["n"]})
+        sources[src] = {"n_events": len(vals), "n_matches": len(vals) // len(OUTCOMES),
+                        "bins": out_bins}
+    return {"status": "live", "n": n_matches, "min_n": min_n, "sources": sources,
+            "note": "Reliability: vorhergesagte 1X2-Wahrscheinlichkeit je Bin vs. beobachtete Trefferquote."}
 
 
 def _all_forecasts() -> dict:
@@ -156,6 +198,7 @@ def evaluate(results: dict) -> dict:
 
     forecasts = _all_forecasts()
     rows = []
+    reliability_events = []
     tot_h = tot_m = ex_h = ex_m = 0   # Tore (Ueber/Unter 2.5) und exaktes Ergebnis
     btts_h = btts_m = 0               # Beide treffen (BTTS)
     favclr_h = favclr_m = 0           # Favorit NUR bei klarer Meinung (Ensemble-p > 50%)
@@ -217,6 +260,9 @@ def evaluate(results: dict) -> dict:
             row["log_loss"][src] = round(log_loss(probs, outcome), 4)
             row["rps"][src] = round(rps(probs, outcome), 4)
             row["hit"][src] = int(argmax_outcome(probs) == outcome)
+            for o in OUTCOMES:
+                reliability_events.append({"source": src, "prob": probs.get(o, 0.0),
+                                           "actual": int(o == outcome)})
 
         # Referenz-Wett-Policy: 1 Einheit flat auf Ensemble-Favorit zur besten Quote
         ens = fc["sources"].get("ensemble")
@@ -291,6 +337,7 @@ def evaluate(results: dict) -> dict:
 
     return {"status": "live", "n_resolved": len(rows), "matches": rows,
             "summary": summary, "betting": betting, "record": record, "records": records,
+            "reliability": _reliability(reliability_events, len(rows)),
             "note": "Brier 0=perfekt/0.667=Zufall; LogLoss 0=perfekt/1.099=Zufall. "
                     "ROI/CLV: Referenz-Policy auf Ensemble-Favorit, letzter Pre-Kickoff-Snapshot. "
                     "record = Treffer/Fehl der Headline-Prognose (argmax == Ergebnis)."}
