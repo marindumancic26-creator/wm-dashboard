@@ -375,6 +375,18 @@ def test_weight_optimizer_treats_market_sources_as_one_block():
     assert market_block < 0.80, weights
     assert weights["model"] > 0.10 and weights["whale"] > 0.10, weights
 
+    equal_skill = {"n_resolved": 100,
+                   "summary": {
+                       "market": {"mean_log_loss": 0.30},
+                       "books": {"mean_log_loss": 0.30},
+                       "kalshi": {"mean_log_loss": 0.30},
+                       "model": {"mean_log_loss": 0.30},
+                   }}
+    equal_out = weight_optimizer.suggest_weights(equal_skill)
+    equal_weights = equal_out["weights"]
+    equal_market_block = equal_weights["market"] + equal_weights["books"] + equal_weights["kalshi"]
+    approx(equal_market_block, equal_weights["model"], 0.05)
+
     small_n = weight_optimizer.suggest_weights(dict(calib, n_resolved=weight_optimizer.MIN_N - 1))
     assert small_n["status"] == "prior"
     assert small_n["weights"] == dict(config.ENSEMBLE_WEIGHTS)

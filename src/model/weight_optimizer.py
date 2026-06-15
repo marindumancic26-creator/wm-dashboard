@@ -37,7 +37,20 @@ def _skill(log_loss: float) -> float:
     return math.exp(-BETA * log_loss)
 
 
-def _raw_block_weights(summary: dict, avail: list[str]) -> dict:
+def _effective_prior(prior: dict, voices: tuple[str, ...]) -> dict:
+    prior_eff = {}
+    if "market_block" in voices:
+        # Der Block-Prior ist config-basiert, aber de-korreliert: drei Marktquellen
+        # duerfen nicht schon im Prior wie drei unabhaengige Stimmen zaehlen.
+        prior_eff["market_block"] = sum(prior[s] for s in MARKET_BLOCK) / len(MARKET_BLOCK)
+    for s in ("model", "whale"):
+        if s in voices:
+            prior_eff[s] = prior[s]
+    z = sum(prior_eff.values()) or 1.0
+    return {s: v / z for s, v in prior_eff.items()}
+
+
+def _raw_block_weights(summary: dict, avail: list[str], prior: dict, alpha: float) -> dict:
     source_skill = {s: _skill(summary[s]["mean_log_loss"]) for s in avail}
 
     effective = {}
@@ -51,15 +64,18 @@ def _raw_block_weights(summary: dict, avail: list[str]) -> dict:
 
     z_eff = sum(effective.values()) or 1.0
     raw_effective = {s: v / z_eff for s, v in effective.items()}
+    prior_effective = _effective_prior(prior, tuple(raw_effective))
+    effective_weights = {s: alpha * raw_effective[s] + (1 - alpha) * prior_effective[s]
+                         for s in raw_effective}
 
     raw = {}
     if block_members:
         z_block = sum(source_skill[s] for s in block_members) or 1.0
         for s in block_members:
-            raw[s] = raw_effective["market_block"] * source_skill[s] / z_block
+            raw[s] = effective_weights["market_block"] * source_skill[s] / z_block
     for s in ("model", "whale"):
-        if s in raw_effective:
-            raw[s] = raw_effective[s]
+        if s in effective_weights:
+            raw[s] = effective_weights[s]
     return raw
 
 
@@ -77,13 +93,8 @@ def suggest_weights(calib: dict) -> dict:
                 "weights": dict(config.ENSEMBLE_WEIGHTS), "prior": dict(config.ENSEMBLE_WEIGHTS),
                 "note": f"n={n} < {MIN_N}: Prior beibehalten (kein Overfitting an Einzelspiele)."}
 
-    raw = _raw_block_weights(summary, avail)
-
     alpha = n / (n + SHRINK_K)
-    sug = {}
-    for s in SOURCES:
-        r = raw.get(s, prior[s])
-        sug[s] = alpha * r + (1 - alpha) * prior[s]
+    sug = _raw_block_weights(summary, avail, prior, alpha)
     zz = sum(sug.values()) or 1.0
     sug = {s: round(v / zz, 3) for s, v in sug.items()}
 
