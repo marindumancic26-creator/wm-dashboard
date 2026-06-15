@@ -92,6 +92,12 @@ def _all_forecasts() -> dict:
                      "model_version": snap.get("config", {}).get("model_version"),
                      "team1": m["team1"], "team2": m["team2"],
                      "date": m["date"], "sources": {}, "odds_1x2": m.get("odds_1x2")}
+            # MC-Prognose fuer zusaetzliche Trefferarten (Tore Ueber/Unter 2.5, exaktes Ergebnis)
+            mc = m.get("monte_carlo") or {}
+            ou25 = (mc.get("over_under") or {}).get("2.5") or {}
+            tops = mc.get("top_scorelines") or []
+            entry["mc"] = {"over25": ou25.get("over"),
+                           "top_score": tops[0]["score"] if tops else None}
             if m.get("market"):
                 entry["sources"]["market"] = m["market"]["probs"]
                 entry["generated_at"] = m["market"].get("fetched_at", entry["generated_at"])
@@ -149,6 +155,7 @@ def evaluate(results: dict) -> dict:
 
     forecasts = _all_forecasts()
     rows = []
+    tot_h = tot_m = ex_h = ex_m = 0   # Tore (Ueber/Unter 2.5) und exaktes Ergebnis
     for slug, entries in forecasts.items():
         fc0 = entries[0]
         res = next((r for r in results["results"]
@@ -170,6 +177,19 @@ def evaluate(results: dict) -> dict:
         hg, ag = res["home_goals"], res["away_goals"]
         g1, g2 = (ag, hg) if flipped else (hg, ag)
         outcome = "team1_win" if g1 > g2 else ("team2_win" if g2 > g1 else "draw")
+
+        # Zusatz-Trefferarten aus der MC-Prognose des Closing-Stands
+        mcf = fc.get("mc") or {}
+        if mcf.get("over25") is not None:
+            if (mcf["over25"] > 0.5) == ((g1 + g2) > 2.5):
+                tot_h += 1
+            else:
+                tot_m += 1
+        if mcf.get("top_score"):
+            if mcf["top_score"] == f"{g1}:{g2}":
+                ex_h += 1
+            else:
+                ex_m += 1
 
         row = {"slug": slug, "result": f"{g1}:{g2}", "outcome": outcome,
                "snapshot_date": fc["snapshot_date"], "forecast_at": fc["generated_at"],
@@ -234,8 +254,24 @@ def evaluate(results: dict) -> dict:
         record = {"source": rec_src, "hits": s["hits"], "misses": s["misses"],
                   "n": s["n"], "hit_rate": s["hit_rate"]}
 
+    def _rec(h, m):
+        n = h + m
+        return {"hits": h, "misses": m, "n": n,
+                "hit_rate": round(h / n, 4) if n else None} if n else None
+
+    # Mehrere Trefferarten fuer das Cockpit:
+    #   favorit  = Tendenz 1X2 (argmax == Ergebnis), Quelle Ensemble
+    #   tore     = Ueber/Unter 2.5 richtig (MC-Prognose vs. tatsaechliche Gesamttore)
+    #   ergebnis = exaktes Ergebnis (Top-MC-Scoreline == Endstand)
+    records = {
+        "favorit": ({"hits": record["hits"], "misses": record["misses"],
+                     "n": record["n"], "hit_rate": record["hit_rate"]} if record else None),
+        "tore": _rec(tot_h, tot_m),
+        "ergebnis": _rec(ex_h, ex_m),
+    }
+
     return {"status": "live", "n_resolved": len(rows), "matches": rows,
-            "summary": summary, "betting": betting, "record": record,
+            "summary": summary, "betting": betting, "record": record, "records": records,
             "note": "Brier 0=perfekt/0.667=Zufall; LogLoss 0=perfekt/1.099=Zufall. "
                     "ROI/CLV: Referenz-Policy auf Ensemble-Favorit, letzter Pre-Kickoff-Snapshot. "
                     "record = Treffer/Fehl der Headline-Prognose (argmax == Ergebnis)."}

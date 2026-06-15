@@ -196,5 +196,23 @@ def test_feature_record_count_in_report():
     assert "5/3" in rep  # R/F-Spalte in der Bestenliste
 
 
+def test_feature_records_three_types(monkeypatch):
+    """Feature: calibration liefert favorit/tore/ergebnis-Trefferbilanz."""
+    from src.model import calibration
+    fc = {"snapshot_date": "s", "generated_at": "2026-06-13T01:00:00+00:00", "model_version": "m",
+          "team1": "Brazil", "team2": "Morocco", "date": "2026-06-13",
+          "sources": {"ensemble": {"team1_win": 0.6, "draw": 0.2, "team2_win": 0.2}},
+          "odds_1x2": None, "mc": {"over25": 0.7, "top_score": "2:1"}}
+    monkeypatch.setattr(calibration, "_all_forecasts", lambda: {"slug1": [fc]})
+    results = {"status": "live", "results": [
+        {"date": "2026-06-13", "home": "Brazil", "away": "Morocco",
+         "home_goals": 2, "away_goals": 1, "kickoff_utc": "2026-06-13T05:00:00Z"}]}
+    out = calibration.evaluate(results)
+    r = out["records"]
+    assert r["favorit"]["hits"] == 1 and r["favorit"]["misses"] == 0   # argmax team1_win == Ergebnis
+    assert r["tore"]["hits"] == 1 and r["tore"]["misses"] == 0          # over 2.5 prognostiziert, 3 Tore
+    assert r["ergebnis"]["hits"] == 1                                   # exaktes 2:1 getroffen
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

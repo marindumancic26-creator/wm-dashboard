@@ -73,6 +73,18 @@
     <div class="dim" style="margin-top:6px">Klick auf eine Zeile öffnet das Spiel unten im Detail. Sortierbar per Klick auf Spaltenkopf. DQ = Datenqualität.</div>
   </div>
 
+  <div class="card c4">
+    <h2>Cockpit — Trefferbilanz <span class="tag estimated">richtig/falsch</span></h2>
+    <div id="recordBox"></div>
+    <div class="dim" style="margin-top:6px">Aufgelöste Spiele. Favorit = Tendenz 1X2 (argmax), Tore = Über/Unter 2.5, Ergebnis = exakter Endstand (Top-MC-Scoreline).</div>
+  </div>
+
+  <div class="card c8">
+    <h2>Cockpit — Top-Whale-Wallets <span class="tag estimated">heuristic</span></h2>
+    <table id="cockpitWhaleTable"></table>
+    <div class="dim" style="margin-top:6px">Höchstbewertete Wallets über alle heutigen Spiele (Score-gewichtete Yes-Exposure, heuristisch — keine verifizierte Nutzer-Historie öffentlich).</div>
+  </div>
+
   <div class="card c12" id="valueRankCard">
     <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">Ensemble-Chancen</span></h2>
     <div class="disclaimer" id="valueRankWarn" style="margin-bottom:8px"></div>
@@ -263,6 +275,36 @@ function renderCockpit(){
       '<td class="mono">'+(r.nvalue||'–')+'</td><td>'+(r.risk||'–')+'</td><td>'+dot(r.dq)+' <span class="mono">'+r.dqscore.toFixed(2)+'</span></td><td class="dim">'+st+'</td></tr>';
   }).join('');
   $('cockpitTable').innerHTML=html;
+  renderRecordBox();
+  renderCockpitWhales();
+}
+function renderRecordBox(){
+  const rc=(DATA.calibration&&DATA.calibration.records)||{};
+  const line=(label,r)=> r&&r.n
+    ? '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #2a3142"><span>'+label+'</span>'+
+      '<span class="mono"><b style="color:var(--good)">✅ '+r.hits+'</b> · <b style="color:var(--bad)">❌ '+r.misses+'</b> '+
+      '<span class="dim">('+Math.round((r.hit_rate||0)*100)+'%, n='+r.n+')</span></span></div>'
+    : '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a3142"><span>'+label+'</span><span class="dim">noch keine Daten</span></div>';
+  $('recordBox').innerHTML=
+    line('🎯 Favorit (Tendenz 1X2)',rc.favorit)+
+    line('⚽ Tore (Über/Unter 2.5)',rc.tore)+
+    line('🔢 Ergebnis (exakter Endstand)',rc.ergebnis);
+}
+function renderCockpitWhales(){
+  const seen={};
+  (DATA.matches||[]).forEach(m=>{ const ws=(m.whale&&m.whale.wallets)||[];
+    ws.forEach(w=>{ if(!w.wallet)return; const c=seen[w.wallet];
+      if(!c||(w.score||0)>(c.score||0)) seen[w.wallet]=Object.assign({},w,{match:m.title}); }); });
+  const top=Object.values(seen).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,12);
+  if(!top.length){ $('cockpitWhaleTable').innerHTML='<tr><td class="dim">Keine Whale-Daten im aktuellen Lauf (evtl. mit --skip-whales gelaufen).</td></tr>'; return; }
+  $('cockpitWhaleTable').innerHTML='<tr><th>Wallet</th><th>Score</th><th>Treffer~</th><th>FB-Vol $</th><th>FB-Trades</th><th>Spez.</th><th>Top-Spiel</th></tr>'+
+    top.map(w=>'<tr><td class="mono">'+esc((w.wallet||'').slice(0,8))+'…'+esc((w.wallet||'').slice(-4))+'</td>'+
+      '<td class="mono">'+(w.score!=null?w.score.toFixed(3):'–')+'</td>'+
+      '<td class="mono">'+(w.resolved_hit_rate_heuristic!=null?(w.resolved_hit_rate_heuristic*100).toFixed(0)+'%':'–')+'</td>'+
+      '<td class="mono">'+(w.volume_usd_football!=null?Number(w.volume_usd_football).toLocaleString():'–')+'</td>'+
+      '<td class="mono">'+(w.n_trades_football||0)+'</td>'+
+      '<td>'+(w.football_specialist?'⭐':'')+'</td>'+
+      '<td class="dim">'+esc(w.match||'')+'</td></tr>').join('');
 }
 function setCockpitSort(k){ if(cockpitSort.key===k)cockpitSort.dir*=-1; else {cockpitSort.key=k;cockpitSort.dir=-1;} renderCockpit(); }
 function selectMatch(i){ $('matchSel').value=i; show(i); showTab('detail'); window.scrollTo({top:0,behavior:'smooth'}); }
