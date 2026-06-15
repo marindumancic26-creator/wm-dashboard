@@ -112,7 +112,22 @@ NAME_ALIASES = {
 }
 
 def canonical_team(name: str) -> str:
+    if not name:                       # None/leer aus einer Datenquelle -> nicht crashen
+        return ""
     return NAME_ALIASES.get(name.strip(), name.strip())
+
+
+_KNOWN_TEAMS_LOWER: set | None = None
+
+def known_team_names_lower() -> set:
+    """Menge aller bekannten kanonischen Teamnamen (lowercase) — aus ELO_RATINGS-Keys
+    (kanonisiert) und den Polymarket-Codes. Dient dem Substring-Matching als Sicherung:
+    zwei VERSCHIEDENE bekannte Teams duerfen sich nie per Teilzeichenkette treffen."""
+    global _KNOWN_TEAMS_LOWER
+    if _KNOWN_TEAMS_LOWER is None:
+        names = {canonical_team(k) for k in ELO_RATINGS} | set(TEAM_CODES.values())
+        _KNOWN_TEAMS_LOWER = {n.lower() for n in names}
+    return _KNOWN_TEAMS_LOWER
 
 # Polymarket-Team-Codes (Slug-Kuerzel -> Klarname), fuer Slug-Parsing
 TEAM_CODES = {

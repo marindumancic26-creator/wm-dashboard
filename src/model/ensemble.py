@@ -30,7 +30,7 @@ def blend_probs(market: dict | None, model: dict | None, whale: dict | None,
         avg_conf = 0.0
         if whale.get("wallets"):
             avg_conf = sum(w["confidence"] for w in whale["wallets"]) / len(whale["wallets"])
-        weights["whale"] = weights.get("whale", 0.2) * damp * (0.5 + 0.5 * avg_conf)
+        weights["whale"] = weights.get("whale", config.ENSEMBLE_WEIGHTS["whale"]) * damp * (0.5 + 0.5 * avg_conf)
         sources["whale"] = whale["probs"]
 
     active = {k: weights[k] for k in sources if weights.get(k, 0) > 0}
@@ -67,15 +67,27 @@ def blend_probs(market: dict | None, model: dict | None, whale: dict | None,
             "sources": {k: {o: round(p, 4) for o, p in v.items()} for k, v in sources.items()}}
 
 
-def blend_lambdas(market: dict | None, model: dict | None, weights_used: dict) -> dict:
+def blend_lambdas(market: dict | None, model: dict | None, weights_used: dict,
+                  books: dict | None = None, kalshi: dict | None = None) -> dict:
     """Tor-Erwartungswerte des Ensembles: gewichtetes Mittel aus markt-impliziten
     und modellbasierten lambdas (Whale liefert keine eigene Torstruktur —
-    sein Gewicht fliesst anteilig dem Markt zu, da beide preisbasiert sind)."""
+    sein Gewicht fliesst anteilig dem Markt zu, da beide preisbasiert sind).
+
+    Die preis-implizite Torstruktur stammt aus der besten verfuegbaren Preisquelle:
+    Polymarket-Markt > Buchmacher > Kalshi. Damit folgt die MC-Torverteilung denselben
+    Quellen, die auch blend_probs treiben — auch wenn Polymarket fuer ein Spiel fehlt."""
     cands = {}
+    price_src = None
     if market and market.get("probs"):
-        mi = features.market_implied_lambdas(market["probs"]["team1_win"],
-                                             market["probs"]["draw"],
-                                             market["probs"]["team2_win"])
+        price_src = market["probs"]
+    elif books and books.get("probs"):
+        price_src = books["probs"]
+    elif kalshi and kalshi.get("probs"):
+        price_src = kalshi["probs"]
+    if price_src:
+        mi = features.market_implied_lambdas(price_src["team1_win"],
+                                             price_src["draw"],
+                                             price_src["team2_win"])
         cands["market"] = (mi["lambda1"], mi["lambda2"], mi)
     if model:
         cands["model"] = (model["lambda1"], model["lambda2"], None)

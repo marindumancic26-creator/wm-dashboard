@@ -22,6 +22,8 @@ wir hoechstens eine modell-faire Referenzquote, aber KEINE Value-Empfehlung.
 """
 from __future__ import annotations
 
+import math
+
 HAIRCUT = {"low": 0.03, "medium": 0.06, "high": 0.10}
 STAKE_CAP = {"low": 0.020, "medium": 0.015, "high": 0.0075}  # max % Bankroll
 KELLY_FRACTION = 0.25  # Viertel-Kelly (defensiv)
@@ -34,8 +36,12 @@ MIN_BOOKS = 3        # Liquiditaets-Gate: weniger Buecher -> keine Value-Empfehl
 
 def estimate_sigma(band_width: float | None, disagreement: float) -> float:
     """Unsicherheit der Wahrscheinlichkeit aus MC-Bandbreite (90%-Intervall -> sigma),
-    Markt-Modell-Diskrepanz und Grundunsicherheit. Quadratische Summe."""
-    bw = (band_width / 3.29) if band_width is not None else 0.05  # 90%-Intervall = 3.29*sigma
+    Markt-Modell-Diskrepanz und Grundunsicherheit. Quadratische Summe.
+
+    Fehlt ein MC-Band (z.B. Totals), wird KONSERVATIV ein breites Band angenommen (0.08),
+    damit Maerkte ohne Band nicht systematisch ein kleineres sigma — und damit leichter ein
+    Value-Flag — bekommen als 1X2-Maerkte mit echtem (typ. breiterem) Band."""
+    bw = (band_width / 3.29) if band_width is not None else 0.08  # konservativ bei fehlendem Band
     return (bw ** 2 + (0.4 * disagreement) ** 2 + SIGMA_FLOOR ** 2) ** 0.5
 
 
@@ -139,10 +145,10 @@ def evaluate_match(match: dict, best_prices: dict | None) -> dict:
             ln = float(line)
         except ValueError:
             continue
-        # P(Over ln) aus MC-Gesamttorverteilung
-        floor = int(ln)  # z.B. 2.5 -> over = total >= 3 = 1 - P(0..2)
-        p_over = round(1.0 - sum(total_dist[: floor + 1]), 4)
-        p_under = round(1.0 - p_over, 4)
+        # P(Over ln) aus MC-Gesamttorverteilung. Ganzzahlige Linien: P(total==ln) ist Push
+        # (Einsatz zurueck) und gehoert weder zu Over noch Under -> getrennt rechnen.
+        p_over = round(1.0 - sum(total_dist[: int(ln) + 1]), 4)        # P(total > ln)
+        p_under = round(sum(total_dist[: int(math.ceil(ln))]), 4)      # P(total < ln)
         for nm, p_model, info in (("Over %.1f" % ln, p_over, slot["over"]),
                                   ("Under %.1f" % ln, p_under, slot["under"])):
             # Totals ohne MC-Band -> band_width None (estimate_sigma nutzt Default)

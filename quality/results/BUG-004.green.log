@@ -1,0 +1,6 @@
+GREEN
+--- Test output for BUG-004 green phase (fix applied) ---
+Command: python -m pytest quality/test_regression.py::test_bug004_integer_total_line_respects_push -q
+Exit code: 0
+.                                                                        [100%]
+1 passed in 0.16s

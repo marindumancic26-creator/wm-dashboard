@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-003 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug003_blend_lambdas_uses_books_when_market_absent --runxfail -q
+Exit code: 1
+        books = {"probs": {"team1_win": 0.60, "draw": 0.25, "team2_win": 0.15}}
+        model = {"probs": {"team1_win": 0.40, "draw": 0.30, "team2_win": 0.30},
+                 "lambda1": 1.30, "lambda2": 1.30}
+        blend = ensemble.blend_probs(None, model, None, books=books)
+        lams = ensemble.blend_lambdas(None, model, blend.get("weights_used", {}))
+        # Buecher implizieren lam1>lam2; korrekte Mischung muss von der reinen Modell-1.30/1.30 abweichen
+>       assert abs(lams["lambda1"] - 1.30) > 0.02, f"lambda ignoriert Buecher: {lams}"
+E       AssertionError: lambda ignoriert Buecher: {'lambda1': 1.3, 'lambda2': 1.3}
+E       assert 0.0 > 0.02
+E        +  where 0.0 = abs((1.3 - 1.3))
+
+quality\test_regression.py:47: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug003_blend_lambdas_uses_books_when_market_absent
+1 failed in 0.42s

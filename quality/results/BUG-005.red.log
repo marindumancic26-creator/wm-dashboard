@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-005 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug005_totals_sigma_not_smaller_than_1x2 --runxfail -q
+Exit code: 1
+
+    @pytest.mark.xfail(strict=True, reason="BUG-005: Totals erhalten systematisch kleineres sigma als 1X2")
+    def test_bug005_totals_sigma_not_smaller_than_1x2():
+        """REQ-005: ein Markt ohne MC-Band darf bei gleichem Edge kein kleineres sigma bekommen."""
+        from src.model import value_betting as vb
+        r_1x2 = vb._row("1X2", "s", 3.0, "bk", 0.55, 0.50, band_width=0.18, n_books=20)
+        r_tot = vb._row("Über/Unter", "s", 3.0, "bk", 0.55, 0.50, band_width=None, n_books=20)
+>       assert r_tot["sigma"] >= r_1x2["sigma"] - 1e-9, (r_tot["sigma"], r_1x2["sigma"])
+E       AssertionError: (0.0616, 0.0655)
+E       assert 0.0616 >= (0.0655 - 1e-09)
+
+quality\test_regression.py:73: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug005_totals_sigma_not_smaller_than_1x2
+1 failed in 0.43s

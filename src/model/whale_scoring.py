@@ -92,15 +92,19 @@ def whale_signal(snapshot: dict, max_wallets: int = 10) -> dict:
     holders = snapshot.get("holders", {})
     trades = snapshot.get("trades", {})
 
-    # Exposure je Wallet und Ausgang aus Top-Holdern (Yes-Token-Bestaende)
+    # Exposure je Wallet und Ausgang aus Top-Holdern (Yes-Token-Bestaende).
+    # Holder liefern eine ANZAHL Yes-Anteile; Trades (unten) liefern USD. Damit beides
+    # kommensurabel summiert wird, werden Holder-Anteile mit dem Yes-Marktpreis in USD bewertet.
     exposure: dict[str, dict[str, float]] = {}
+    raw_price = market.get("raw", {})
     for outcome_key, hl in holders.items():
+        px = float(raw_price.get(outcome_key) or 0) or 1.0   # USD je Yes-Anteil
         for h in hl[:config.WHALE_TOP_HOLDERS]:
             w = h.get("proxyWallet")
             amt = float(h.get("amount") or 0)
             if w and amt > 0:
                 exposure.setdefault(w, {}).setdefault(outcome_key, 0.0)
-                exposure[w][outcome_key] += amt
+                exposure[w][outcome_key] += amt * px   # in USD
 
     # Grosse aktuelle Trades ergaenzen (BUY auf Yes zaehlt als Exposure)
     for outcome_key, tl in trades.items():

@@ -53,7 +53,12 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     lines += ["## Rollierende Bestenliste (alle aufgelösten Spiele)", "",
               "| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | n |",
               "|---|---|---|---|---|---|---|"]
-    ranking = sorted(summary.items(), key=lambda kv: kv[1].get("mean_rps") or kv[1]["mean_brier"])
+    # nach RPS sortieren (Fussball-Standard); RPS==0.0 ist gueltig (perfekt) und darf NICHT
+    # als falsy auf den Brier zurueckfallen -> explizit auf None pruefen.
+    def _rank_key(kv):
+        rps = kv[1].get("mean_rps")
+        return rps if rps is not None else kv[1]["mean_brier"]
+    ranking = sorted(summary.items(), key=_rank_key)
     for rank, (src, s) in enumerate(ranking, 1):
         lines.append(f"| {rank} | {SOURCE_LABEL.get(src, src)} | {_fmt(s['mean_brier'])} "
                      f"| {_fmt(s.get('mean_rps'))} | {_fmt(s.get('mean_log_loss'))} "

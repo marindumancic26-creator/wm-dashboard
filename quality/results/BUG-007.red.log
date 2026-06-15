@@ -1,0 +1,16 @@
+RED
+--- Test output for BUG-007 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug007_whale_default_matches_config --runxfail -q
+Exit code: 1
+>       assert abs(float(m.group(1)) - config.ENSEMBLE_WEIGHTS["whale"]) < 1e-9, m.group(1)
+E       AssertionError: 0.2
+E       assert 0.05000000000000002 < 1e-09
+E        +  where 0.05000000000000002 = abs((0.2 - 0.15))
+E        +    where 0.2 = float('0.2')
+E        +      where '0.2' = <built-in method group of re.Match object at 0x000001672176F0A0>(1)
+E        +        where <built-in method group of re.Match object at 0x000001672176F0A0> = <re.Match object; span=(949, 974), match='weights.get("whale", 0.2)'>.group
+
+quality\test_regression.py:102: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug007_whale_default_matches_config
+1 failed in 0.44s

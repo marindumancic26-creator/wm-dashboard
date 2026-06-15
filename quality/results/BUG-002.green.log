@@ -1,0 +1,6 @@
+GREEN
+--- Test output for BUG-002 green phase (fix applied) ---
+Command: python -m pytest quality/test_regression.py::test_bug002_uncertainty_band_invariant_to_runs -q
+Exit code: 0
+.                                                                        [100%]
+1 passed in 0.22s

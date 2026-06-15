@@ -117,7 +117,16 @@ def _filtered_best(pairs: list, outlier_ratio: float = 1.5):
 def _team_match(a: str, b: str) -> bool:
     ca = config.canonical_team(a).lower()
     cb = config.canonical_team(b).lower()
-    return ca == cb or ca in cb or cb in ca
+    if not ca or not cb:               # leerer/None-Name matcht nichts (sonst "" in x == True)
+        return False
+    if ca == cb:
+        return True
+    # Substring nur als Fallback fuer un-kanonisierte Schreibvarianten — NICHT, wenn beide
+    # Seiten eigenstaendige bekannte Teams sind (verhindert Falschtreffer beim Quoten-Matching).
+    known = config.known_team_names_lower()
+    if ca in known and cb in known:
+        return False
+    return ca in cb or cb in ca
 
 
 def _find_event(team1: str, team2: str, all_odds: dict):

@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-001 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug001_simulate_small_runs_does_not_crash --runxfail -q
+Exit code: 1
+            "win_margin_2plus": round(wmean(np.abs(g1.astype(int) - g2.astype(int)) >= 2), 4),
+        }
+    
+        # Unsicherheitsbaender: gewichtete 1X2 ueber 200 Parameter-Resample-Bloecke
+        bands = {}
+        nb = 200
+        chunk = max(1, runs // nb)
+>       idx = np.arange(runs)[: nb * chunk].reshape(nb, chunk)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: cannot reshape array of size 50 into shape (200,1)
+
+src\model\monte_carlo.py:99: ValueError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug001_simulate_small_runs_does_not_crash
+1 failed in 0.63s

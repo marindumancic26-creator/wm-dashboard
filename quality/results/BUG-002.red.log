@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-002 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug002_uncertainty_band_invariant_to_runs --runxfail -q
+Exit code: 1
+        """REQ-002: Bandbreite muss ~invariant gegen MC_RUNS sein (Parameter-Unsicherheit)."""
+        from src.model import monte_carlo
+        def width(r):
+            b = monte_carlo.simulate(1.6, 1.0, runs=r, seed=1, rho=0.0)["uncertainty"]["team1_win"]
+            return b["p95"] - b["p05"]
+        w_lo, w_hi = width(20000), width(200000)
+>       assert abs(w_lo - w_hi) < 0.03, f"Band schrumpft mit runs: {w_lo:.4f} -> {w_hi:.4f}"
+E       AssertionError: Band schrumpft mit runs: 0.1705 -> 0.0491
+E       assert 0.12139999999999995 < 0.03
+E        +  where 0.12139999999999995 = abs((0.17049999999999998 - 0.04910000000000003))
+
+quality\test_regression.py:34: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug002_uncertainty_band_invariant_to_runs
+1 failed in 0.68s

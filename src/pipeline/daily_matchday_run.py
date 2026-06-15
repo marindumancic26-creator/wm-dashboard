@@ -149,7 +149,8 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
                     log["warnings"].append(f"{slug}: Whale-Scoring fehlgeschlagen ({exc})")
 
             blend = ensemble.blend_probs(market, model, whale, books=books, kalshi=kalshi)
-            lams = ensemble.blend_lambdas(market, model, blend.get("weights_used", {}))
+            lams = ensemble.blend_lambdas(market, model, blend.get("weights_used", {}),
+                                          books=books, kalshi=kalshi)
             mc = monte_carlo.simulate(lams["lambda1"], lams["lambda2"])
 
             # K.o.-Phase: Weiterkommen (Verlängerung + Elfmeter) zusätzlich zum 90-Min-1X2

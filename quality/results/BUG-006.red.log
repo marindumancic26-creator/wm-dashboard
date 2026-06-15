@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-006 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug006_whale_exposure_is_usd_commensurable --runxfail -q
+Exit code: 1
+                           "probs": {"team1_win": 0.5, "draw": 0.3, "team2_win": 0.2}},
+                "holders": {"team1_win": [{"proxyWallet": "0xH", "amount": 800}]},
+                "trades": {}}
+        sig = whale_scoring.whale_signal(snap)
+        expo = sig["wallets"][0]["exposure"]["team1_win"]
+        # 800 Anteile @ 0.50 = $400 USD-Exposure (kommensurabel mit Trade-USD); Code zaehlt roh 800
+>       assert abs(expo - 400.0) < 1.0, f"Holder-Anteile nicht in USD bewertet: {expo}"
+E       AssertionError: Holder-Anteile nicht in USD bewertet: 800.0
+E       assert 400.0 < 1.0
+E        +  where 400.0 = abs((800.0 - 400.0))
+
+quality\test_regression.py:91: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug006_whale_exposure_is_usd_commensurable
+1 failed in 0.43s

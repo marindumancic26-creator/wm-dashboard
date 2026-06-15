@@ -1,0 +1,9 @@
+RED
+Command: python -m pytest quality/test_regression.py::test_bug009_closing_loop_ranks_perfect_rps_first -q
+Exit code: 1
+E        +    where <built-in method index of str object at 0x0000027C88965980> = '# Closing-Loop-Report \u2014 2026-06-14\\n\\nStand: 2026-06-14T10:00:00 \xb7 automatisch erzeugt (deterministisch, ohne Claude)...Flags\\n\\n- \u2139\ufe0f Erst 1 Spiele aufgel\xf6st \u2014 keine Gewichts\xe4nderungen vor n\u22655 (Schutz vor \xdcberanpassung an Einzelspiele).\\n'.index
+
+quality\test_regression.py:122: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug009_closing_loop_ranks_perfect_rps_first
+1 failed in 0.38s

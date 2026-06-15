@@ -1,0 +1,5 @@
+GREEN
+Command: python -m pytest quality/test_regression.py::test_bug009_closing_loop_ranks_perfect_rps_first -q
+Exit code: 0
+.                                                                        [100%]
+1 passed in 0.03s

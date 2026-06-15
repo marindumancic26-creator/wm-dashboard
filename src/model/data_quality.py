@@ -22,17 +22,20 @@ def _liquidity_factor(value: dict | None) -> tuple[float, str]:
 
 
 def _market_agreement(match: dict) -> tuple[float, str]:
-    """Niedrige Dispersion zwischen Markt/Buecher/Kalshi = hohe Qualitaet."""
-    probs = []
+    """Niedrige Dispersion zwischen Markt/Buecher/Kalshi = hohe Qualitaet.
+    Ueber ALLE drei Ausgaenge gemessen (die schlechteste Achse zaehlt) — sonst gelten
+    Quellen als einig, die nur beim Heimsieg uebereinstimmen, aber Remis/Auswaerts vertauschen."""
+    rows = []
     for src in ("market", "books", "kalshi"):
         s = match.get(src)
         if s and s.get("probs"):
-            probs.append(s["probs"]["team1_win"])
-    if len(probs) < 2:
+            rows.append(s["probs"])
+    if len(rows) < 2:
         return 0.5, "nur 1 Marktquelle"
-    disp = statistics.pstdev(probs)  # 0 = perfekte Einigkeit
+    disp = max(statistics.pstdev([r.get(o, 0.0) for r in rows])
+               for o in ("team1_win", "draw", "team2_win"))  # 0 = perfekte Einigkeit
     f = max(0.0, 1.0 - disp / 0.10)  # 10pp Streuung -> 0
-    return f, f"Dispersion {disp*100:.1f}pp ueber {len(probs)} Quellen"
+    return f, f"max Dispersion {disp*100:.1f}pp ueber {len(rows)} Quellen"
 
 
 def score_match(match: dict) -> dict:

@@ -1,0 +1,6 @@
+GREEN
+--- Test output for BUG-005 green phase (fix applied) ---
+Command: python -m pytest quality/test_regression.py::test_bug005_totals_sigma_not_smaller_than_1x2 -q
+Exit code: 0
+.                                                                        [100%]
+1 passed in 0.02s

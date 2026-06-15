@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.1",
+  "skill_version": "1.5.6",
+  "date": "2026-06-14",
+  "project": "wm-dashboard-fussball-wahrscheinlichkeit",
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "requirement": "REQ-001",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-001.md",
+      "notes": "Fix proposed inline; source unchanged (Mode A). Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-002",
+      "requirement": "REQ-002",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-002.md",
+      "notes": "Band shrinks 0.171->0.049 with MC_RUNS. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-003",
+      "requirement": "REQ-003",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-003.md",
+      "notes": "Books lambda dropped when market absent. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-004",
+      "requirement": "REQ-004",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-004.md",
+      "notes": "Integer line push leaked to Under. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-005",
+      "requirement": "REQ-005",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-005.md",
+      "notes": "Totals sigma < 1X2 sigma. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-006",
+      "requirement": "REQ-006",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-006.md",
+      "notes": "Share-count + USD mixed. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-007",
+      "requirement": "REQ-009",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-007.md",
+      "notes": "Whale default 0.2 != config 0.15. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-008",
+      "requirement": "REQ-008",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/writeups/BUG-008.md",
+      "notes": "Agreement ignores draw/away. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-009",
+      "requirement": "closing_loop ranking",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md#bug-009",
+      "notes": "closing_loop falsy-0.0 RPS ranking. Fix applied; red->green verified."
+    },
+    {
+      "id": "BUG-010",
+      "requirement": "None-safety",
+      "red_phase": "fail",
+      "green_phase": "pass",
+      "verdict": "TDD verified",
+      "fix_patch_present": false,
+      "writeup_path": "quality/BUGS.md#bug-010",
+      "notes": "canonical_team(None) crash found by live daily run. Fixed."
+    }
+  ],
+  "summary": {
+    "total": 10,
+    "verified": 10,
+    "confirmed_open": 0,
+    "red_failed": 0,
+    "green_failed": 0
+  }
+}

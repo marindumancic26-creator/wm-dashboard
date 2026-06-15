@@ -1,0 +1,24 @@
+[6.1] Mechanical: NOT APPLICABLE â€” no dispatch/registry/enumeration contracts in scope.
+[6.3] Functional tests:
+25 passed in 1.07s
+[6.3b] Regression suite (expect 8 xfail):
+8 xfailed in 2.73s
+[6.3c] Existing repo suite (regression guard):
+29 passed in 1.09s
+[6.5] Version stamps (must all be 1.5.6):
+  markdown stamps: 12 files reference v1.5.6
+  test_functional stamp: 1
+  tdd-results skill_version: 1.5.6
+[6.2] quality_gate.py (honest attempt; expects manifests not produced in Mode A):
+  INFO: check_hybrid_cross_cutting_reqs: skip (project_type=None)
+[Phase 4: role-map consistency]
+  INFO: check_role_map_consistency: skip (exploration_role_map.json absent — Phase 1 not run yet)
+
+
+===========================================
+Total: 2 FAIL, 3 WARN
+RESULT: GATE FAILED — 2 check(s) must be fixed
+[6.6] AGENTS.md + INDEX.md created. Re-running gate for honest final count:
+  INFO: Total: 0 patch file(s) in quality/patches/
+Total: 2 FAIL, 3 WARN
+RESULT: GATE FAILED — 2 check(s) must be fixed

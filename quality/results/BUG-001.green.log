@@ -1,0 +1,6 @@
+GREEN
+--- Test output for BUG-001 green phase (fix applied) ---
+Command: python -m pytest quality/test_regression.py::test_bug001_simulate_small_runs_does_not_crash -q
+Exit code: 0
+.                                                                        [100%]
+1 passed in 0.13s

@@ -30,7 +30,16 @@ SOURCES = ("market", "books", "kalshi", "model", "whale", "ensemble")
 def _team_eq(a: str, b: str) -> bool:
     ca = config.canonical_team(a).lower()
     cb = config.canonical_team(b).lower()
-    return ca == cb or ca in cb or cb in ca
+    if not ca or not cb:               # leerer/None-Name matcht nichts (sonst "" in x == True)
+        return False
+    if ca == cb:
+        return True
+    # Substring nur als Fallback fuer un-kanonisierte Schreibvarianten — NICHT, wenn beide
+    # Seiten eigenstaendige bekannte Teams sind (verhindert Falschtreffer im 48er-Feld).
+    known = config.known_team_names_lower()
+    if ca in known and cb in known:
+        return False
+    return ca in cb or cb in ca
 
 
 def _date_close(d1: str, d2: str, days: int = 1) -> bool:

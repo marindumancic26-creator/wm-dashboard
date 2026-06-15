@@ -1,0 +1,19 @@
+RED
+--- Test output for BUG-004 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug004_integer_total_line_respects_push --runxfail -q
+Exit code: 1
+            floor = int(ln)  # z.B. 2.5 -> over = total >= 3 = 1 - P(0..2)
+            p_over = round(1.0 - sum(total_dist[: floor + 1]), 4)
+            p_under = round(1.0 - p_over, 4)
+            for nm, p_model, info in (("Over %.1f" % ln, p_over, slot["over"]),
+                                      ("Under %.1f" % ln, p_under, slot["under"])):
+                # Totals ohne MC-Band -> band_width None (estimate_sigma nutzt Default)
+>               r = _row("Über/Unter", nm, info["best_odds"], info["book"], p_model,
+                                                              ^^^^^^^^^^^^
+                         info["consensus_prob"], None, info.get("n_books", 0))
+E               KeyError: 'book'
+
+src\model\value_betting.py:149: KeyError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug004_integer_total_line_respects_push
+1 failed in 0.63s

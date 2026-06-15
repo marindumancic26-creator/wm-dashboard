@@ -92,17 +92,22 @@ def simulate(lam1: float, lam2: float, runs: int = None, seed: int = 42,
         "win_margin_2plus": round(wmean(np.abs(g1.astype(int) - g2.astype(int)) >= 2), 4),
     }
 
-    # Unsicherheitsbaender: gewichtete 1X2 ueber 200 Parameter-Resample-Bloecke
-    bands = {}
-    nb = 200
-    chunk = max(1, runs // nb)
-    idx = np.arange(runs)[: nb * chunk].reshape(nb, chunk)
-    wb = w[idx]
-    den = wb.sum(axis=1)
-    for name, cond in (("team1_win", g1 > g2), ("draw", g1 == g2), ("team2_win", g1 < g2)):
-        per = (wb * cond[idx]).sum(axis=1) / den
-        bands[name] = {"p05": round(float(np.quantile(per, 0.05)), 4),
-                       "p95": round(float(np.quantile(per, 0.95)), 4)}
+    # Unsicherheitsbaender = ECHTE Parameter-Unsicherheit: je Resample EIN festes Lambda-Paar
+    # aus der Gamma ziehen und das 1X2 analytisch auswerten. Die Bandbreite spiegelt damit die
+    # Streuung der Tor-Erwartung (CV) wider und ist invariant gegen runs (kein MC-Rauschen mehr).
+    from src.model import features
+    nb = 400
+    l1b = rng.gamma(k, lam1 / k, nb)
+    l2b = rng.gamma(k, lam2 / k, nb)
+    cols = {"team1_win": [], "draw": [], "team2_win": []}
+    for a, b in zip(l1b, l2b):
+        q1, qd, q2 = features.poisson_1x2(float(a), float(b), max_goals=mg, rho=rho)
+        cols["team1_win"].append(q1)
+        cols["draw"].append(qd)
+        cols["team2_win"].append(q2)
+    bands = {name: {"p05": round(float(np.quantile(v, 0.05)), 4),
+                    "p95": round(float(np.quantile(v, 0.95)), 4)}
+             for name, v in cols.items()}
 
     return {
         "runs": runs,

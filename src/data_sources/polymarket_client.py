@@ -98,7 +98,12 @@ def extract_1x2(event: dict) -> Optional[dict]:
     for m in event.get("markets", []):
         q = (m.get("question") or "").lower()
         try:
-            yes_price = float(json.loads(m.get("outcomePrices", "[]"))[0])
+            prices = json.loads(m.get("outcomePrices", "[]"))
+            outs = json.loads(m.get("outcomes", "[]")) if m.get("outcomes") else []
+            # Yes-Preis ueber das Label finden (robust gegen [No, Yes]-Reihenfolge);
+            # ohne Labels Fallback auf Index 0 (bisherige Annahme [Yes, No]).
+            yi = next((i for i, o in enumerate(outs) if str(o).strip().lower() == "yes"), 0)
+            yes_price = float(prices[yi])
         except Exception:
             continue
         vol += float(m.get("volumeNum") or 0)

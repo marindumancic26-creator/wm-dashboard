@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "skill_version": "1.5.6",
+  "project": "wm-dashboard-fussball-wahrscheinlichkeit",
+  "model": "claude-opus-4-8",
+  "model_provider": "anthropic",
+  "runner": "claude-code",
+  "start_time": "2026-06-14T19:26:15Z",
+  "end_time": "2026-06-14T19:55:00Z",
+  "duration_minutes": null,
+  "phases_completed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "iterations_completed": [],
+  "bug_count": 8,
+  "bug_severity": {
+    "HIGH": 0,
+    "MEDIUM": 4,
+    "LOW": 4
+  },
+  "gate_result": "PASS (markdown artifacts); quality_gate.py FAIL on missing bin/-runner manifests",
+  "gate_fail_count": 2,
+  "gate_warn_count": 3,
+  "notes": "Mode A by hand. 8 bugs confirmed w/ red logs; 2 findings dismissed via probes. JSON manifests/role-map not produced (bin/ absent)."
+}

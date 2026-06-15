@@ -1,0 +1,16 @@
+RED
+--- Test output for BUG-008 red phase ---
+Command: python -m pytest quality/test_regression.py::test_bug008_market_agreement_considers_all_outcomes --runxfail -q
+Exit code: 1
+        from src.model import data_quality
+        match = {"market": {"probs": {"team1_win": 0.50, "draw": 0.45, "team2_win": 0.05}},
+                 "books":  {"probs": {"team1_win": 0.50, "draw": 0.05, "team2_win": 0.45}}}
+        f, _ = data_quality._market_agreement(match)
+>       assert f < 0.9, f"Agreement ignoriert draw/away-Dispersion: {f}"
+E       AssertionError: Agreement ignoriert draw/away-Dispersion: 1.0
+E       assert 1.0 < 0.9
+
+quality\test_regression.py:112: AssertionError
+=========================== short test summary info ===========================
+FAILED quality/test_regression.py::test_bug008_market_agreement_considers_all_outcomes
+1 failed in 0.40s
