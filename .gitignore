@@ -23,3 +23,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Lokale Codex-Uebergabe (nur Projektordner, nicht ins Repo)
+HANDOVER_CODEX.md
