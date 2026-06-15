@@ -107,3 +107,9 @@ diesem Caveat. ELO_PER_GOAL ist historisch NICHT backtestbar (kein altes Elo).
 Reliability-Diagramm (n=1 zu wenig), Quotenverlauf-Charts (Snapshots noch eng), xG-Form
 (FBref-xG für WM noch leer), Aufstellung/Verletzung ins Modell, Wetter/Höhe/Schiri (neue APIs,
 erst nach Zustimmung), korrelationsbewusstes Staking.
+
+## 2026-06-15
+- [Beobachtung] Kalshi und Ensemble führen nach n=8 nahezu gleich: Kalshi Brier/RPS/LogLoss 0.6502/0.1928/1.0446, Ensemble 0.6502/0.1930/1.0622; Markt liegt knapp dahinter bei 0.6566/0.1953/1.0568.
+- [Beobachtung] Modell bleibt schwach kalibriert: Brier 0.7247, RPS 0.2253, LogLoss 1.1436, Treffer 3/8; Whale ist mit n=4 und Brier-Spannweite 0.0014-1.4648 zu variant fuer hoehere Gewichtung.
+- [Hypothese] Der kleine Ensemble-Vorsprung kommt eher aus punktueller Diversifikation als aus robuster Modellueberlegenheit; Markt/Buecher/Kalshi sind stark korreliert, und historische StatsBomb plus 0-Spiele-Form reichen noch nicht fuer verlaessliche Favoriten-Korrekturen.
+- [Aktion] `weights_suggestion` nur notieren, nicht anwenden: vorgeschlagen Markt 0.276, Buecher 0.244, Kalshi 0.147, Modell 0.198, Whale 0.135 bei status=data-driven/n=8; abwarten bis n>=15 und Stabilitaet ueber mehrere Tage pruefen.

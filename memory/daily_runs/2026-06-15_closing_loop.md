@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-06-15
 
-Stand: 2026-06-15T08:34:31 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-06-15T08:42:17 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -138,3 +138,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (α=0.35). Markt/Bücher/Kalshi korrelie
 - ⚠️ **Whale hochvariant** (Spannweite 0.001–1.465 über 4 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ **Modell schwach kalibriert** (Ø 0.725 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.650 vs. 0.657).
+
+## Hermes-Analyse
+
+Kalibrierung: Kalshi ist aktuell die beste voll besetzte Quelle (Ø Brier 0.6502, RPS 0.1928, LogLoss 1.0446, n=8). Das Ensemble liegt beim Brier gleichauf (0.6502) und beim RPS fast gleichauf (0.1930), verliert aber im LogLoss gegen Kalshi (1.0622 vs. 1.0446). Gegen den reinen Markt ist der Vorsprung real, aber klein: Brier 0.6502 vs. 0.6566 und RPS 0.1930 vs. 0.1953. Das ist ein Signal, aber noch kein Grund für aggressive Gewichtsänderungen.
+
+Auffällig schlecht bleibt das reine Modell (Ø Brier 0.7247, RPS 0.2253, LogLoss 1.1436, Treffer 3/8). Der Grund wirkt nicht wie ein einzelner Datenfehler, sondern wie strukturelle Überzeugung auf Favoriten-/Stärkeannahmen bei dünner Turnierform: StatsBomb ist historisch, FBref-Form steht bei 0 Spielen, und die heutigen Match-Qualitätsgründe nennen regelmäßig "Form 0 Sp.". In den beiden großen Fehlprognosen Qatar-Schweiz 1:1 und Australien-Türkei 2:0 war das Modell zwar jeweils weniger schlecht als Markt/Bücher/Kalshi, aber alle Hauptquellen lagen auf dem falschen Favoriten; das hilft dem Ensemble nur begrenzt, weil die Marktquellen stark korreliert sind.
+
+Positive Treffer: Deutschland-Korea war marktseitig praktisch sauber kalibriert (Bücher Brier 0.0042, Markt 0.0051, Ensemble 0.0124). Haiti-Schottland und USA-Paraguay zeigen, dass Whale-Signale einzelne Favoriten sehr gut treffen können (Whale Brier 0.0078 bzw. 0.0014), aber Australien-Türkei zeigt die Gegenprobe mit Whale Brier 1.4648. Daher bleibt die automatische Flag "Whale hochvariant" maßgeblich; n=4 reicht nicht für mehr Gewicht.
+
+Wetten/CLV: Die Referenz-Policy steht bei 7 Wetten, 43% Trefferquote und ROI -33.9%. CLV ist nur als Tendenz lesbar: beat-close 57.1% über n=7, aber der Report warnt zurecht, dass Snapshots noch zu eng beieinander liegen. Für die heutigen offenen Spiele sind 0 Value-Bets ausgewiesen; mehrere zentrale EVs sind zwar positiv, werden durch konservative p-Abzüge auf negative EVs gedrückt. Das ist im Sinne der Leitplanken richtig und sollte nicht aufgeweicht werden.
+
+Gewichte: `weights_suggestion.status=data-driven` bei n=8 liefert Markt 0.276, Bücher 0.244, Kalshi 0.147, Modell 0.198, Whale 0.135 gegenüber aktuell 0.300/0.250/0.100/0.200/0.150. Weil n=8 nur die Mindestschwelle ist und Markt/Bücher/Kalshi korreliert sind, heute keine Konfigurationsänderung empfehlen. Nächster Prüfpunkt: Stabilität bis mindestens n≥15, insbesondere ob Kalshi den LogLoss-Vorsprung hält und ob das Modell unter 0.70 Brier fällt.

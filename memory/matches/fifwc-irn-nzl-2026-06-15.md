@@ -1,6 +1,6 @@
 # IR Iran vs. New Zealand
 
-Datum: 2026-06-15  |  Stand: 2026-06-15T08:34:31
+Datum: 2026-06-15  |  Stand: 2026-06-15T08:42:17
 Quelle: [Polymarket](https://polymarket.com/event/fifwc-irn-nzl-2026-06-15) (Volumen $717,258)
 
 Ensemble: Iran 58.0% / Remis 24.2% / New Zealand 17.8%
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 0:0 — 9.7%
 - 2:1 — 8.8%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.6%, draw 0.2%, team2_win 0.2%
+Whale-Signal (10 Wallets, heuristisch): team1_win 99.9%, draw 0.0%, team2_win 0.1%
