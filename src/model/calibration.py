@@ -97,7 +97,8 @@ def _all_forecasts() -> dict:
             ou25 = (mc.get("over_under") or {}).get("2.5") or {}
             tops = mc.get("top_scorelines") or []
             entry["mc"] = {"over25": ou25.get("over"),
-                           "top_score": tops[0]["score"] if tops else None}
+                           "top_score": tops[0]["score"] if tops else None,
+                           "btts": (mc.get("events") or {}).get("btts")}
             if m.get("market"):
                 entry["sources"]["market"] = m["market"]["probs"]
                 entry["generated_at"] = m["market"].get("fetched_at", entry["generated_at"])
@@ -156,6 +157,8 @@ def evaluate(results: dict) -> dict:
     forecasts = _all_forecasts()
     rows = []
     tot_h = tot_m = ex_h = ex_m = 0   # Tore (Ueber/Unter 2.5) und exaktes Ergebnis
+    btts_h = btts_m = 0               # Beide treffen (BTTS)
+    favclr_h = favclr_m = 0           # Favorit NUR bei klarer Meinung (Ensemble-p > 50%)
     for slug, entries in forecasts.items():
         fc0 = entries[0]
         res = next((r for r in results["results"]
@@ -190,6 +193,20 @@ def evaluate(results: dict) -> dict:
                 ex_h += 1
             else:
                 ex_m += 1
+        if mcf.get("btts") is not None:
+            if (mcf["btts"] > 0.5) == (g1 > 0 and g2 > 0):
+                btts_h += 1
+            else:
+                btts_m += 1
+        # Favorit nur bei klarer Meinung (Ensemble-Spitzenwahrscheinlichkeit > 50%)
+        ens_fc = fc["sources"].get("ensemble")
+        if ens_fc:
+            pmax = max(ens_fc.values())
+            if pmax > 0.5:
+                if max(ens_fc, key=ens_fc.get) == outcome:
+                    favclr_h += 1
+                else:
+                    favclr_m += 1
 
         row = {"slug": slug, "result": f"{g1}:{g2}", "outcome": outcome,
                "snapshot_date": fc["snapshot_date"], "forecast_at": fc["generated_at"],
@@ -266,7 +283,9 @@ def evaluate(results: dict) -> dict:
     records = {
         "favorit": ({"hits": record["hits"], "misses": record["misses"],
                      "n": record["n"], "hit_rate": record["hit_rate"]} if record else None),
+        "favorit_klar": _rec(favclr_h, favclr_m),
         "tore": _rec(tot_h, tot_m),
+        "beide_treffen": _rec(btts_h, btts_m),
         "ergebnis": _rec(ex_h, ex_m),
     }
 

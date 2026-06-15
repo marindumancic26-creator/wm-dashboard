@@ -12,6 +12,9 @@ from flask import Flask, jsonify, render_template, request
 from src import config
 
 app = Flask(__name__)
+# Template-Aenderungen sofort ausliefern (kein Server-Neustart noetig fuer dashboard.html)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_env.auto_reload = True
 
 
 def _load_data():

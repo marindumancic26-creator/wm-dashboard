@@ -287,7 +287,9 @@ function renderRecordBox(){
     : '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a3142"><span>'+label+'</span><span class="dim">noch keine Daten</span></div>';
   $('recordBox').innerHTML=
     line('🎯 Favorit (Tendenz 1X2)',rc.favorit)+
+    line('🎯 Favorit nur bei p&gt;50%',rc.favorit_klar)+
     line('⚽ Tore (Über/Unter 2.5)',rc.tore)+
+    line('🥅 Beide treffen (BTTS)',rc.beide_treffen)+
     line('🔢 Ergebnis (exakter Endstand)',rc.ergebnis);
 }
 function renderCockpitWhales(){
