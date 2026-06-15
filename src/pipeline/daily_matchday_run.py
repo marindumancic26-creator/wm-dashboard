@@ -27,8 +27,49 @@ from src.data_sources import results_client
 from src.data_sources import statsbomb_client as sb
 from src.data_sources import venue_client
 from src.model import (calibration, closing_loop, data_quality, ensemble, features,
-                       injuries, knockout, monte_carlo, value_betting, weight_optimizer,
-                       whale_scoring)
+                       injuries, knockout, monte_carlo, parameter_tuning, value_betting,
+                       weight_optimizer, whale_scoring)
+
+
+def _compact_parameter_tuning(result: dict) -> dict:
+    cand = result.get("best_candidate") or {}
+    current = result.get("current") or {}
+    return {"status": result.get("status"),
+            "n": result.get("n"),
+            "current_elo_per_goal": current.get("elo_per_goal"),
+            "candidate_elo_per_goal": cand.get("elo_per_goal"),
+            "margin_rps_vs_current": cand.get("margin_rps_vs_current"),
+            "report_path": result.get("report_path"),
+            "note": result.get("note")}
+
+
+def _parameter_tuning_warning(result: dict) -> str | None:
+    if result.get("status") != "proposal":
+        return None
+    cand = result.get("best_candidate") or {}
+    current = result.get("current") or {}
+    return ("WARNUNG PARAMETER-TUNING: ELO_PER_GOAL-Wechsel empfohlen: "
+            f"aktuell {current.get('elo_per_goal')} -> Kandidat {cand.get('elo_per_goal')}; "
+            f"Walk-forward-RPS-Marge {cand.get('margin_rps_vs_current')}. "
+            "NICHT automatisch angewandt.")
+
+
+def _run_parameter_tuning(log: dict) -> dict | None:
+    """Analyse-Report erzeugen; Fehler duerfen den Daily-Run nicht abbrechen."""
+    try:
+        result = parameter_tuning.run()
+        compact = _compact_parameter_tuning(result)
+        warning = _parameter_tuning_warning(result)
+        if warning:
+            compact["proposal_warning"] = warning
+            log.setdefault("warnings", []).append(warning)
+        log["parameter_tuning"] = compact
+        return result
+    except Exception as exc:
+        msg = f"Parameter-Tuning fehlgeschlagen: {exc}"
+        log.setdefault("warnings", []).append(msg)
+        log["parameter_tuning"] = {"status": "error", "error": str(exc)}
+        return None
 
 
 def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
@@ -232,6 +273,7 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
                    "baseline_total_goals": config.BASELINE_TOTAL_GOALS},
         "calibration": calib,
         "weights_suggestion": weights_suggestion,
+        "parameter_tuning": None,
         "value_portfolio": portfolio,
         "opportunity_portfolio": opp_portfolio,
         "matches": match_results,
@@ -244,10 +286,19 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     snap_file.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     (config.DATA_PROCESSED / "dashboard_data.json").write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    # Parameter-Tuning laeuft nur als Analyse/Vorschlag. Es liest die gerade
+    # persistierten Pre-Kickoff-Snapshots und darf config.py nie veraendern.
+    tuning_result = _run_parameter_tuning(log)
+    payload["parameter_tuning"] = tuning_result
+    snap_file.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    (config.DATA_PROCESSED / "dashboard_data.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     _write_markdown(payload, today)
 
     # Deterministischer Closing-Loop-Report (automatische Tages-Lernzusammenfassung)
-    report = closing_loop.generate_report(calib, payload["generated_at"], weights_suggestion)
+    report = closing_loop.generate_report(calib, payload["generated_at"], weights_suggestion,
+                                          tuning_result)
     (config.DAILY_RUNS_DIR / f"{today}_closing_loop.md").write_text(report, encoding="utf-8")
 
     # Static-Export fürs Handy/GitHub Pages (self-contained docs/index.html)

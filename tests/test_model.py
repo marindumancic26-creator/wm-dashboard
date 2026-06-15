@@ -412,6 +412,82 @@ def test_parameter_tuning_selects_last_pre_kickoff_snapshot():
     assert parameter_tuning._select_last_pre_kickoff(entries)["id"] == "last_pre"
 
 
+def _proposal_tuning_result():
+    return {"status": "proposal",
+            "n": 50,
+            "current": {"elo_per_goal": 240.0, "rho": -0.10, "baseline_total_goals": 2.6},
+            "best_candidate": {"elo_per_goal": 220.0, "rho": -0.10,
+                               "margin_rps_vs_current": 0.014,
+                               "adoption_ready": True},
+            "report_path": "memory/parameter_tuning_report.md",
+            "note": "Vorschlag, keine Auto-Uebernahme."}
+
+
+def test_daily_pipeline_parameter_tuning_survives_exception(monkeypatch):
+    from src.pipeline import daily_matchday_run
+
+    def boom():
+        raise RuntimeError("synthetischer Fehler")
+
+    monkeypatch.setattr(daily_matchday_run.parameter_tuning, "run", boom)
+    log = {"warnings": []}
+
+    assert daily_matchday_run._run_parameter_tuning(log) is None
+    assert log["parameter_tuning"]["status"] == "error"
+    assert "synthetischer Fehler" in log["parameter_tuning"]["error"]
+    assert any("Parameter-Tuning fehlgeschlagen" in w for w in log["warnings"])
+
+
+def test_daily_pipeline_parameter_tuning_proposal_is_prominent(monkeypatch):
+    from src.pipeline import daily_matchday_run
+    from src.model.closing_loop import generate_report
+
+    proposal = _proposal_tuning_result()
+    monkeypatch.setattr(daily_matchday_run.parameter_tuning, "run", lambda: proposal)
+    log = {"warnings": []}
+
+    out = daily_matchday_run._run_parameter_tuning(log)
+    assert out == proposal
+    warning = log["parameter_tuning"]["proposal_warning"]
+    assert "ELO_PER_GOAL-Wechsel empfohlen" in warning
+    assert "aktuell 240.0 -> Kandidat 220.0" in warning
+    assert "NICHT automatisch angewandt" in warning
+    assert any(warning == w for w in log["warnings"])
+
+    calib = {"status": "live",
+             "matches": [{"slug": "m1", "result": "1-0", "outcome": "team1_win",
+                          "forecast_at": "2026-06-10T10:00:00+00:00",
+                          "brier": {"model": 0.1}}],
+             "summary": {"model": {"mean_brier": 0.1, "mean_rps": 0.05,
+                                    "mean_log_loss": 0.2, "n": 1}},
+             "record": {"hits": 1, "misses": 0, "hit_rate": 1.0, "n": 1,
+                        "source": "model"}}
+    report = generate_report(calib, "2026-06-15T08:00:00", None, proposal)
+    assert "Parameter-Tuning (ELO_PER_GOAL)" in report
+    assert "ELO_PER_GOAL-Wechsel empfohlen" in report
+    assert "aktuell `240.0` -> Kandidat `220.0`" in report
+    assert "Nicht automatisch angewandt" in report
+
+
+def test_daily_pipeline_parameter_tuning_does_not_mutate_config(monkeypatch):
+    from src import config
+    from src.pipeline import daily_matchday_run
+
+    config_text_before = Path(config.__file__).read_text(encoding="utf-8")
+    before = (config.ELO_PER_GOAL, config.DIXON_COLES_RHO,
+              config.BASELINE_TOTAL_GOALS, dict(config.ENSEMBLE_WEIGHTS))
+    monkeypatch.setattr(daily_matchday_run.parameter_tuning, "run",
+                        lambda: _proposal_tuning_result())
+
+    daily_matchday_run._run_parameter_tuning({"warnings": []})
+
+    after = (config.ELO_PER_GOAL, config.DIXON_COLES_RHO,
+             config.BASELINE_TOTAL_GOALS, dict(config.ENSEMBLE_WEIGHTS))
+    config_text_after = Path(config.__file__).read_text(encoding="utf-8")
+    assert after == before
+    assert config_text_after == config_text_before
+
+
 def test_value_betting_sigma_and_conservative():
     from src.model import value_betting as vb
     # sigma steigt mit Bandbreite und Diskrepanz

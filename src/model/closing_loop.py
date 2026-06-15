@@ -18,7 +18,29 @@ def _fmt(x):
     return f"{x:.3f}" if x is not None else "–"
 
 
-def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | None = None) -> str:
+def _parameter_tuning_section(parameter_tuning_result: dict | None) -> list[str]:
+    if not parameter_tuning_result:
+        return []
+    status = parameter_tuning_result.get("status")
+    n = parameter_tuning_result.get("n")
+    lines = ["## Parameter-Tuning (ELO_PER_GOAL)", ""]
+    if status == "proposal":
+        current = parameter_tuning_result.get("current") or {}
+        cand = parameter_tuning_result.get("best_candidate") or {}
+        lines.append("**WARNUNG: ELO_PER_GOAL-Wechsel empfohlen:** "
+                     f"aktuell `{current.get('elo_per_goal')}` -> "
+                     f"Kandidat `{cand.get('elo_per_goal')}`; "
+                     f"Walk-forward-RPS-Marge `{cand.get('margin_rps_vs_current')}`. "
+                     "**Nicht automatisch angewandt.**")
+    else:
+        note = parameter_tuning_result.get("note") or "Kein uebernahme-reifer Vorschlag."
+        lines.append(f"- Status `{status}` (n={n}): {note}")
+    lines.append("")
+    return lines
+
+
+def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | None = None,
+                    parameter_tuning_result: dict | None = None) -> str:
     """calib = Rueckgabe von calibration.evaluate(). Gibt Markdown zurueck."""
     lines = [f"# Closing-Loop-Report — {generated_at[:10]}", "",
              f"Stand: {generated_at} · automatisch erzeugt (deterministisch, ohne Claude).",
@@ -104,6 +126,9 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
             for s, w in ws["weights"].items():
                 lines.append(f"| {SOURCE_LABEL.get(s, s)} | {cur.get(s, 0)} | {w} |")
         lines.append("")
+
+    # --- Parameter-Tuning: nur Vorschlag, keine Auto-Uebernahme ----------
+    lines += _parameter_tuning_section(parameter_tuning_result)
 
     # --- Automatische Warnflags -----------------------------------------
     per_source: dict[str, list] = {}
