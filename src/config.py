@@ -152,7 +152,8 @@ TEAM_CODES = {
 import hashlib as _hashlib
 
 def _model_version() -> str:
-    fp = f"ens={ENSEMBLE_WEIGHTS}|dc={DIXON_COLES_RHO}|base={BASELINE_TOTAL_GOALS}|cv={MC_PARAM_UNCERTAINTY}"
+    fp = (f"ens={ENSEMBLE_WEIGHTS}|dc={DIXON_COLES_RHO}|elo_goal={ELO_PER_GOAL}|"
+          f"base={BASELINE_TOTAL_GOALS}|cv={MC_PARAM_UNCERTAINTY}")
     h = _hashlib.sha1(fp.encode()).hexdigest()[:8]
     return f"m-{h}"
 

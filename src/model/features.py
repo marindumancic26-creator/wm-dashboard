@@ -206,7 +206,11 @@ def team_strength(team: str, sb_profiles: dict, form: dict | None) -> dict:
 
 def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
                            elo_data: dict | None = None, form: dict | None = None,
-                           context: dict | None = None) -> dict:
+                           context: dict | None = None,
+                           elo_per_goal: float | None = None,
+                           rho: float | None = None,
+                           baseline_total_goals: float | None = None,
+                           replay_model: dict | None = None) -> dict:
     """Tor-Erwartungswerte aus Elo-Tordifferenz + getrennten Angriffs-/Abwehr-Staerken.
 
     Schritt 1: Elo-Differenz -> erwartete Tordifferenz GD (statt Win-Prob-Hack).
@@ -214,7 +218,17 @@ def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
     Schritt 3: opponent-adjustierte Angriffs-/Abwehr-Multiplikatoren.
     Schritt 4: Gastgeber-Bonus. Schritt 5: 1X2 analytisch mit Dixon-Coles.
     """
-    if elo_data:
+    # Optionales Offline-Replay nutzt gespeicherte Snapshot-Inputs statt Live-Quellen.
+    elo_per_goal = float(elo_per_goal if elo_per_goal is not None else config.ELO_PER_GOAL)
+    baseline_total_goals = float(baseline_total_goals if baseline_total_goals is not None
+                                 else config.BASELINE_TOTAL_GOALS)
+    if replay_model:
+        elo = replay_model.get("elo") or {}
+        e1 = float(elo.get("team1", config.ELO_RATINGS.get(team1, config.ELO_DEFAULT)))
+        e2 = float(elo.get("team2", config.ELO_RATINGS.get(team2, config.ELO_DEFAULT)))
+        elo_status = elo.get("status", "snapshot")
+        elo_as_of = elo.get("as_of", config.ELO_SNAPSHOT_DATE)
+    elif elo_data:
         from src.data_sources import elo_client
         e1 = elo_client.rating_for(team1, elo_data)
         e2 = elo_client.rating_for(team2, elo_data)
@@ -224,19 +238,24 @@ def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
         e1 = config.ELO_RATINGS.get(team1, config.ELO_DEFAULT)
         e2 = config.ELO_RATINGS.get(team2, config.ELO_DEFAULT)
         elo_status, elo_as_of = "estimated", config.ELO_SNAPSHOT_DATE
-    if team1 in HOSTS:
-        e1 += HOST_BONUS
-    if team2 in HOSTS:
-        e2 += HOST_BONUS
+    if not replay_model:
+        if team1 in HOSTS:
+            e1 += HOST_BONUS
+        if team2 in HOSTS:
+            e2 += HOST_BONUS
 
-    gd = (e1 - e2) / config.ELO_PER_GOAL
+    gd = (e1 - e2) / elo_per_goal
     gd = max(-2.2, min(2.2, gd))
-    total = config.BASELINE_TOTAL_GOALS
+    total = baseline_total_goals
     lam1 = max(0.15, (total + gd) / 2.0)
     lam2 = max(0.15, total - lam1)
 
-    s1 = team_strength(team1, sb_profiles, form)
-    s2 = team_strength(team2, sb_profiles, form)
+    if replay_model and replay_model.get("strength"):
+        s1 = replay_model["strength"].get("team1") or team_strength(team1, sb_profiles, form)
+        s2 = replay_model["strength"].get("team2") or team_strength(team2, sb_profiles, form)
+    else:
+        s1 = team_strength(team1, sb_profiles, form)
+        s2 = team_strength(team2, sb_profiles, form)
     mult1 = max(0.6, min(1.6, s1["attack"] * s2["defense"]))
     mult2 = max(0.6, min(1.6, s2["attack"] * s1["defense"]))
     lam1 = lam1 * mult1
@@ -244,6 +263,8 @@ def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
 
     # Spielort-Kontext (Höhe/Wetter): Gesamttor-Multiplikator + Höhen-Boni
     ctx_applied = None
+    if context is None and replay_model:
+        context = replay_model.get("venue_context")
     if context:
         tg = context.get("total_goals_mult", 1.0)
         m1 = context.get("team1_mult", 1.0)
@@ -259,7 +280,7 @@ def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
 
     lam1 = round(lam1, 3)
     lam2 = round(lam2, 3)
-    p1, pd, p2 = poisson_1x2(lam1, lam2)
+    p1, pd, p2 = poisson_1x2(lam1, lam2, rho=rho)
     used = []
     if s1["weight_attack"] > 0:
         used.append(team1)
@@ -272,8 +293,10 @@ def attack_defense_lambdas(team1: str, team2: str, sb_profiles: dict,
         "expected_goal_diff": round(gd, 3),
         "strength": {"team1": s1, "team2": s2},
         "tournament_form": ({"team1": s1, "team2": s2} if form else None),
-        "statsbomb_adjustment_applied_for": used,
-        "statsbomb_status": sb_profiles.get("status", "unavailable"),
+        "statsbomb_adjustment_applied_for": (
+            replay_model.get("statsbomb_adjustment_applied_for", used) if replay_model else used),
+        "statsbomb_status": (replay_model.get("statsbomb_status") if replay_model else None)
+                            or sb_profiles.get("status", "unavailable"),
         "venue_context": ctx_applied,
         "engine": "attack_defense_bipoisson",
     }

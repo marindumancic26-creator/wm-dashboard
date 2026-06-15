@@ -353,6 +353,65 @@ def test_model_version_stable():
     assert config.MODEL_VERSION.startswith("m-") and len(config.MODEL_VERSION) == 10
 
 
+def test_model_version_rotates_with_elo_per_goal(monkeypatch):
+    from src import config
+    base = config._model_version()
+    monkeypatch.setattr(config, "ELO_PER_GOAL", config.ELO_PER_GOAL + 20.0)
+    assert config._model_version() != base
+
+
+def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
+    return {"slug": f"m{i}", "team1": "A", "team2": "B",
+            "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",
+            "outcome": outcome,
+            "baseline_total_goals": 2.6,
+            "model": {
+                "elo": {"team1": elo1, "team2": elo2, "as_of": "snapshot", "status": "snapshot"},
+                "strength": {
+                    "team1": {"attack": 1.0, "defense": 1.0, "weight_attack": 0.0, "weight_defense": 0.0},
+                    "team2": {"attack": 1.0, "defense": 1.0, "weight_attack": 0.0, "weight_defense": 0.0},
+                },
+                "venue_context": None,
+                "statsbomb_status": "snapshot",
+            }}
+
+
+def test_parameter_tuning_prior_gate_under_20():
+    from src.model import parameter_tuning
+    out = parameter_tuning.suggest_parameter_tuning(
+        cases=[_tuning_case(i) for i in range(19)],
+        rho_anchor=-0.10,
+        run_historical_backtest=False,
+    )
+    assert out["status"] == "prior"
+    assert out["n"] == 19
+    assert out["grid"] == {}
+
+
+def test_parameter_tuning_grid_prefers_stronger_favorite_when_favorite_wins():
+    from src.model import parameter_tuning
+    out = parameter_tuning.suggest_parameter_tuning(
+        cases=[_tuning_case(i) for i in range(20)],
+        rho_anchor=-0.10,
+        run_historical_backtest=False,
+    )
+    assert out["status"] == "diagnostic"
+    cand = out["best_candidate"]
+    assert cand["elo_per_goal"] == min(parameter_tuning.ELO_GRID)
+    assert cand["margin_rps_vs_current"] > 0
+    assert out["grid"]["rho_sanity"]  # rho wird nur als Sanity-Flaeche berichtet
+
+
+def test_parameter_tuning_selects_last_pre_kickoff_snapshot():
+    from src.model import parameter_tuning
+    entries = [
+        {"forecast_at": "2026-06-10T08:00:00+00:00", "kickoff_utc": "2026-06-10T12:00:00Z", "id": "early"},
+        {"forecast_at": "2026-06-10T11:59:00+00:00", "kickoff_utc": "2026-06-10T12:00:00Z", "id": "last_pre"},
+        {"forecast_at": "2026-06-10T12:01:00+00:00", "kickoff_utc": "2026-06-10T12:00:00Z", "id": "post"},
+    ]
+    assert parameter_tuning._select_last_pre_kickoff(entries)["id"] == "last_pre"
+
+
 def test_value_betting_sigma_and_conservative():
     from src.model import value_betting as vb
     # sigma steigt mit Bandbreite und Diskrepanz
