@@ -1,7 +1,7 @@
 # France vs. Senegal
 
-Datum: 2026-06-16  |  Stand: 2026-06-15T07:30:55
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-sen-2026-06-16) (Volumen $664,371)
+Datum: 2026-06-16  |  Stand: 2026-06-15T08:26:23
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-sen-2026-06-16) (Volumen $721,867)
 
 Ensemble: France 64.1% / Remis 22.3% / Senegal 13.6%
 Erwartete Tore: 2.004 : 0.818

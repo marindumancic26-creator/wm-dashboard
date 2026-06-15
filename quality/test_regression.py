@@ -180,5 +180,21 @@ def test_bug010_canonical_team_and_matchers_none_safe():
     assert _team_eq("Spain", "Spain") is True        # echte Treffer bleiben
 
 
+def test_feature_record_count_in_report():
+    """Feature: Trefferbilanz (richtig/falsch) erscheint im Tagesreport + R/F-Spalte."""
+    from src.model.closing_loop import generate_report
+    calib = {"status": "live",
+             "record": {"source": "ensemble", "hits": 5, "misses": 3, "n": 8, "hit_rate": 0.625},
+             "matches": [{"slug": "m1", "result": "1:0", "outcome": "team1_win",
+                          "brier": {"ensemble": 0.2}}],
+             "summary": {"ensemble": {"mean_rps": 0.2, "mean_brier": 0.3, "mean_log_loss": 0.4,
+                                      "hit_rate": 0.625, "n": 8, "hits": 5, "misses": 3}},
+             "betting": {}}
+    rep = generate_report(calib, "2026-06-15T10:00:00")
+    assert "Trefferbilanz" in rep
+    assert "5 richtig" in rep and "3 falsch" in rep
+    assert "5/3" in rep  # R/F-Spalte in der Bestenliste
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

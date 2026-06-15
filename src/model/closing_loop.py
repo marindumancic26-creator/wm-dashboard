@@ -33,6 +33,14 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
         lines.append("> Noch keine aufgelösten Spiele mit sauberer Pre-Kickoff-Prognose.")
         return "\n".join(lines)
 
+    # --- Trefferbilanz (richtig/falsch der Headline-Prognose) -----------
+    rec = calib.get("record")
+    if rec:
+        lines += ["## Trefferbilanz (Headline-Prognose)", "",
+                  f"**✅ {rec['hits']} richtig · ❌ {rec['misses']} falsch** "
+                  f"— Trefferquote {rec['hit_rate']*100:.0f}% über n={rec['n']} Spiele "
+                  f"({SOURCE_LABEL.get(rec['source'], rec['source'])}).", ""]
+
     # --- Pro Spiel -------------------------------------------------------
     lines += [f"## Aufgelöste Spiele ({len(matches)})", ""]
     for m in matches:
@@ -51,8 +59,8 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     # --- Rollierende Bestenliste (Brier / LogLoss / Hit-Rate) -----------
     summary = calib.get("summary", {})
     lines += ["## Rollierende Bestenliste (alle aufgelösten Spiele)", "",
-              "| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | n |",
-              "|---|---|---|---|---|---|---|"]
+              "| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | R/F | n |",
+              "|---|---|---|---|---|---|---|---|"]
     # nach RPS sortieren (Fussball-Standard); RPS==0.0 ist gueltig (perfekt) und darf NICHT
     # als falsy auf den Brier zurueckfallen -> explizit auf None pruefen.
     def _rank_key(kv):
@@ -62,7 +70,8 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     for rank, (src, s) in enumerate(ranking, 1):
         lines.append(f"| {rank} | {SOURCE_LABEL.get(src, src)} | {_fmt(s['mean_brier'])} "
                      f"| {_fmt(s.get('mean_rps'))} | {_fmt(s.get('mean_log_loss'))} "
-                     f"| {s.get('hit_rate', 0)*100:.0f}% | {s['n']} |")
+                     f"| {s.get('hit_rate', 0)*100:.0f}% | {s.get('hits', 0)}/{s.get('misses', 0)} "
+                     f"| {s['n']} |")
     lines += ["", "_RPS = Ranked Probability Score (ordinal, Fußball-Standard). "
                   "Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._", ""]
 

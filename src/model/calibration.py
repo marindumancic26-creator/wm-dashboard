@@ -202,10 +202,12 @@ def evaluate(results: dict) -> dict:
             ll = [r["log_loss"][src] for r in rows if src in r["log_loss"]]
             rp = [r["rps"][src] for r in rows if src in r.get("rps", {})]
             h = [r["hit"][src] for r in rows if src in r["hit"]]
+            hits = sum(h)
             summary[src] = {"mean_brier": round(sum(b) / len(b), 4),
                             "mean_log_loss": round(sum(ll) / len(ll), 4),
                             "mean_rps": round(sum(rp) / len(rp), 4) if rp else None,
-                            "hit_rate": round(sum(h) / len(h), 4), "n": len(b)}
+                            "hit_rate": round(sum(h) / len(h), 4), "n": len(b),
+                            "hits": hits, "misses": len(h) - hits}
 
     # --- Wett-Summary: ROI + CLV ---
     bets = [r["bet"] for r in rows if r.get("bet")]
@@ -224,7 +226,16 @@ def evaluate(results: dict) -> dict:
         betting["beat_close_rate"] = round(sum(1 for x in beats if x) / len(beats), 4)
         betting["n_clv"] = len(beats)
 
+    # --- Trefferbilanz: richtig/falsch der HEADLINE-Prognose (Ensemble, sonst Modell) ---
+    rec_src = "ensemble" if "ensemble" in summary else ("model" if "model" in summary else None)
+    record = None
+    if rec_src:
+        s = summary[rec_src]
+        record = {"source": rec_src, "hits": s["hits"], "misses": s["misses"],
+                  "n": s["n"], "hit_rate": s["hit_rate"]}
+
     return {"status": "live", "n_resolved": len(rows), "matches": rows,
-            "summary": summary, "betting": betting,
+            "summary": summary, "betting": betting, "record": record,
             "note": "Brier 0=perfekt/0.667=Zufall; LogLoss 0=perfekt/1.099=Zufall. "
-                    "ROI/CLV: Referenz-Policy auf Ensemble-Favorit, letzter Pre-Kickoff-Snapshot."}
+                    "ROI/CLV: Referenz-Policy auf Ensemble-Favorit, letzter Pre-Kickoff-Snapshot. "
+                    "record = Treffer/Fehl der Headline-Prognose (argmax == Ergebnis)."}

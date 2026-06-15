@@ -431,18 +431,21 @@ function render(){
   // Kalibrierung
   const cal=DATA.calibration;
   if(cal&&cal.status==='live'&&cal.summary&&Object.keys(cal.summary).length){
-    $('calibTable').innerHTML='<tr><th>Quelle</th><th>Ø Brier ↓</th><th>Ø RPS ↓</th><th>Ø LogLoss ↓</th><th>Hit ↑</th><th>n</th></tr>'+
+    $('calibTable').innerHTML='<tr><th>Quelle</th><th>Ø Brier ↓</th><th>Ø RPS ↓</th><th>Ø LogLoss ↓</th><th>Hit ↑</th><th>R/F</th><th>n</th></tr>'+
       Object.entries(cal.summary).sort((a,b2)=>(a[1].mean_rps??a[1].mean_brier)-(b2[1].mean_rps??b2[1].mean_brier))
         .map(([s,v])=>'<tr><td>'+esc(s)+'</td><td class="mono">'+v.mean_brier.toFixed(3)+
           '</td><td class="mono">'+(v.mean_rps!=null?v.mean_rps.toFixed(3):'–')+
           '</td><td class="mono">'+(v.mean_log_loss!=null?v.mean_log_loss.toFixed(3):'–')+
           '</td><td class="mono">'+(v.hit_rate!=null?(v.hit_rate*100).toFixed(0)+'%':'–')+
+          '</td><td class="mono">'+((v.hits??0)+'/'+(v.misses??0))+
           '</td><td class="mono">'+v.n+'</td></tr>').join('');
     const bet=cal.betting||{};
     let betLine='';
     if(bet.n_bets){ betLine=' · Referenz-Policy ('+bet.n_bets+' Wetten): ROI <b>'+(bet.roi*100>=0?'+':'')+(bet.roi*100).toFixed(1)+'%</b>'+
       (bet.avg_clv_odds!=null?', Ø CLV '+(bet.avg_clv_odds*100>=0?'+':'')+(bet.avg_clv_odds*100).toFixed(2)+'%':', CLV noch nicht messbar'); }
-    $('calibNote').innerHTML='Brier 0.667 / LogLoss 1.099 = Zufall. '+cal.n_resolved+' Spiele aufgelöst.'+betLine;
+    const rec=cal.record;
+    const recLine=rec?('<b>✅ '+rec.hits+' richtig · ❌ '+rec.misses+' falsch</b> (Trefferquote '+Math.round((rec.hit_rate||0)*100)+'%, '+esc(rec.source)+'). '):'';
+    $('calibNote').innerHTML=recLine+'Brier 0.667 / LogLoss 1.099 = Zufall. '+cal.n_resolved+' Spiele aufgelöst.'+betLine;
   } else {
     $('calibTable').innerHTML='';
     $('calibNote').textContent=cal&&cal.note?cal.note:'Noch keine aufgelösten Spiele oder kein football-data.org-Key.';

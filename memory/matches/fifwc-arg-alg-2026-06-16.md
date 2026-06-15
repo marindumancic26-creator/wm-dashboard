@@ -1,7 +1,7 @@
 # Argentina vs. Algeria
 
-Datum: 2026-06-16  |  Stand: 2026-06-15T07:30:55
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-arg-alg-2026-06-16) (Volumen $481,010)
+Datum: 2026-06-16  |  Stand: 2026-06-15T08:26:23
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-arg-alg-2026-06-16) (Volumen $493,590)
 
 Ensemble: Argentina 71.9% / Remis 19.2% / Algeria 8.8%
 Erwartete Tore: 2.198 : 0.647

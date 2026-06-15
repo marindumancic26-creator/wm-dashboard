@@ -1,7 +1,7 @@
 # Sweden vs. Tunisia
 
-Datum: 2026-06-14  |  Stand: 2026-06-15T07:30:55
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-swe-tun-2026-06-14) (Volumen $21,718,214)
+Datum: 2026-06-14  |  Stand: 2026-06-15T08:26:23
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-swe-tun-2026-06-14) (Volumen $21,820,291)
 
 Ensemble: Sweden 83.5% / Remis 9.0% / Tunisia 7.5%
 Erwartete Tore: 2.947 : 0.488

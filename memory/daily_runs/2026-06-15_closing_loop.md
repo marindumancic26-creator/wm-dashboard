@@ -1,7 +1,11 @@
 # Closing-Loop-Report — 2026-06-15
 
-Stand: 2026-06-15T07:30:55 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-06-15T08:26:23 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
+
+## Trefferbilanz (Headline-Prognose)
+
+**✅ 4 richtig · ❌ 4 falsch** — Trefferquote 50% über n=8 Spiele (Ensemble).
 
 ## Aufgelöste Spiele (8)
 
@@ -99,14 +103,14 @@ Prognose-Stand: 2026-06-14T16:03:55+00:00
 
 ## Rollierende Bestenliste (alle aufgelösten Spiele)
 
-| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | n |
-|---|---|---|---|---|---|---|
-| 1 | Kalshi | 0.650 | 0.193 | 1.045 | 50% | 8 |
-| 2 | Ensemble | 0.650 | 0.193 | 1.062 | 50% | 8 |
-| 3 | Polymarkt | 0.657 | 0.195 | 1.057 | 50% | 8 |
-| 4 | Buchmacher | 0.655 | 0.196 | 1.052 | 50% | 8 |
-| 5 | Modell | 0.725 | 0.225 | 1.144 | 38% | 8 |
-| 6 | Whale | 0.719 | 0.242 | 1.444 | 50% | 4 |
+| Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | R/F | n |
+|---|---|---|---|---|---|---|---|
+| 1 | Kalshi | 0.650 | 0.193 | 1.045 | 50% | 4/4 | 8 |
+| 2 | Ensemble | 0.650 | 0.193 | 1.062 | 50% | 4/4 | 8 |
+| 3 | Polymarkt | 0.657 | 0.195 | 1.057 | 50% | 4/4 | 8 |
+| 4 | Buchmacher | 0.655 | 0.196 | 1.052 | 50% | 4/4 | 8 |
+| 5 | Modell | 0.725 | 0.225 | 1.144 | 38% | 3/5 | 8 |
+| 6 | Whale | 0.719 | 0.242 | 1.444 | 50% | 2/2 | 4 |
 
 _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._
 
