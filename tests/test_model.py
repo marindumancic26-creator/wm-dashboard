@@ -354,6 +354,32 @@ def test_value_betting_stake_capped():
     assert r["stake_pct"] <= 0.75 + 1e-9
 
 
+def test_weight_optimizer_treats_market_sources_as_one_block():
+    from src import config
+    from src.model import weight_optimizer
+
+    calib = {"n_resolved": 100,
+             "summary": {
+                 "market": {"mean_log_loss": 0.10},
+                 "books": {"mean_log_loss": 0.10},
+                 "kalshi": {"mean_log_loss": 0.10},
+                 "model": {"mean_log_loss": 1.00},
+                 "whale": {"mean_log_loss": 1.00},
+             }}
+    out = weight_optimizer.suggest_weights(calib)
+    weights = out["weights"]
+    market_block = weights["market"] + weights["books"] + weights["kalshi"]
+
+    assert out["status"] == "data-driven"
+    assert "Markt-Block" in out["note"]
+    assert market_block < 0.80, weights
+    assert weights["model"] > 0.10 and weights["whale"] > 0.10, weights
+
+    small_n = weight_optimizer.suggest_weights(dict(calib, n_resolved=weight_optimizer.MIN_N - 1))
+    assert small_n["status"] == "prior"
+    assert small_n["weights"] == dict(config.ENSEMBLE_WEIGHTS)
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_"):
