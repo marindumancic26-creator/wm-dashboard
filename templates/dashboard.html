@@ -6,12 +6,12 @@
 <title>WM 2026 — Prognose-Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   /* Arbeits-Dashboard: hohe Lesbarkeit, stabile Touch-Ziele, klare Semantik. */
   :root { --bg:#0b0c0e; --panel:#15171a; --panel2:#20242a; --soft:#101214; --line:#363b44; --line2:#242932;
           --tx:#f7f8fa; --body:#d4d8df; --dim:#969eab;
-          --acc:#62a8ff; --good:#34d399; --warn:#fbbf24; --bad:#fb7185;
+          --acc:#62a8ff; --accent:#D97706; --good:#34d399; --warn:#fbbf24; --bad:#fb7185;
           --m1:#2f81f7; --m2:#34d399; --m3:#fb7185; --focus:#f8d66d; }
   .m-stripe { height:3px; width:100%; background:linear-gradient(90deg,var(--m1) 0 33.3%,var(--m2) 33.3% 66.6%,var(--m3) 66.6% 100%); }
   * { box-sizing:border-box; }
@@ -29,6 +29,8 @@
   button { min-height:44px; background:transparent; color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:9px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; touch-action:manipulation; transition:background-color .18s ease,color .18s ease,border-color .18s ease; }
   button:hover { background:var(--tx); color:var(--bg); cursor:pointer; border-color:var(--tx); }
   button:disabled { opacity:.55; cursor:not-allowed; background:var(--panel2); color:var(--dim); border-color:var(--line); }
+  #refreshBtn { color:var(--accent); border-color:var(--accent); background:rgba(217,119,6,.08); }
+  #refreshBtn:hover:not(:disabled) { background:var(--accent); color:#101214; border-color:var(--accent); }
   button:focus-visible, select:focus-visible, a:focus-visible, input[type=range]:focus-visible, [tabindex]:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
   .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; padding:16px 20px 32px; max-width:1500px; margin:0 auto; }
   .card { background:var(--panel); border:1px solid var(--line2); border-radius:8px; padding:16px; box-shadow:0 1px 0 rgba(255,255,255,.03),0 12px 30px rgba(0,0,0,.18); }
@@ -56,7 +58,7 @@
   input[type=range]{ flex:1; accent-color:var(--acc); }
   .src-link { color:var(--acc); text-decoration:none; }
   .src-link:hover { text-decoration:underline; }
-  .dim { color:var(--dim); } .mono { font-variant-numeric:tabular-nums; }
+  .dim { color:var(--dim); } .mono { font-family:"Fira Code",ui-monospace,monospace; font-variant-numeric:tabular-nums; font-weight:500; }
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   .dq-pill { display:inline-flex; align-items:center; gap:5px; justify-content:flex-end; white-space:nowrap; }
   .dq-dot { display:inline-block; width:10px; height:10px; border-radius:50%; border:1px solid rgba(255,255,255,.35); }
@@ -660,9 +662,9 @@ async function renderOddsHistory(slug,t1,t2){
     const ens=s.map(p=>p.ensemble?p.ensemble.team1_win:null);
     const imp=s.map(p=>p.odds&&p.odds.team1_win?1/p.odds.team1_win:null);
     mkChart('oddsHistChart',{type:'line',data:{labels,datasets:[
-      {label:'Markt '+t1,data:mkt,borderColor:'#4fa3ff',tension:.2,spanGaps:true},
-      {label:'Ensemble '+t1,data:ens,borderColor:'#f0b35e',tension:.2,spanGaps:true},
-      {label:'Bestquote-implied',data:imp,borderColor:'#6ee0d8',borderDash:[4,3],tension:.2,spanGaps:true}]},
+      {label:'Markt '+t1,data:mkt,borderColor:'#4fa3ff',backgroundColor:hexToRgba('#4fa3ff',.2),borderDash:LINE_DASHES[0],tension:.2,spanGaps:true},
+      {label:'Ensemble '+t1,data:ens,borderColor:'#f0b35e',backgroundColor:hexToRgba('#f0b35e',.2),borderDash:LINE_DASHES[1],tension:.2,spanGaps:true},
+      {label:'Bestquote-implied',data:imp,borderColor:'#6ee0d8',backgroundColor:hexToRgba('#6ee0d8',.2),borderDash:LINE_DASHES[2],tension:.2,spanGaps:true}]},
       options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100).toFixed(0)+'%'}}}}});
     $('oddsHistNote').textContent=s.length<=1?'Nur 1 Snapshot — Verlauf füllt sich, sobald der 09:00-Job Tage im Voraus läuft.':s.length+' Snapshots.';
   }catch(e){ $('oddsHistNote').textContent='Verlauf nicht verfügbar.'; }
@@ -675,9 +677,9 @@ function renderCalibTime(){
   const labels=ms.map((m,i)=>'#'+(i+1));
   const cum=(src)=>{let sum=0,n=0; return ms.map(m=>{if(m.brier&&m.brier[src]!=null){sum+=m.brier[src];n++;} return n?sum/n:null;});};
   mkChart('calibTimeChart',{type:'line',data:{labels,datasets:[
-    {label:'Markt',data:cum('market'),borderColor:'#4fa3ff',tension:.2,spanGaps:true},
-    {label:'Ensemble',data:cum('ensemble'),borderColor:'#f0b35e',tension:.2,spanGaps:true},
-    {label:'Modell',data:cum('model'),borderColor:'#3ecf8e',tension:.2,spanGaps:true}]},
+    {label:'Markt',data:cum('market'),borderColor:'#4fa3ff',backgroundColor:hexToRgba('#4fa3ff',.2),borderDash:LINE_DASHES[0],tension:.2,spanGaps:true},
+    {label:'Ensemble',data:cum('ensemble'),borderColor:'#f0b35e',backgroundColor:hexToRgba('#f0b35e',.2),borderDash:LINE_DASHES[1],tension:.2,spanGaps:true},
+    {label:'Modell',data:cum('model'),borderColor:'#3ecf8e',backgroundColor:hexToRgba('#3ecf8e',.2),borderDash:LINE_DASHES[2],tension:.2,spanGaps:true}]},
     options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}}},scales:{x:axis,y:axis}}});
   $('calibTimeNote').textContent=ms.length+' Spiel(e). Reliability-Diagramm folgt ab ~20 Spielen.';
 }
@@ -696,7 +698,9 @@ function renderReliability(){
     const s=rel.sources&&rel.sources[src];
     if(!s||!s.bins||!s.bins.length)return;
     datasets.push({label:src,data:s.bins.map(b=>({x:b.avg_pred,y:b.observed,r:b.n})),
-      borderColor:colors[src],backgroundColor:colors[src],pointRadius:4,showLine:true,tension:.15});
+      borderColor:colors[src],backgroundColor:hexToRgba(colors[src],.2),
+      borderDash:LINE_DASHES[datasets.length % LINE_DASHES.length],
+      pointRadius:4,showLine:true,tension:.15});
   });
   mkChart('reliabilityChart',{type:'scatter',data:{datasets},
     options:{plugins:{legend:{labels:{color:'#d8dee9',boxWidth:10,font:{size:10}}},
@@ -710,20 +714,29 @@ function renderReliability(){
         ticks:{...axis.ticks,callback:v=>(v*100).toFixed(0)+'%'}}}}});
   $('reliabilityNote').textContent=rel.n+' aufgeloeste Spiele. Punkte sind 1X2-Wahrscheinlichkeits-Bins je Quelle; Diagonale = perfekt kalibriert.';
 }
+const LINE_DASHES=[[],[6,4],[2,3],[8,3,2,3],[10,4],[3,5]];
+function hexToRgba(hex,a){
+  const h=hex.replace('#','');
+  const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
 const axis={ticks:{color:'#8893a5'},grid:{color:'#2a3140'}};
 function mkBar(id,labels,data,label){
   mkChart(id,{type:'bar',data:{labels,datasets:[{label,data,backgroundColor:'#4fa3ff'}]},
     options:{plugins:{legend:{display:false}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
 }
 function mkGrouped(id,labels,sets){
-  mkChart(id,{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.label,data:s.data,backgroundColor:s.color}))},
+  mkChart(id,{type:'bar',data:{labels,datasets:sets.map((s,i)=>({
+    label:s.label,data:s.data,backgroundColor:hexToRgba(s.color,.22),
+    borderColor:s.color,borderWidth:2,borderDash:LINE_DASHES[i % LINE_DASHES.length],
+  }))},
     options:{plugins:{legend:{labels:{color:'#d8dee9'}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
 }
 function mkBand(id,labels,lo,hi,mid){
   mkChart(id,{type:'bar',data:{labels,datasets:[
-    {label:'P05',data:lo,backgroundColor:'rgba(79,163,255,0.25)'},
-    {label:'Punkt',data:mid,backgroundColor:'#4fa3ff'},
-    {label:'P95',data:hi,backgroundColor:'rgba(79,163,255,0.55)'}]},
+    {label:'P05',data:lo,backgroundColor:'rgba(79,163,255,0.18)',borderColor:'#4fa3ff',borderWidth:2,borderDash:LINE_DASHES[1]},
+    {label:'Punkt',data:mid,backgroundColor:'rgba(79,163,255,0.24)',borderColor:'#4fa3ff',borderWidth:2,borderDash:LINE_DASHES[0]},
+    {label:'P95',data:hi,backgroundColor:'rgba(79,163,255,0.18)',borderColor:'#4fa3ff',borderWidth:2,borderDash:LINE_DASHES[2]}]},
     options:{plugins:{legend:{labels:{color:'#d8dee9'}}},scales:{x:axis,y:{...axis,ticks:{...axis.ticks,callback:v=>(v*100)+'%'}}}}});
 }
 
