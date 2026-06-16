@@ -4,34 +4,41 @@
 <meta charset="utf-8">
 <title>WM 2026 — Prognose-Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#11141a; --panel:#1a1f29; --line:#2a3140; --tx:#d8dee9; --dim:#8893a5;
-          --acc:#4fa3ff; --good:#3ecf8e; --warn:#f0b35e; --bad:#e36b6b; }
+  /* BMW-M-inspiriert: schwarzer Canvas, weiße Inter-Headlines, M-Tricolor als Signatur */
+  :root { --bg:#000000; --panel:#1a1a1a; --panel2:#262626; --soft:#0d0d0d; --line:#3c3c3c; --line2:#262626;
+          --tx:#ffffff; --body:#bbbbbb; --dim:#7e7e7e;
+          --acc:#1c69d4; --good:#0fa336; --warn:#f4b400; --bad:#e22718;
+          --m1:#0066b1; --m2:#1c69d4; --m3:#e22718; }
+  .m-stripe { height:4px; width:100%; background:linear-gradient(90deg,var(--m1) 0 33.3%,var(--m2) 33.3% 66.6%,var(--m3) 66.6% 100%); }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--tx); font:13px/1.45 "Segoe UI",system-ui,sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--body); font:300 13px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
   header { display:flex; gap:16px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  header h1 { font-size:16px; margin:0; }
+  header h1 { font-size:18px; margin:0; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--tx); }
   nav.tabs { display:flex; gap:2px; padding:0 16px; border-bottom:1px solid var(--line); background:var(--bg); position:sticky; top:0; z-index:20; flex-wrap:wrap; }
-  .tabbtn { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--dim); padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer; border-radius:0; }
+  .tabbtn { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--body); padding:12px 16px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; cursor:pointer; border-radius:0; }
   .tabbtn:hover { color:var(--tx); }
-  .tabbtn.active { color:var(--acc); border-bottom-color:var(--acc); }
-  select,button { background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:4px; padding:5px 9px; font-size:13px; }
-  button:hover { border-color:var(--acc); cursor:pointer; }
+  .tabbtn.active { color:var(--tx); border-bottom-color:var(--tx); }
+  select { background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:0; padding:6px 10px; font-size:13px; }
+  button { background:transparent; color:var(--tx); border:1px solid var(--tx); border-radius:0; padding:7px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; }
+  button:hover { background:var(--tx); color:var(--bg); cursor:pointer; }
   .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:10px; padding:12px 16px; max-width:1500px; margin:0 auto; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 12px; }
-  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 0 8px; }
+  .card { background:var(--panel); border:1px solid var(--line2); border-radius:0; padding:14px 16px; }
+  .card h2 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--dim); margin:0 0 10px; }
   .c3{grid-column:span 3} .c4{grid-column:span 4} .c6{grid-column:span 6} .c8{grid-column:span 8} .c12{grid-column:span 12}
   table { border-collapse:collapse; width:100%; font-size:12.5px; }
   th,td { padding:3px 7px; text-align:right; border-bottom:1px solid var(--line); }
   th:first-child,td:first-child { text-align:left; }
   th { color:var(--dim); font-weight:600; }
   .big { font-size:22px; font-weight:700; }
-  .tag { display:inline-block; padding:1px 7px; border-radius:9px; font-size:10.5px; font-weight:600; margin-left:6px; vertical-align:middle; }
+  .tag { display:inline-block; padding:2px 7px; border-radius:0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-left:6px; vertical-align:middle; }
   .tag.live{background:#1d4030;color:var(--good)} .tag.historical{background:#3a3320;color:var(--warn)}
   .tag.estimated{background:#3a2a3a;color:#d39ad3} .tag.unavailable{background:#402626;color:var(--bad)}
   .tag.cached{background:#22304a;color:var(--acc)}
   .matrix td { width:34px; text-align:center; padding:4px 2px; font-size:11px; border:1px solid var(--bg); }
-  .disclaimer { background:#33231d; border:1px solid #5c3b2a; color:#e8b48f; padding:8px 12px; border-radius:6px; font-size:12px; }
+  .disclaimer { background:var(--soft); border:1px solid var(--line2); border-left:3px solid var(--warn); color:var(--body); padding:10px 14px; border-radius:0; font-size:12px; }
   .slider-row { display:flex; align-items:center; gap:8px; margin:4px 0; }
   .slider-row label { width:130px; color:var(--dim); }
   .slider-row output { width:38px; text-align:right; }
@@ -39,7 +46,7 @@
   .src-link { color:var(--acc); text-decoration:none; }
   .dim { color:var(--dim); } .mono { font-variant-numeric:tabular-nums; }
   #status { font-size:12px; color:var(--dim); }
-  .bar { height:18px; display:flex; border-radius:4px; overflow:hidden; margin:6px 0; font-size:11px; color:#fff; }
+  .bar { height:18px; display:flex; border-radius:0; overflow:hidden; margin:6px 0; font-size:11px; color:#fff; }
   .bar div { display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
 </style>
 </head>
@@ -50,6 +57,7 @@
   <button id="refreshBtn" title="Pipeline neu ausführen (1–2 min)">⟳ Daten aktualisieren</button>
   <span id="status"></span>
 </header>
+<div class="m-stripe"></div>
 
 <nav class="tabs" id="tabbar" style="display:none">
   <button class="tabbtn active" data-tab="cockpit">📊 Cockpit</button>
