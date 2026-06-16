@@ -28,6 +28,7 @@
   select { min-height:44px; background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:8px 12px; font-size:14px; max-width:min(100%,520px); }
   button { min-height:44px; background:transparent; color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:9px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; touch-action:manipulation; transition:background-color .18s ease,color .18s ease,border-color .18s ease; }
   button:hover { background:var(--tx); color:var(--bg); cursor:pointer; border-color:var(--tx); }
+  button:disabled { opacity:.55; cursor:not-allowed; background:var(--panel2); color:var(--dim); border-color:var(--line); }
   button:focus-visible, select:focus-visible, a:focus-visible, input[type=range]:focus-visible, [tabindex]:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
   .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; padding:16px 20px 32px; max-width:1500px; margin:0 auto; }
   .card { background:var(--panel); border:1px solid var(--line2); border-radius:8px; padding:16px; box-shadow:0 1px 0 rgba(255,255,255,.03),0 12px 30px rgba(0,0,0,.18); }
@@ -56,6 +57,9 @@
   .src-link { color:var(--acc); text-decoration:none; }
   .src-link:hover { text-decoration:underline; }
   .dim { color:var(--dim); } .mono { font-variant-numeric:tabular-nums; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .dq-pill { display:inline-flex; align-items:center; gap:5px; justify-content:flex-end; white-space:nowrap; }
+  .dq-dot { display:inline-block; width:10px; height:10px; border-radius:50%; border:1px solid rgba(255,255,255,.35); }
   #status { font-size:12px; color:var(--dim); }
   canvas { display:block; width:100%; max-width:100%; }
   .bar { min-height:24px; display:flex; border-radius:6px; overflow:hidden; margin:8px 0; font-size:11px; color:#fff; }
@@ -109,7 +113,7 @@
     <h2>Cockpit — alle Spiele
       <button id="csvBtn" style="float:right;font-size:11px;padding:3px 8px;min-height:36px">CSV-Export</button>
     </h2>
-    <table id="cockpitTable"></table>
+    <table id="cockpitTable" aria-label="Cockpit-Tabelle aller Spiele"></table>
     <div class="dim" style="margin-top:6px">Klick auf eine Zeile öffnet das Spiel unten im Detail. Sortierbar per Klick auf Spaltenkopf. DQ = Datenqualität.</div>
   </div>
 
@@ -121,14 +125,14 @@
 
   <div class="card c8">
     <h2>Cockpit — Top-Whale-Wallets <span class="tag estimated">heuristic</span></h2>
-    <table id="cockpitWhaleTable"></table>
+    <table id="cockpitWhaleTable" aria-label="Top Whale Wallets im aktuellen Lauf"></table>
     <div class="dim" style="margin-top:6px">Höchstbewertete Wallets über alle heutigen Spiele (Score-gewichtete Yes-Exposure, heuristisch — keine verifizierte Nutzer-Historie öffentlich).</div>
   </div>
 
   <div class="card c12" id="valueRankCard">
     <h2>Value-Ranking & Einsatzverteilung <span class="tag estimated">Ensemble-Chancen</span></h2>
     <div class="disclaimer" id="valueRankWarn" style="margin-bottom:8px"></div>
-    <table id="valueRankTable"></table>
+    <table id="valueRankTable" aria-label="Value-Ranking und Einsatzverteilung"></table>
     <div class="dim" id="valueRankNote" style="margin-top:6px"></div>
   </div>
 
@@ -136,7 +140,7 @@
     <h2>1X2 — Ensemble <span class="tag estimated">blend</span></h2>
     <div id="headline"></div>
     <div class="bar" id="probBar"></div>
-    <table id="probTable"></table>
+    <table id="probTable" aria-label="1X2-Wahrscheinlichkeiten nach Quelle"></table>
     <div id="koNote" style="margin-top:6px"></div>
   </div>
 
@@ -152,7 +156,7 @@
 
   <div class="card c4">
     <h2>Datenquellen-Status</h2>
-    <table id="sourceTable"></table>
+    <table id="sourceTable" aria-label="Status der Datenquellen"></table>
   </div>
 
   <div class="card c4">
@@ -165,20 +169,20 @@
   </div>
   <div class="card c4">
     <h2>Over / Under</h2>
-    <table id="ouTable"></table>
+    <table id="ouTable" aria-label="Over-Under-Wahrscheinlichkeiten"></table>
   </div>
 
   <div class="card c4">
     <h2>Scoreline-Matrix (P in %)</h2>
-    <table class="matrix" id="matrixTable"></table>
+    <table class="matrix" id="matrixTable" aria-label="Scoreline-Matrix der simulierten Ergebnisse"></table>
   </div>
   <div class="card c4">
     <h2>Top-Ergebnisse</h2>
-    <table id="topScores"></table>
+    <table id="topScores" aria-label="Top simulierte Ergebnisse"></table>
   </div>
   <div class="card c4">
     <h2>Spielereignisse <span class="tag estimated">simuliert</span></h2>
-    <table id="eventTable"></table>
+    <table id="eventTable" aria-label="Simulierte Spielereignisse"></table>
     <div class="dim" style="margin-top:6px">Abgeleitet aus der Tor-Simulation; keine Karten-/Ecken-Daten öffentlich verfügbar.</div>
   </div>
 
@@ -194,17 +198,17 @@
   <div class="card c12">
     <h2>Wettmarkt & Expected Value <span class="tag live">echte Quoten</span></h2>
     <div id="evMeta" class="dim" style="margin-bottom:6px"></div>
-    <table id="evTable"></table>
+    <table id="evTable" aria-label="Expected-Value-Tabelle mit Buchmacherquoten"></table>
     <div id="evWatch" style="margin-top:8px"></div>
     <h2 style="margin-top:14px">Zusatzmärkte (BTTS / Doppelte Chance / DNB)</h2>
     <div id="extraMeta" class="dim" style="margin-bottom:4px"></div>
-    <table id="extraTable"></table>
+    <table id="extraTable" aria-label="Zusatzmärkte mit Modell-Fairquoten"></table>
     <div class="dim" style="margin-top:6px">EV = konservative Wahrscheinlichkeit × Bestquote − 1. Konservativ = min(Modell, scharfer Markt) − Sicherheitsabschlag (low −3 / med −6 / high −10 pp). Zusatzmärkte ohne API-Quote: Modell-Fairquote ist nur Orientierung; recherchierte Web-/manuelle Quoten sind als Quelle markiert. <b>Keine Wettberatung.</b></div>
   </div>
 
   <div class="card c4">
     <h2>Spielort & Kontext</h2>
-    <table id="venueTable"></table>
+    <table id="venueTable" aria-label="Spielort und Kontextdaten"></table>
   </div>
   <div class="card c4">
     <h2>Quotenverlauf — Sieg Favorit (Modell vs. Markt)</h2>
@@ -224,7 +228,7 @@
 
   <div class="card c4">
     <h2>Kalibrierung (Brier Score je Quelle)</h2>
-    <table id="calibTable"></table>
+    <table id="calibTable" aria-label="Kalibrierungswerte je Quelle"></table>
     <div class="dim" id="calibNote" style="margin-top:6px"></div>
   </div>
   <div class="card c8">
@@ -234,7 +238,7 @@
   </div>
   <div class="card c8">
     <h2>Top-Wallets (Whale-Scoring, heuristisch) <span class="tag estimated">heuristic</span></h2>
-    <table id="whaleTable"></table>
+    <table id="whaleTable" aria-label="Whale-Scoring-Tabelle"></table>
   </div>
 </main>
 
@@ -297,7 +301,12 @@ function showTab(tab){
 }
 
 const AMPEL={green:'#3ecf8e',amber:'#f0b35e',red:'#e36b6b'};
-function dot(tier){ return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(AMPEL[tier]||'#566173')+'"></span>'; }
+const DQ_LABEL={green:'gruen',amber:'gelb',red:'rot'};
+function dot(tier){
+  const label=DQ_LABEL[tier]||'unbekannt';
+  return '<span class="dq-pill" title="Datenqualitaet '+label+'"><span class="dq-dot" style="background:'+
+    (AMPEL[tier]||'#566173')+'"></span><span>'+label+'</span></span>';
+}
 
 let cockpitSort={key:'ev',dir:-1};
 function cockpitRows(){
@@ -477,11 +486,11 @@ function render(){
   const sb=DATA.run_log.statsbomb;
   $('sourceTable').innerHTML=
     '<tr><td>Polymarket 1X2</td><td><span class="tag live">live</span></td><td class="mono">'+M.market.fetched_at+'</td></tr>'+
-    '<tr><td><a class="src-link" href="'+M.market.url+'" target="_blank">Markt öffnen ↗</a></td><td class="mono">Vol $'+Number(M.market.volume_usd).toLocaleString()+'</td><td class="mono">Σraw '+M.market.raw_sum+'</td></tr>'+
+    '<tr><td><a class="src-link" href="'+M.market.url+'" target="_blank" rel="noopener noreferrer">Markt öffnen ↗</a></td><td class="mono">Vol $'+Number(M.market.volume_usd).toLocaleString()+'</td><td class="mono">Σraw '+M.market.raw_sum+'</td></tr>'+
     '<tr><td>Buchmacher ('+(M.books?M.books.basis:'–')+')</td><td><span class="tag '+(M.books?'live':'unavailable')+'">'+(M.books?'live':'unavailable')+'</span></td><td class="mono">'+(M.books?M.books.n_bookmakers+' Bücher, OR '+M.books.overround:'Key fehlt')+'</td></tr>'+
     '<tr><td>StatsBomb ('+sb.mode+')</td><td><span class="tag '+sb.status+'">'+sb.status+'</span></td><td class="mono">'+sb.teams+' Teams</td></tr>'+
     '<tr><td>Elo (eloratings.net)</td><td><span class="tag '+(DATA.config.elo_status==='live'?'live':'estimated')+'">'+DATA.config.elo_status+'</span></td><td class="mono">'+DATA.config.elo_as_of+'</td></tr>'+
-    '<tr><td>Kalshi'+(M.kalshi?' <a class="src-link" href="'+M.kalshi.url+'" target="_blank">↗</a>':'')+'</td><td><span class="tag '+(M.kalshi?'live':'unavailable')+'">'+(M.kalshi?'live':'unavailable')+'</span></td><td class="mono">'+(M.kalshi?M.kalshi.volume_contracts.toLocaleString()+' Kontrakte':'–')+'</td></tr>'+
+    '<tr><td>Kalshi'+(M.kalshi?' <a class="src-link" href="'+M.kalshi.url+'" target="_blank" rel="noopener noreferrer">↗</a>':'')+'</td><td><span class="tag '+(M.kalshi?'live':'unavailable')+'">'+(M.kalshi?'live':'unavailable')+'</span></td><td class="mono">'+(M.kalshi?M.kalshi.volume_contracts.toLocaleString()+' Kontrakte':'–')+'</td></tr>'+
     '<tr><td>ESPN-Status</td><td><span class="tag '+(M.match_info?'live':'unavailable')+'">'+(M.match_info?'live (unofficial)':'unavailable')+'</span></td><td class="mono">'+esc(M.match_info?M.match_info.status:'–')+'</td></tr>'+
     '<tr><td>FBref-Turnierform</td><td><span class="tag '+(M.model.tournament_form?'live':'unavailable')+'">'+(M.model.tournament_form?'live':'keine Spiele')+'</span></td><td class="mono">'+(M.model.tournament_form?Object.values(M.model.tournament_form).map(f=>f.matches+' Sp. ('+f.basis+')').join(' / '):'–')+'</td></tr>'+
     '<tr><td>Whale-Signal</td><td><span class="tag estimated">heuristic</span></td><td class="mono">'+(M.whale?M.whale.n_wallets_scored+' Wallets':'–')+'</td></tr>'+
@@ -735,9 +744,18 @@ document.querySelectorAll('.tabbtn').forEach((b,idx,btns)=>{
   e.target.nextElementSibling.value=e.target.value+'%'; render();
 }));
 $('refreshBtn').addEventListener('click',async()=>{
+  const btn=$('refreshBtn');
+  btn.disabled=true;
+  btn.setAttribute('aria-busy','true');
+  btn.textContent='Daten laufen';
   $('status').textContent='Pipeline läuft… (1–2 min)';
   try{ await fetch('/api/refresh',{method:'POST'}); await load(); }
   catch(e){ $('status').textContent='Refresh fehlgeschlagen: '+e; }
+  finally{
+    btn.disabled=false;
+    btn.removeAttribute('aria-busy');
+    btn.textContent='Daten aktualisieren';
+  }
 });
 load();
 </script>
