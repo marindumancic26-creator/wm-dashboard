@@ -8,87 +8,106 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  /* BMW-M-inspiriert: schwarzer Canvas, weiße Inter-Headlines, M-Tricolor als Signatur */
-  :root { --bg:#000000; --panel:#1a1a1a; --panel2:#262626; --soft:#0d0d0d; --line:#3c3c3c; --line2:#262626;
-          --tx:#ffffff; --body:#bbbbbb; --dim:#7e7e7e;
-          --acc:#1c69d4; --good:#0fa336; --warn:#f4b400; --bad:#e22718;
-          --m1:#0066b1; --m2:#1c69d4; --m3:#e22718; }
-  .m-stripe { height:4px; width:100%; background:linear-gradient(90deg,var(--m1) 0 33.3%,var(--m2) 33.3% 66.6%,var(--m3) 66.6% 100%); }
+  /* Arbeits-Dashboard: hohe Lesbarkeit, stabile Touch-Ziele, klare Semantik. */
+  :root { --bg:#0b0c0e; --panel:#15171a; --panel2:#20242a; --soft:#101214; --line:#363b44; --line2:#242932;
+          --tx:#f7f8fa; --body:#d4d8df; --dim:#969eab;
+          --acc:#62a8ff; --good:#34d399; --warn:#fbbf24; --bad:#fb7185;
+          --m1:#2f81f7; --m2:#34d399; --m3:#fb7185; --focus:#f8d66d; }
+  .m-stripe { height:3px; width:100%; background:linear-gradient(90deg,var(--m1) 0 33.3%,var(--m2) 33.3% 66.6%,var(--m3) 66.6% 100%); }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--body); font:300 13px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
-  header { display:flex; gap:16px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  header h1 { font-size:18px; margin:0; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--tx); }
-  nav.tabs { display:flex; gap:2px; padding:0 16px; border-bottom:1px solid var(--line); background:var(--bg); position:sticky; top:0; z-index:20; flex-wrap:wrap; }
-  .tabbtn { background:transparent; border:none; border-bottom:2px solid transparent; color:var(--body); padding:12px 16px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; cursor:pointer; border-radius:0; }
-  .tabbtn:hover { color:var(--tx); }
-  .tabbtn.active { color:var(--tx); border-bottom-color:var(--tx); }
-  select { background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:0; padding:6px 10px; font-size:13px; }
-  button { background:transparent; color:var(--tx); border:1px solid var(--tx); border-radius:0; padding:7px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; }
-  button:hover { background:var(--tx); color:var(--bg); cursor:pointer; }
-  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:10px; padding:12px 16px; max-width:1500px; margin:0 auto; }
-  .card { background:var(--panel); border:1px solid var(--line2); border-radius:0; padding:14px 16px; }
-  .card h2 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--dim); margin:0 0 10px; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--body); font:400 14px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  .skip-link { position:absolute; left:12px; top:-48px; z-index:100; background:var(--tx); color:var(--bg); padding:10px 14px; border-radius:6px; font-weight:700; }
+  .skip-link:focus { top:12px; outline:3px solid var(--focus); outline-offset:2px; }
+  header { display:flex; gap:12px; align-items:center; padding:12px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; background:var(--soft); }
+  header h1 { font-size:18px; margin:0; font-weight:700; color:var(--tx); line-height:1.2; }
+  nav.tabs { display:flex; gap:4px; padding:0 20px; border-bottom:1px solid var(--line); background:var(--bg); position:sticky; top:0; z-index:20; flex-wrap:wrap; }
+  .tabbtn { min-height:44px; background:transparent; border:none; border-bottom:3px solid transparent; color:var(--body); padding:12px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; cursor:pointer; border-radius:6px 6px 0 0; touch-action:manipulation; transition:background-color .18s ease,color .18s ease,border-color .18s ease; }
+  .tabbtn:hover { background:var(--panel); color:var(--tx); }
+  .tabbtn.active { color:var(--tx); border-bottom-color:var(--acc); background:var(--panel); }
+  select { min-height:44px; background:var(--panel); color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:8px 12px; font-size:14px; max-width:min(100%,520px); }
+  button { min-height:44px; background:transparent; color:var(--tx); border:1px solid var(--line); border-radius:6px; padding:9px 14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; touch-action:manipulation; transition:background-color .18s ease,color .18s ease,border-color .18s ease; }
+  button:hover { background:var(--tx); color:var(--bg); cursor:pointer; border-color:var(--tx); }
+  button:focus-visible, select:focus-visible, a:focus-visible, input[type=range]:focus-visible, [tabindex]:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; padding:16px 20px 32px; max-width:1500px; margin:0 auto; }
+  .card { background:var(--panel); border:1px solid var(--line2); border-radius:8px; padding:16px; box-shadow:0 1px 0 rgba(255,255,255,.03),0 12px 30px rgba(0,0,0,.18); }
+  .card h2 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0; color:var(--dim); margin:0 0 12px; }
   .c3{grid-column:span 3} .c4{grid-column:span 4} .c6{grid-column:span 6} .c8{grid-column:span 8} .c12{grid-column:span 12}
   table { border-collapse:collapse; width:100%; font-size:12.5px; }
-  th,td { padding:3px 7px; text-align:right; border-bottom:1px solid var(--line); }
+  th,td { padding:7px 8px; text-align:right; border-bottom:1px solid var(--line); vertical-align:middle; }
   th:first-child,td:first-child { text-align:left; }
   th { color:var(--dim); font-weight:600; }
+  tbody tr:hover, tr[tabindex]:hover { background:rgba(255,255,255,.035); }
+  .sortbtn { min-height:32px; padding:4px 0; border:0; color:var(--dim); background:transparent; text-transform:none; font-size:12px; width:100%; text-align:inherit; }
+  .sortbtn:hover { color:var(--tx); background:transparent; }
   .big { font-size:22px; font-weight:700; }
-  .tag { display:inline-block; padding:2px 7px; border-radius:0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-left:6px; vertical-align:middle; }
-  /* BMW-M: monochrome Carbon-Chips, Semantik nur über die Textfarbe (keine Fremdfarben/Fills) */
+  .tag { display:inline-block; padding:2px 7px; border-radius:999px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0; margin-left:6px; vertical-align:middle; border:1px solid var(--line); }
+  /* Status-Chips: Text + Farbe, damit Bedeutung nicht nur ueber Farbe laeuft. */
   .tag.live{background:var(--panel2);color:var(--good)} .tag.historical{background:var(--panel2);color:var(--warn)}
   .tag.estimated{background:var(--panel2);color:var(--dim)} .tag.unavailable{background:var(--panel2);color:var(--bad)}
   .tag.cached{background:var(--panel2);color:var(--acc)}
   .matrix td { width:34px; text-align:center; padding:4px 2px; font-size:11px; border:1px solid var(--bg); }
-  .disclaimer { background:var(--soft); border:1px solid var(--line2); border-left:3px solid var(--warn); color:var(--body); padding:10px 14px; border-radius:0; font-size:12px; }
+  .disclaimer { background:var(--soft); border:1px solid var(--line2); border-left:4px solid var(--warn); color:var(--body); padding:12px 14px; border-radius:8px; font-size:12.5px; }
   .slider-row { display:flex; align-items:center; gap:8px; margin:4px 0; }
   .slider-row label { width:130px; color:var(--dim); }
   .slider-row output { width:38px; text-align:right; }
+  .slider-row input { min-height:44px; }
   input[type=range]{ flex:1; accent-color:var(--acc); }
   .src-link { color:var(--acc); text-decoration:none; }
+  .src-link:hover { text-decoration:underline; }
   .dim { color:var(--dim); } .mono { font-variant-numeric:tabular-nums; }
   #status { font-size:12px; color:var(--dim); }
-  .bar { height:18px; display:flex; border-radius:0; overflow:hidden; margin:6px 0; font-size:11px; color:#fff; }
+  canvas { display:block; width:100%; max-width:100%; }
+  .bar { min-height:24px; display:flex; border-radius:6px; overflow:hidden; margin:8px 0; font-size:11px; color:#fff; }
   .bar div { display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
   /* Mobile: 12-Spalten-Grid auf 1-spaltig, breite Tabellen scrollen horizontal in der Karte */
   @media (max-width: 820px) {
     .grid { grid-template-columns:1fr; padding:12px; }
     .c3,.c4,.c6,.c8,.c12 { grid-column:1 / -1; }
     .card { overflow-x:auto; }
-    header { gap:8px; padding:10px 12px; }
-    header h1 { font-size:15px; letter-spacing:.5px; }
+    header { gap:8px; padding:12px; }
+    header h1 { font-size:16px; flex-basis:100%; }
     nav.tabs { padding:0 8px; }
-    .tabbtn { padding:10px 10px; font-size:11px; letter-spacing:1px; }
+    .tabbtn { padding:10px 10px; font-size:11px; flex:1 1 auto; }
     table { font-size:11.5px; }
+    th,td { padding:8px 7px; }
+    select, #refreshBtn { width:100%; }
+    .slider-row { align-items:flex-start; flex-direction:column; gap:2px; }
+    .slider-row label, .slider-row output { width:auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
   }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
 <header>
-  <h1>⚽ WM 2026 Prognosen</h1>
-  <select id="matchSel"></select>
-  <button id="refreshBtn" title="Pipeline neu ausführen (1–2 min)">⟳ Daten aktualisieren</button>
-  <span id="status"></span>
+  <h1>WM 2026 Prognosen</h1>
+  <label class="dim" for="matchSel">Spiel</label>
+  <select id="matchSel" aria-label="Spiel auswählen"></select>
+  <button id="refreshBtn" title="Pipeline neu ausführen (1–2 min)" aria-label="Daten aktualisieren">Daten aktualisieren</button>
+  <span id="status" aria-live="polite"></span>
 </header>
 <div class="m-stripe"></div>
 
-<nav class="tabs" id="tabbar" style="display:none">
-  <button class="tabbtn active" data-tab="cockpit">📊 Cockpit</button>
-  <button class="tabbtn" data-tab="detail">🔍 Spiel-Detail</button>
-  <button class="tabbtn" data-tab="value">💰 Value &amp; Wetten</button>
-  <button class="tabbtn" data-tab="calib">🎯 Kalibrierung</button>
+<nav class="tabs" id="tabbar" style="display:none" role="tablist" aria-label="Dashboard-Bereiche">
+  <button class="tabbtn active" role="tab" aria-selected="true" tabindex="0" data-tab="cockpit">Cockpit</button>
+  <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="detail">Spiel-Detail</button>
+  <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="value">Value &amp; Wetten</button>
+  <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="calib">Kalibrierung</button>
 </nav>
 
-<div class="grid" id="content" style="display:none">
+<main class="grid" id="content" style="display:none" tabindex="-1">
   <div class="card c12 disclaimer">
-    ⚠️ <b>Keine Finanz- oder Wettberatung.</b> Prognosemärkte können fehlerhaft, illiquide, manipuliert oder unvollständig sein.
+    <b>Keine Finanz- oder Wettberatung.</b> Prognosemärkte können fehlerhaft, illiquide, manipuliert oder unvollständig sein.
     Modellwerte sind Schätzungen mit Unsicherheit. Whale-Scores sind heuristisch (keine verifizierte Nutzer-Historie öffentlich).
     StatsBomb Open Data ist historisch (WM 2018/2022), nicht tagesaktuell für 2026.
   </div>
 
   <div class="card c12">
     <h2>Cockpit — alle Spiele
-      <button id="csvBtn" style="float:right;font-size:11px;padding:3px 8px">⬇ CSV-Export</button>
+      <button id="csvBtn" style="float:right;font-size:11px;padding:3px 8px;min-height:36px">CSV-Export</button>
     </h2>
     <table id="cockpitTable"></table>
     <div class="dim" style="margin-top:6px">Klick auf eine Zeile öffnet das Spiel unten im Detail. Sortierbar per Klick auf Spaltenkopf. DQ = Datenqualität.</div>
@@ -138,11 +157,11 @@
 
   <div class="card c4">
     <h2>Monte-Carlo: Gesamttore <span class="tag estimated">simuliert</span></h2>
-    <canvas id="totalChart" height="170"></canvas>
+    <canvas id="totalChart" height="170" role="img" aria-label="Verteilung der simulierten Gesamttore"></canvas>
   </div>
   <div class="card c4">
     <h2>Tore pro Team</h2>
-    <canvas id="teamGoalsChart" height="170"></canvas>
+    <canvas id="teamGoalsChart" height="170" role="img" aria-label="Verteilung der simulierten Tore pro Team"></canvas>
   </div>
   <div class="card c4">
     <h2>Over / Under</h2>
@@ -165,11 +184,11 @@
 
   <div class="card c6">
     <h2>Markt vs. Modell vs. Whale</h2>
-    <canvas id="srcChart" height="180"></canvas>
+    <canvas id="srcChart" height="180" role="img" aria-label="Vergleich der Wahrscheinlichkeiten nach Quelle"></canvas>
   </div>
   <div class="card c6">
     <h2>Unsicherheit (5–95 % Band, Parameter-Resampling)</h2>
-    <canvas id="bandChart" height="180"></canvas>
+    <canvas id="bandChart" height="180" role="img" aria-label="Unsicherheitsband der 1X2-Wahrscheinlichkeiten"></canvas>
   </div>
 
   <div class="card c12">
@@ -189,12 +208,12 @@
   </div>
   <div class="card c4">
     <h2>Quotenverlauf — Sieg Favorit (Modell vs. Markt)</h2>
-    <canvas id="oddsHistChart" height="170"></canvas>
+    <canvas id="oddsHistChart" height="170" role="img" aria-label="Quotenverlauf des Favoriten"></canvas>
     <div class="dim" id="oddsHistNote" style="margin-top:4px"></div>
   </div>
   <div class="card c4">
     <h2>Kalibrierung über Zeit (Ø Brier kumuliert)</h2>
-    <canvas id="calibTimeChart" height="170"></canvas>
+    <canvas id="calibTimeChart" height="170" role="img" aria-label="Kumulierte Kalibrierung über Zeit"></canvas>
     <div class="dim" id="calibTimeNote" style="margin-top:4px"></div>
   </div>
 
@@ -210,14 +229,14 @@
   </div>
   <div class="card c8">
     <h2>Kalibrierung - Reliability-Plot <span class="tag estimated">ab n&gt;=20</span></h2>
-    <canvas id="reliabilityChart" height="180"></canvas>
+    <canvas id="reliabilityChart" height="180" role="img" aria-label="Reliability-Plot der Kalibrierung"></canvas>
     <div class="dim" id="reliabilityNote" style="margin-top:6px"></div>
   </div>
   <div class="card c8">
     <h2>Top-Wallets (Whale-Scoring, heuristisch) <span class="tag estimated">heuristic</span></h2>
     <table id="whaleTable"></table>
   </div>
-</div>
+</main>
 
 <script>
 let DATA=null, M=null, charts={};
@@ -268,7 +287,12 @@ function showTab(tab){
     const t=card.dataset.tab;
     card.style.display=(t==='all'||t===tab)?'':'none';
   });
-  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tabbtn').forEach(b=>{
+    const active=b.dataset.tab===tab;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-selected',active?'true':'false');
+    b.tabIndex=active?0:-1;
+  });
   if(M) render();   // Charts im jetzt sichtbaren Tab korrekt dimensionieren
 }
 
@@ -292,11 +316,11 @@ function renderCockpit(){
   const rows=cockpitRows();
   rows.sort((a,b)=>{const k=cockpitSort.key; let va=a[k],vb=b[k]; if(typeof va==='string'){return cockpitSort.dir*va.localeCompare(vb);} return cockpitSort.dir*((va||0)-(vb||0));});
   const hdr=[['title','Spiel'],['pick','Favorit'],['pickp','p'],['mkt','Markt'],['bestEv','bester EV'],['nvalue','Value'],['risk','Risiko'],['dqscore','DQ']];
-  let html='<tr>'+hdr.map(([k,l])=>'<th style="cursor:pointer" onclick="setCockpitSort(\''+k+'\')">'+l+(cockpitSort.key===k?(cockpitSort.dir<0?' ▼':' ▲'):'')+'</th>').join('')+'<th>Status</th></tr>';
+  let html='<tr>'+hdr.map(([k,l])=>'<th><button class="sortbtn" aria-label="Nach '+l+' sortieren" onclick="setCockpitSort(\''+k+'\')">'+l+(cockpitSort.key===k?(cockpitSort.dir<0?' ▼':' ▲'):'')+'</button></th>').join('')+'<th>Status</th></tr>';
   html+=rows.map(r=>{
     const evc=r.bestEv>0?'var(--good)':'var(--bad)';
     const st=r.state==='post'?'beendet':(r.state==='in'?'LIVE':'offen');
-    return '<tr style="cursor:pointer" onclick="selectMatch('+r.i+')"><td>'+esc(r.title)+'</td><td>'+esc(r.pick)+'</td><td class="mono">'+pct(r.pickp)+
+    return '<tr tabindex="0" role="button" aria-label="Spiel '+esc(r.title)+' öffnen" style="cursor:pointer" onclick="selectMatch('+r.i+')" onkeydown="rowKey(event,'+r.i+')"><td>'+esc(r.title)+'</td><td>'+esc(r.pick)+'</td><td class="mono">'+pct(r.pickp)+
       '</td><td class="mono">'+pct(r.mkt)+'</td><td class="mono" style="color:'+evc+'">'+(r.bestEv*100).toFixed(1)+'%</td>'+
       '<td class="mono">'+(r.nvalue||'–')+'</td><td>'+(r.risk||'–')+'</td><td>'+dot(r.dq)+' <span class="mono">'+r.dqscore.toFixed(2)+'</span></td><td class="dim">'+st+'</td></tr>';
   }).join('');
@@ -308,15 +332,15 @@ function renderRecordBox(){
   const rc=(DATA.calibration&&DATA.calibration.records)||{};
   const line=(label,r)=> r&&r.n
     ? '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #2a3142"><span>'+label+'</span>'+
-      '<span class="mono"><b style="color:var(--good)">✅ '+r.hits+'</b> · <b style="color:var(--bad)">❌ '+r.misses+'</b> '+
+      '<span class="mono"><b style="color:var(--good)">R '+r.hits+'</b> · <b style="color:var(--bad)">F '+r.misses+'</b> '+
       '<span class="dim">('+Math.round((r.hit_rate||0)*100)+'%, n='+r.n+')</span></span></div>'
     : '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a3142"><span>'+label+'</span><span class="dim">noch keine Daten</span></div>';
   $('recordBox').innerHTML=
-    line('🎯 Favorit (Tendenz 1X2)',rc.favorit)+
-    line('🎯 Favorit nur bei p&gt;50%',rc.favorit_klar)+
-    line('⚽ Tore (Über/Unter 2.5)',rc.tore)+
-    line('🥅 Beide treffen (BTTS)',rc.beide_treffen)+
-    line('🔢 Ergebnis (exakter Endstand)',rc.ergebnis);
+    line('Favorit (Tendenz 1X2)',rc.favorit)+
+    line('Favorit nur bei p&gt;50%',rc.favorit_klar)+
+    line('Tore (Über/Unter 2.5)',rc.tore)+
+    line('Beide treffen (BTTS)',rc.beide_treffen)+
+    line('Ergebnis (exakter Endstand)',rc.ergebnis);
 }
 function renderCockpitWhales(){
   const seen={};
@@ -331,10 +355,11 @@ function renderCockpitWhales(){
       '<td class="mono">'+(w.resolved_hit_rate_heuristic!=null?(w.resolved_hit_rate_heuristic*100).toFixed(0)+'%':'–')+'</td>'+
       '<td class="mono">'+(w.volume_usd_football!=null?Number(w.volume_usd_football).toLocaleString():'–')+'</td>'+
       '<td class="mono">'+(w.n_trades_football||0)+'</td>'+
-      '<td>'+(w.football_specialist?'⭐':'')+'</td>'+
+      '<td>'+(w.football_specialist?'ja':'nein')+'</td>'+
       '<td class="dim">'+esc(w.match||'')+'</td></tr>').join('');
 }
 function setCockpitSort(k){ if(cockpitSort.key===k)cockpitSort.dir*=-1; else {cockpitSort.key=k;cockpitSort.dir=-1;} renderCockpit(); }
+function rowKey(e,i){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); selectMatch(i); } }
 function selectMatch(i){ $('matchSel').value=i; show(i); showTab('detail'); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function renderValueRanking(){
@@ -343,7 +368,7 @@ function renderValueRanking(){
   const cs=(DATA.calibration&&DATA.calibration.summary)||{};
   const md=cs.model, wh=cs.whale, mk=cs.market;
   const nres=(DATA.calibration&&DATA.calibration.n_resolved)||0;
-  let warn='⚠️ <b>Diese Rangliste ist KEIN belegtes Wettsignal.</b> Die „Chancen" entstehen, weil unsere '+
+  let warn='<b>Diese Rangliste ist KEIN belegtes Wettsignal.</b> Die „Chancen" entstehen, weil unsere '+
     '<b>Ensemble-Schätzung</b> vom Markt abweicht — getrieben v.a. vom <b>unvalidierten Whale-Signal</b> '+
     '(Positionen einzelner Wallets, hochvariant). ';
   if(nres>0 && md){
@@ -359,7 +384,7 @@ function renderValueRanking(){
   if(!plan.length){ $('valueRankTable').innerHTML=''; $('valueRankNote').textContent='Aktuell keine Chancen mit positivem Erwartungswert gefunden.'; return; }
   $('valueRankTable').innerHTML='<tr><th>#</th><th>Spiel</th><th>Markt</th><th>Auswahl</th><th>Bestquote</th><th>Anbieter</th><th>Break-even</th><th>Modell-p</th><th>EV</th><th>Risiko</th><th>Einsatz %</th></tr>'+
     plan.map((b,i)=>{
-      const star=b.is_value?' ⭐':'';
+      const star=b.is_value?' <span class="tag live">streng</span>':'';
       return '<tr><td class="dim">'+(i+1)+'</td><td>'+esc(b.match)+'</td><td>'+esc(b.market)+'</td><td>'+esc(b.selection)+star+'</td><td class="mono">'+b.best_odds.toFixed(2)+
       '</td><td class="dim">'+esc(b.book)+'</td><td class="mono">'+pct(b.breakeven_prob)+'</td><td class="mono">'+pct(b.p_model)+
       '</td><td class="mono" style="color:var(--good)">+'+(b.ev_at_model*100).toFixed(0)+'%</td><td>'+b.risk+
@@ -368,7 +393,7 @@ function renderValueRanking(){
   const ns=op.n_strict_value||0;
   $('valueRankNote').innerHTML='Ranking nach empfohlenem Einsatz. EV/Wahrscheinlichkeit basieren auf unserer <b>Ensemble-Schätzung</b> (Modell+Markt), nicht auf der ultrastrengen Grenze. '+
     '<b>Gesamteinsatz '+op.total_stake_pct+'% der Bankroll</b>'+(op.scaled_down?' (auf 6% gedeckelt)':'')+', Viertel-Kelly × Risiko/Datenqualität, max. 2%/Spiel. '+
-    '⭐ = erreicht auch die strenge konservative Schwelle ('+ns+'/'+plan.length+'). <b>Keine Wettberatung</b> — Einsätze klein halten.';
+    '<span class="tag live">streng</span> = erreicht auch die strenge konservative Schwelle ('+ns+'/'+plan.length+'). <b>Keine Wettberatung</b> — Einsätze klein halten.';
 }
 
 function exportCSV(){
@@ -514,7 +539,7 @@ function render(){
     if(bet.n_bets){ betLine=' · Referenz-Policy ('+bet.n_bets+' Wetten): ROI <b>'+(bet.roi*100>=0?'+':'')+(bet.roi*100).toFixed(1)+'%</b>'+
       (bet.avg_clv_odds!=null?', Ø CLV '+(bet.avg_clv_odds*100>=0?'+':'')+(bet.avg_clv_odds*100).toFixed(2)+'%':', CLV noch nicht messbar'); }
     const rec=cal.record;
-    const recLine=rec?('<b>✅ '+rec.hits+' richtig · ❌ '+rec.misses+' falsch</b> (Trefferquote '+Math.round((rec.hit_rate||0)*100)+'%, '+esc(rec.source)+'). '):'';
+    const recLine=rec?('<b>'+rec.hits+' richtig · '+rec.misses+' falsch</b> (Trefferquote '+Math.round((rec.hit_rate||0)*100)+'%, '+esc(rec.source)+'). '):'';
     $('calibNote').innerHTML=recLine+'Brier 0.667 / LogLoss 1.099 = Zufall. '+cal.n_resolved+' Spiele aufgelöst.'+betLine;
     renderReliability();
   } else {
@@ -538,7 +563,7 @@ function render(){
     $('evTable').innerHTML='<tr><th>Markt</th><th>Auswahl</th><th>Bestquote</th><th>Anbieter</th><th>Break-even</th><th>Modell</th><th>Markt</th><th>Konservativ</th><th>EV (kons.)</th><th>EV (Modell)</th><th>Risiko</th></tr>'+
       v.rows.map(r=>{
         const evc = r.ev>0?'var(--good)':'var(--bad)';
-        const star = r.is_value?' ⭐':'';
+        const star = r.is_value?' <span class="tag live">streng</span>':'';
         return '<tr><td>'+esc(r.market)+'</td><td>'+esc(r.selection)+star+'</td><td class="mono">'+r.best_odds.toFixed(2)+
           '</td><td class="dim">'+esc(r.book)+'</td><td class="mono">'+pct(r.breakeven_prob)+'</td><td class="mono">'+pct(r.p_model)+
           '</td><td class="mono">'+pct(r.p_market_consensus)+'</td><td class="mono">'+pct(r.p_conservative)+
@@ -565,7 +590,7 @@ function render(){
     mm.forEach(m=>{
       const r=resBySel[m.selection];
       const evc = r? (r.ev>0?'var(--good)':'var(--bad)') : 'var(--dim)';
-      rows+='<tr><td>'+esc(m.market)+'</td><td>'+esc(m.selection)+(r&&r.is_value?' ⭐':'')+'</td><td class="mono">'+pct(m.p_model)+
+      rows+='<tr><td>'+esc(m.market)+'</td><td>'+esc(m.selection)+(r&&r.is_value?' <span class="tag live">streng</span>':'')+'</td><td class="mono">'+pct(m.p_model)+
         '</td><td class="mono dim">'+(m.fair_odds?m.fair_odds.toFixed(2):'–')+
         '</td><td class="mono">'+(r?r.odds.toFixed(2):'–')+'</td><td class="dim">'+esc(r?(r.book||r.source||'Web'):'–')+
         '</td><td class="mono">'+(r&&r.p_conservative!=null?pct(r.p_conservative):'–')+
@@ -582,7 +607,7 @@ function render(){
   if(ve.weather){ vrows+='<tr><td>Wetter'+(ve.weather.source?' <span class="dim">('+esc(ve.weather.source==='forecast'?'Forecast z. Anstoß':'aktuell')+')</span>':'')+'</td><td class="mono">'+(ve.weather.temp_c)+'°C, Wind '+ve.weather.wind_kmh+' km/h'+(ve.weather.rain?', Regen':'')+'</td></tr>'; }
   else { vrows+='<tr><td>Wetter</td><td><span class="tag unavailable">kein Key</span></td></tr>'; }
   const inj=(M.model&&M.model.venue_context&&M.model.venue_context.injury_override);
-  if(inj){ vrows+='<tr><td>Override</td><td>⚠️ '+esc(inj.note)+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
+  if(inj){ vrows+='<tr><td>Override</td><td>'+esc(inj.note)+' (T1×'+inj.team1_mult+'/T2×'+inj.team2_mult+')</td></tr>'; }
   if(ve.notes&&ve.notes.length){ vrows+='<tr><td>Notizen</td><td class="dim">'+esc(ve.notes.join('; '))+'</td></tr>'; }
   $('venueTable').innerHTML=vrows;
 
@@ -608,7 +633,7 @@ function render(){
         '<td class="mono"><b>'+w.score.toFixed(3)+'</b></td><td class="mono">'+w.confidence.toFixed(2)+'</td><td class="mono">'+w.n_trades_football+
         '</td><td class="mono">'+Number(w.volume_usd_football).toLocaleString()+'</td><td class="mono">'+(w.resolved_hit_rate_heuristic!=null?w.resolved_hit_rate_heuristic.toFixed(2):'–')+
         '</td><td class="mono">'+Number(w.avg_stake_usd).toLocaleString()+'</td><td class="mono">'+(w.recency_days!=null?w.recency_days:'–')+
-        '</td><td>'+(w.football_specialist?'⚽ ja':'nein')+'</td><td class="mono dim">'+Object.entries(w.exposure||{}).map(([k,v])=>k.replace('_win','')+':'+Number(v).toLocaleString()).join(' ')+'</td></tr>').join('');
+        '</td><td>'+(w.football_specialist?'ja':'nein')+'</td><td class="mono dim">'+Object.entries(w.exposure||{}).map(([k,v])=>k.replace('_win','')+':'+Number(v).toLocaleString()).join(' ')+'</td></tr>').join('');
   } else {
     $('whaleTable').innerHTML='<tr><td class="dim">Kein Whale-Signal verfügbar (Lauf mit --skip-whales oder API-Fehler).</td></tr>';
   }
@@ -695,7 +720,17 @@ function mkBand(id,labels,lo,hi,mid){
 
 $('matchSel').addEventListener('change',e=>show(+e.target.value));
 $('csvBtn').addEventListener('click',exportCSV);
-document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.querySelectorAll('.tabbtn').forEach((b,idx,btns)=>{
+  b.addEventListener('click',()=>showTab(b.dataset.tab));
+  b.addEventListener('keydown',e=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+    e.preventDefault();
+    const next=e.key==='Home'?0:e.key==='End'?btns.length-1:idx+(e.key==='ArrowRight'?1:-1);
+    const target=btns[(next+btns.length)%btns.length];
+    target.focus();
+    showTab(target.dataset.tab);
+  });
+});
 ['wMarket','wBooks','wKalshi','wModel','wWhale'].forEach(id=>$(id).addEventListener('input',e=>{
   e.target.nextElementSibling.value=e.target.value+'%'; render();
 }));
