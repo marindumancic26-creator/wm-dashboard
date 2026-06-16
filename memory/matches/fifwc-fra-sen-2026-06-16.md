@@ -1,17 +1,17 @@
 # France vs. Senegal
 
-Datum: 2026-06-16  |  Stand: 2026-06-15T08:42:17
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-sen-2026-06-16) (Volumen $728,145)
+Datum: 2026-06-16  |  Stand: 2026-06-16T07:51:46
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-sen-2026-06-16) (Volumen $2,594,082)
 
-Ensemble: France 68.6% / Remis 19.5% / Senegal 11.9%
-Erwartete Tore: 2.009 : 0.818
+Ensemble: France 67.5% / Remis 19.6% / Senegal 12.9%
+Erwartete Tore: 2.07 : 0.884
 
 Top-Scorelines:
 
-- 2:0 — 11.4%
-- 1:0 — 11.1%
-- 1:1 — 10.7%
-- 2:1 — 9.1%
-- 3:0 — 8.2%
+- 2:0 — 10.7%
+- 1:1 — 10.2%
+- 1:0 — 10.2%
+- 2:1 — 10.0%
+- 3:0 — 7.7%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 98.4%, draw 1.2%, team2_win 0.4%
+Whale-Signal (10 Wallets, heuristisch): team1_win 98.8%, draw 0.4%, team2_win 0.8%

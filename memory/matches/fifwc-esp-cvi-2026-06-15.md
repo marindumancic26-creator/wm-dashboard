@@ -1,17 +1,17 @@
 # Spain vs. Cabo Verde
 
-Datum: 2026-06-15  |  Stand: 2026-06-15T08:42:17
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-cvi-2026-06-15) (Volumen $4,459,126)
+Datum: 2026-06-15  |  Stand: 2026-06-15T18:45:52
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-cvi-2026-06-15) (Volumen $18,253,331)
 
-Ensemble: Spain 92.4% / Remis 5.9% / Cabo Verde 1.7%
-Erwartete Tore: 3.367 : 0.387
+Ensemble: Spain 86.7% / Remis 10.4% / Cabo Verde 2.9%
+Erwartete Tore: 2.604 : 0.415
 
 Top-Scorelines:
 
-- 3:0 — 14.5%
-- 2:0 — 13.5%
-- 4:0 — 12.4%
-- 5:0 — 8.1%
-- 1:0 — 7.8%
+- 2:0 — 16.4%
+- 3:0 — 14.2%
+- 1:0 — 12.1%
+- 4:0 — 9.4%
+- 2:1 — 6.7%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.8%, draw 0.1%, team2_win 0.1%
+Whale-Signal (10 Wallets, heuristisch): team1_win 97.0%, draw 2.1%, team2_win 0.9%
