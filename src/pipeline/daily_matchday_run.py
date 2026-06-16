@@ -298,7 +298,7 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
 
     # Deterministischer Closing-Loop-Report (automatische Tages-Lernzusammenfassung)
     report = closing_loop.generate_report(calib, payload["generated_at"], weights_suggestion,
-                                          tuning_result)
+                                          parameter_tuning_result=tuning_result)
     (config.DAILY_RUNS_DIR / f"{today}_closing_loop.md").write_text(report, encoding="utf-8")
 
     # Static-Export fürs Handy/GitHub Pages (self-contained docs/index.html)
