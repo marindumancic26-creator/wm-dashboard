@@ -113,3 +113,9 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Modell bleibt schwach kalibriert: Brier 0.7247, RPS 0.2253, LogLoss 1.1436, Treffer 3/8; Whale ist mit n=4 und Brier-Spannweite 0.0014-1.4648 zu variant fuer hoehere Gewichtung.
 - [Hypothese] Der kleine Ensemble-Vorsprung kommt eher aus punktueller Diversifikation als aus robuster Modellueberlegenheit; Markt/Buecher/Kalshi sind stark korreliert, und historische StatsBomb plus 0-Spiele-Form reichen noch nicht fuer verlaessliche Favoriten-Korrekturen.
 - [Aktion] `weights_suggestion` nur notieren, nicht anwenden: vorgeschlagen Markt 0.276, Buecher 0.244, Kalshi 0.147, Modell 0.198, Whale 0.135 bei status=data-driven/n=8; abwarten bis n>=15 und Stabilitaet ueber mehrere Tage pruefen.
+
+## 2026-06-16
+- [Beobachtung] Nach n=12 fuehrt Kalshi den rollierenden Score: Brier/RPS/LogLoss 0.7376/0.2047/1.1539; Markt und Buecher liegen bei Brier 0.7431, Ensemble faellt auf 0.7729 und Modell auf 0.8317.
+- [Beobachtung] Die drei neuen aufgeloesten Spiele vom 15.06. waren Remis; die Ensemble-Favoriten verfehlten alle drei, Referenz-Policy ROI steht bei -57.9 % ueber 11 Bets, CLV bleibt mit +0.93 % bei n=10 nur schwach positiv.
+- [Hypothese] Das aktuelle Problem ist Draw-/Favoriten-Kalibrierung plus Whale-Varianz, nicht fehlende Live-Quellen: Elo/Buecher/Kalshi/ESPN live, StatsBomb historisch, Turnierform 0 Spiele; Whale verschlechtert die letzten drei Remis mit Brier 1.892-1.996.
+- [Aktion] Keine Gewichte automatisch aendern: `weights_suggestion` data-driven/n=12 empfiehlt Markt 0.201, Buecher 0.202, Kalshi 0.205, Modell 0.303, Whale 0.088; abwarten bis n>=15 und stabile Mehrtages-Tendenz, Whale keinesfalls erhoehen.

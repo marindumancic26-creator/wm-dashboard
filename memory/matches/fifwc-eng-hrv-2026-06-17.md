@@ -1,9 +1,9 @@
 # England vs. Croatia
 
-Datum: 2026-06-17  |  Stand: 2026-06-16T07:51:46
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-hrv-2026-06-17) (Volumen $400,770)
+Datum: 2026-06-17  |  Stand: 2026-06-16T12:43:48
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-hrv-2026-06-17) (Volumen $427,427)
 
-Ensemble: England 56.1% / Remis 22.7% / Croatia 21.2%
+Ensemble: England 56.5% / Remis 21.5% / Croatia 22.0%
 Erwartete Tore: 1.868 : 1.02
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:0 — 9.3%
 - 0:0 — 7.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 54.8%, draw 11.7%, team2_win 33.5%
+Whale-Signal (10 Wallets, heuristisch): team1_win 58.3%, draw 1.8%, team2_win 39.9%

@@ -1,9 +1,9 @@
 # Portugal vs. DR Congo
 
-Datum: 2026-06-17  |  Stand: 2026-06-16T07:51:46
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-prt-cdr-2026-06-17) (Volumen $326,958)
+Datum: 2026-06-17  |  Stand: 2026-06-16T12:43:48
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-prt-cdr-2026-06-17) (Volumen $349,110)
 
-Ensemble: Portugal 75.5% / Remis 17.5% / DR Congo 7.0%
+Ensemble: Portugal 75.1% / Remis 18.0% / DR Congo 6.9%
 Erwartete Tore: 2.375 : 0.661
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 8.4%
 - 1:1 — 8.2%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 80.4%, draw 17.6%, team2_win 1.9%
+Whale-Signal (10 Wallets, heuristisch): team1_win 77.4%, draw 21.1%, team2_win 1.5%
