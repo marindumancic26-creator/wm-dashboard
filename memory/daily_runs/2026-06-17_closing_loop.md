@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-06-17
 
-Stand: 2026-06-17T09:08:09 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-06-17T10:39:03 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -237,17 +237,3 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.52). Markt/Books/Kalshi korreli
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 11 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ **Modell schwach kalibriert** (Ø 0.679 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.610 vs. 0.589) → Gewichtung überdenken, sobald n≥5.
-
-## Hermes-Analyse
-
-Rollierend ist Kalshi aktuell die beste Quelle: Brier/RPS/LogLoss 0.585/0.165/0.950 bei n=16. Polymarkt (0.589/0.167/0.956) und Buchmacher (0.591/0.168/0.957) liegen praktisch gleichauf; das ist wegen der Korrelation des Marktblocks nicht als drei unabhaengige Belege zu werten. Schlechtester Baustein bleibt Whale trotz 6/5 Trefferquote: Brier 0.801 und LogLoss 2.008 bei n=11, mit extremen Einzeltreffern und extremen Fehlschlaegen. Das Modell ist stabiler als Whale, aber weiter schwach kalibriert: Brier 0.679, RPS 0.207, LogLoss 1.083, Treffer 7/16.
-
-Seit dem gestrigen Lauf kamen vier aufgeloeste Favoritensiege hinzu: Argentinien-Algerien 3:0, Frankreich-Senegal 3:1, Irak-Norwegen 1:4 und Oesterreich-Jordanien 3:1. Alle Headline-Picks trafen; die Referenz-Policy gewann +1.67 Einheiten und der ROI verbesserte sich von -57.9% auf -31.3%. Auf diesen vier neuen Spielen war das Ensemble sehr gut (Brier/RPS/LogLoss 0.120/0.045/0.325) und knapp vor dem Markt (0.128/0.047/0.335) sowie Kalshi (0.129/0.047/0.336). Das ist ein Favoriten-Cluster, kein Beweis fuer robuste Ensemble-Ueberlegenheit.
-
-Auffaellig ist die Spreizung innerhalb der Treffer: Bei Argentinien-Algerien war das Modell der beste Baustein (Brier 0.073 vs. Kalshi 0.148, Markt 0.156), bei Frankreich, Norwegen und Oesterreich war Whale nahezu perfekt. Genau diese Whale-Treffer duerfen wegen der vorherigen Remis-Fehlschlaege (z.B. Belgien-Aegypten, Iran-Neuseeland, Saudi-Arabien-Uruguay mit Whale-Brier 1.892-1.996) nicht hochgewichtet werden. Das Modell traf zwar alle vier Favoriten, blieb aber bei Norwegen und Oesterreich klar weniger scharf als Markt/Whale; der automatische Flag "Modell schwach kalibriert" bleibt deshalb berechtigt.
-
-Das Ensemble schlaegt den reinen Markt rollierend noch nicht: Brier 0.610 vs. 0.589, RPS 0.173 vs. 0.167, LogLoss 0.991 vs. 0.956. Ursache ist nicht die heutige Trefferlage, sondern die Last der frueheren Remis-Fehlprognosen und die Beimischung von Modell/Whale in Spielen, in denen der Marktblock besser kalibriert war. FBref-Form ist weiterhin unavailable; Elo, Books, Kalshi und ESPN waren live. Die aktuelle Schwachstelle sieht daher eher nach Draw-/Favoriten-Kalibrierung und Whale-Varianz aus als nach einem fehlenden Live-Feed.
-
-CLV bleibt gemischt: Ø CLV -0.72% bei n=13, aber Beat-Close-Rate 54%. Die vier neuen Picks gewannen sportlich, zeigten aber dreimal negative bzw. null Quoten-CLV (-2.05%, -2.58%, -3.20%, 0.00%). Das spricht gegen aggressiveres Staking trotz besserem Tages-ROI.
-
-`weights_suggestion` ist jetzt data-driven bei n=16 und empfiehlt Markt 0.195, Buecher 0.195, Kalshi 0.198, Modell 0.307, Whale 0.106 (alpha=0.52). Nicht automatisch anwenden: n ist ausreichend fuer eine Empfehlung, aber noch nicht stabil genug fuer eine Real-Geld-Gewichtsaenderung; ausserdem widerspricht die Modell-Erhoehung dem aktuellen Kalibrierungs-Flag teilweise. Empfehlung: weiter beobachten bis mindestens n>=20 und nur uebernehmen, wenn Ensemble-vs.-Markt und Modell-Kalibrierung mehrere Tage stabil werden.

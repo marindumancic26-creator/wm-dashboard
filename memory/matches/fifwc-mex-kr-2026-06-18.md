@@ -1,9 +1,9 @@
 # Mexico vs. Korea Republic
 
-Datum: 2026-06-18  |  Stand: 2026-06-17T09:08:09
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-mex-kr-2026-06-18) (Volumen $604,506)
+Datum: 2026-06-18  |  Stand: 2026-06-17T10:39:03
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-mex-kr-2026-06-18) (Volumen $616,792)
 
-Ensemble: Mexico 45.6% / Remis 23.9% / South Korea 30.5%
+Ensemble: Mexico 46.6% / Remis 24.2% / South Korea 29.2%
 Erwartete Tore: 1.588 : 1.027
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 9.1%
 - 0:0 — 8.8%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 17.9%, draw 1.5%, team2_win 80.7%
+Whale-Signal (10 Wallets, heuristisch): team1_win 25.1%, draw 2.9%, team2_win 71.9%

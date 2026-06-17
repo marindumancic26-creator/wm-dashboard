@@ -284,6 +284,18 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     # ueberschreiben, sonst verlieren wir Pre-Kickoff-Staende fuer die Kalibrierung
     snap_file = config.DATA_SNAPSHOTS / f"{started:%Y-%m-%d_%H%M%S}.json"
     snap_file.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    # GUARD gegen degradierte Laeufe: Wenn 0 Spiele geladen wurden (Netzwerk-/Quellen-
+    # Ausfall), das gute Dashboard NICHT ueberschreiben — sonst nukt ein Internet-Blip die
+    # Live-Ansicht und der Auto-Push verbreitet die leere Version. Snapshot bleibt zur Doku.
+    if not match_results:
+        log["degraded"] = True
+        log["warnings"].append("DEGRADIERTER LAUF: 0 Spiele geladen — dashboard_data.json/"
+                               "docs NICHT ueberschrieben (letzter guter Stand bleibt).")
+        print("  ⚠️  Degradierter Lauf (0 Spiele) — Dashboard NICHT ueberschrieben. "
+              "Snapshot: " + snap_file.name)
+        return payload
+
     (config.DATA_PROCESSED / "dashboard_data.json").write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
