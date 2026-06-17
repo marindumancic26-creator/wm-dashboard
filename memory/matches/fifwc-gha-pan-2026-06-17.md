@@ -1,17 +1,17 @@
 # Ghana vs. Panama
 
-Datum: 2026-06-17  |  Stand: 2026-06-16T12:43:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-gha-pan-2026-06-17) (Volumen $161,414)
+Datum: 2026-06-17  |  Stand: 2026-06-17T09:08:09
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-gha-pan-2026-06-17) (Volumen $610,097)
 
-Ensemble: Ghana 35.3% / Remis 28.3% / Panama 36.4%
-Erwartete Tore: 1.32 : 1.227
+Ensemble: Ghana 40.0% / Remis 25.1% / Panama 35.0%
+Erwartete Tore: 1.259 : 1.249
 
 Top-Scorelines:
 
-- 1:1 — 13.7%
-- 0:0 — 9.4%
+- 1:1 — 13.6%
+- 0:0 — 9.5%
+- 0:1 — 9.2%
 - 1:0 — 9.1%
-- 0:1 — 8.2%
-- 2:1 — 7.8%
+- 1:2 — 8.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 21.8%, draw 32.6%, team2_win 45.6%
+Whale-Signal (10 Wallets, heuristisch): team1_win 69.4%, draw 2.6%, team2_win 28.0%

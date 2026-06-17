@@ -119,3 +119,9 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Die drei neuen aufgeloesten Spiele vom 15.06. waren Remis; die Ensemble-Favoriten verfehlten alle drei, Referenz-Policy ROI steht bei -57.9 % ueber 11 Bets, CLV bleibt mit +0.93 % bei n=10 nur schwach positiv.
 - [Hypothese] Das aktuelle Problem ist Draw-/Favoriten-Kalibrierung plus Whale-Varianz, nicht fehlende Live-Quellen: Elo/Buecher/Kalshi/ESPN live, StatsBomb historisch, Turnierform 0 Spiele; Whale verschlechtert die letzten drei Remis mit Brier 1.892-1.996.
 - [Aktion] Keine Gewichte automatisch aendern: `weights_suggestion` data-driven/n=12 empfiehlt Markt 0.201, Buecher 0.202, Kalshi 0.205, Modell 0.303, Whale 0.088; abwarten bis n>=15 und stabile Mehrtages-Tendenz, Whale keinesfalls erhoehen.
+
+## 2026-06-17
+- [Beobachtung] Vier neue aufgeloeste Favoritensiege trafen die Ensemble-Headline-Picks: Tages-Brier/RPS/LogLoss fuer diese vier Spiele Ensemble 0.1204/0.0445/0.3248 vs. Markt 0.1280/0.0472/0.3354; Referenz-Policy +1.67 Einheiten, ROI rollierend -57.9% -> -31.3%.
+- [Beobachtung] Rollierend fuehrt weiter Kalshi bei n=16: Brier/RPS/LogLoss 0.5854/0.1654/0.9495; Ensemble bleibt trotz gutem Tag hinter Markt/Kalshi mit 0.6098/0.1733/0.9907, Modell 0.6792/0.2072/1.0834, Whale 0.8013/0.2226/2.0079 bei n=11.
+- [Hypothese] Der heutige Sprung ist ein Favoriten-Cluster und keine robuste Entwarnung: Whale war in den vier neuen Spielen stark, bleibt aber wegen frueherer Remis-Fehler hochvariant; das Modell trifft Favoriten, ist aber weniger scharf als Markt/Whale bei Norwegen und Oesterreich.
+- [Aktion] `weights_suggestion` data-driven/n=16 nur notieren, nicht anwenden: empfohlen Markt 0.195, Buecher 0.195, Kalshi 0.198, Modell 0.307, Whale 0.106; abwarten bis n>=20 und Stabilitaet ueber mehrere Tage, besonders Ensemble-vs.-Markt und Modell-Kalibrierung.

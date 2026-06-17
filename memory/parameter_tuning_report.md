@@ -1,7 +1,7 @@
 # Parameter-Tuning-Report
 
 Status: **prior**
-n=0 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
+n=15 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## Aktuelle Config
 
@@ -34,11 +34,11 @@ n=0 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## Input-Audit
 
-- snapshots: `43`
-- resolved: `0`
-- entries: `0`
-- missing_model_inputs: `0`
+- snapshots: `44`
+- resolved: `16`
+- entries: `190`
+- missing_model_inputs: `126`
 - missing_baseline_total_goals: `39`
-- cases: `0`
+- cases: `15`
 
 _Keine automatische Aenderung an config.py. Parameter-Aenderungen bleiben Menschenentscheidung._
