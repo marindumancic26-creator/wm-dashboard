@@ -125,3 +125,7 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Rollierend fuehrt weiter Kalshi bei n=16: Brier/RPS/LogLoss 0.5854/0.1654/0.9495; Ensemble bleibt trotz gutem Tag hinter Markt/Kalshi mit 0.6098/0.1733/0.9907, Modell 0.6792/0.2072/1.0834, Whale 0.8013/0.2226/2.0079 bei n=11.
 - [Hypothese] Der heutige Sprung ist ein Favoriten-Cluster und keine robuste Entwarnung: Whale war in den vier neuen Spielen stark, bleibt aber wegen frueherer Remis-Fehler hochvariant; das Modell trifft Favoriten, ist aber weniger scharf als Markt/Whale bei Norwegen und Oesterreich.
 - [Aktion] `weights_suggestion` data-driven/n=16 nur notieren, nicht anwenden: empfohlen Markt 0.195, Buecher 0.195, Kalshi 0.198, Modell 0.307, Whale 0.106; abwarten bis n>=20 und Stabilitaet ueber mehrere Tage, besonders Ensemble-vs.-Markt und Modell-Kalibrierung.
+
+## 2026-06-18
+
+Key result: Kalshi leads rolling calibration at n=19, the ensemble remains worse than the market block, Whale had a strong latest day but remains too high-variance, ROI remains negative, and weight suggestions should be noted but not applied automatically.
