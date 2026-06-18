@@ -128,4 +128,7 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 
 ## 2026-06-18
 
-Key result: Kalshi leads rolling calibration at n=19, the ensemble remains worse than the market block, Whale had a strong latest day but remains too high-variance, ROI remains negative, and weight suggestions should be noted but not applied automatically.
+- [Beobachtung] Kalshi fuehrt rollierend bei n=19 mit Brier/RPS/LogLoss 0.541/0.159/0.893; Ensemble bleibt schlechter bei 0.562/0.166/0.928.
+- [Beobachtung] Die drei neuen Aufloesungen vom 17.06.2026 trafen alle Ensemble-Picks; Tages-Brier: Whale 0.117, Kalshi 0.305, Ensemble 0.310, Modell 0.522.
+- [Hypothese] Die juengsten Favoriten-Treffer verbessern die Tagesbilanz, loesen aber die strukturelle Ensemble-Schwaeche nicht, weil Modell-Brier 0.654 und Whale-LogLoss 1.640 weiter zu hoch sind.
+- [Aktion] `weights_suggestion` data-driven/n=19 nur notieren, nicht anwenden; abwarten bis mindestens n>=20-25 und stabile Mehrtages-Tendenz, Parameter-Tuning prior/n=18 unveraendert lassen.

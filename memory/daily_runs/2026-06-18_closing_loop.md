@@ -276,30 +276,12 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.56). Markt/Books/Kalshi korreli
 
 ## Hermes-Analyse
 
-Ich habe `HERMES.md` gelesen und Schritte 2 bis 5 inhaltlich ausgeführt. Schreiben in [2026-06-18_closing_loop.md](</c/Users/marin/OneDrive/Dokumente/Fußball wahrscheinlichkeit/memory/daily_runs/2026-06-18_closing_loop.md>) und [learnings.md](</c/Users/marin/OneDrive/Dokumente/Fußball wahrscheinlichkeit/memory/learnings.md>) wurde von der read-only-Sandbox blockiert.
+Hermes-Schritte 2 bis 5 wurden fuer den Tagesstand 2026-06-18 ausgewertet. Die aktuelle Kalibrierung umfasst n=19 aufgeloeste Spiele; die Headline-Prognose des Ensembles liegt bei 11/19 Treffern, also 58%. Kalshi kalibriert rollierend am besten mit Brier/RPS/LogLoss 0.541/0.159/0.893, knapp vor Polymarkt 0.545/0.160/0.900 und Buchmacher 0.546/0.161/0.901.
 
-Einzutragen wäre:
+Das Ensemble schlaegt den reinen Marktblock aktuell nicht: Ensemble 0.562/0.166/0.928 gegen Kalshi 0.541/0.159/0.893, Polymarkt 0.545/0.160/0.900 und Buchmacher 0.546/0.161/0.901. Die Ursache bleibt die Beimischung schwacher bzw. hochvarianter Signale: Modell 0.654/0.212/1.060 bei n=19 und Whale 0.655/0.186/1.640 bei n=14.
 
-```md
-## Hermes-Analyse
+Die drei zuletzt aufgeloesten Spiele vom 17.06.2026 trafen alle Ensemble-Picks. Tages-Brier: Whale 0.117, Kalshi 0.305, Ensemble 0.310, Buchmacher 0.310, Polymarkt 0.311, Modell 0.522. Der groesste Modellfehler lag bei Ghana-Panama mit Modell-Brier 1.097; Whale war dort mit 0.175 stark, bleibt aber wegen der Gesamtspannweite 0.000 bis 1.996 nicht belastbar genug fuer mehr Gewicht.
 
-Kalshi kalibriert rollierend aktuell am besten: Brier/RPS/LogLoss 0.541/0.159/0.893 bei n=19. Dahinter liegen Polymarkt 0.545/0.160/0.900 und Buchmacher 0.546/0.161/0.901. Schwaechste Quellen bleiben Modell 0.654/0.212/1.060 bei n=19 und Whale 0.655/0.186/1.640 bei n=14. Whale hat zwar die beste Hit-Rate (9/14 = 64%), bleibt aber wegen Spannweite 0.000-1.996 hochvariant.
+Wett-Kennzahlen bleiben defensiv: 18 Referenz-Bets, 56% Trefferquote, ROI -11.7%, durchschnittlicher CLV -0.97% bei n=16. Im aktuellen Lauf gibt es 0 Value-Bets und 0% Gesamt-Stake; damit gibt es keine praktische Einsatz-Aktion.
 
-Die drei neu aufgeloesten Spiele vom 17.06. trafen alle Ensemble-Headline-Picks. Tages-Brier: Whale 0.117, Kalshi 0.305, Ensemble 0.310, Buchmacher 0.310, Polymarkt 0.311, Modell 0.522. Der groesste Modellfehler lag bei Ghana-Panama (Brier 1.097); Whale war dort stark (0.175), aber das reicht wegen der Varianz nicht fuer mehr Whale-Gewicht.
-
-Das Ensemble schlaegt den Marktblock rollierend nicht: Ensemble 0.562/0.166/0.928 vs. Polymarkt 0.545/0.160/0.900, Kalshi 0.541/0.159/0.893 und Buchmacher 0.546/0.161/0.901. Hauptursache ist die Beimischung von Modell und Whale.
-
-CLV/ROI: 18 Bets, 56% Trefferquote, ROI -11.7%, avg CLV -0.97% bei n=16. Keine Value-Bets im aktuellen Lauf.
-
-weights_suggestion ist data-driven bei n=19: Polymarkt 0.190, Buchmacher 0.190, Kalshi 0.193, Modell 0.296, Whale 0.131. Nicht automatisch uebernehmen; erst bei stabiler Mehrtageslage und n>=20-25 diskutieren. Parameter-Tuning bleibt prior bei n=18 < 20; ELO_PER_GOAL=240 nicht aendern.
-```
-
-Und in `memory/learnings.md`:
-
-```md
-## 2026-06-18
-- [Beobachtung] Kalshi fuehrt rollierend bei n=19 mit Brier/RPS/LogLoss 0.5411/0.1585/0.8928; Ensemble bleibt schlechter als der Marktblock mit 0.5624/0.1664/0.9283 vs. Polymarkt 0.5454/0.1597/0.8999 und Buchmacher 0.5463/0.1606/0.9006.
-- [Beobachtung] Die drei neuen Aufloesungen trafen alle Ensemble-Picks; Tages-Brier: Whale 0.1166, Kalshi 0.3049, Ensemble 0.3095, Buchmacher 0.3103, Polymarkt 0.3110, Modell 0.5218. Modellfehler konzentriert sich auf Ghana-Panama (Brier 1.097).
-- [Hypothese] Die juengsten Favoriten-Treffer verbessern ROI und Whale optisch, loesen aber die strukturelle Ensemble-Schwaeche nicht: Modell bleibt >0.55 Brier und Whale bleibt wegen LogLoss 1.6396 sowie Spannweite 0.000-1.996 zu variant fuer mehr Gewicht.
-- [Aktion] weights_suggestion data-driven/n=19 nur notieren, nicht anwenden: empfohlen Markt 0.190, Buecher 0.190, Kalshi 0.193, Modell 0.296, Whale 0.131; abwarten bis mindestens n>=20-25 und stabile Mehrtages-Tendenz. Parameter-Tuning bleibt prior bei n=18 < 20; ELO_PER_GOAL nicht aendern.
-```
+Die Gewichts-Empfehlung ist data-driven bei n=19: Polymarkt 0.190, Buchmacher 0.190, Kalshi 0.193, Modell 0.296, Whale 0.131. Nach HERMES nicht automatisch uebernehmen; erst bei stabiler Mehrtageslage und mindestens n>=20 bis 25 erneut bewerten. Parameter-Tuning bleibt prior bei n=18 < 20, also ELO_PER_GOAL=240 nicht aendern.
