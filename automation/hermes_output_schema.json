@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "narrative": {
+      "type": "string",
+      "minLength": 500,
+      "description": "Konkrete deutsche Quant-Analyse in 4 bis 7 Absaetzen, ohne Ueberschrift, Codeblock, Dateipfad oder Meta-Kommentar."
+    },
+    "learning": {
+      "type": "string",
+      "minLength": 400,
+      "description": "Genau vier deutsche Markdown-Bullets: zweimal Beobachtung, dann Hypothese und Aktion; jeweils mit konkreten Metriken."
+    }
+  },
+  "required": ["narrative", "learning"],
+  "additionalProperties": false
+}
