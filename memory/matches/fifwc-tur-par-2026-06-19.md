@@ -1,9 +1,9 @@
 # Türkiye vs. Paraguay
 
-Datum: 2026-06-19  |  Stand: 2026-06-19T09:24:51
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-tur-par-2026-06-19) (Volumen $657,448)
+Datum: 2026-06-19  |  Stand: 2026-06-19T16:00:37
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-tur-par-2026-06-19) (Volumen $975,501)
 
-Ensemble: Turkey 53.3% / Remis 24.4% / Paraguay 22.3%
+Ensemble: Turkey 52.9% / Remis 24.7% / Paraguay 22.3%
 Erwartete Tore: 1.486 : 1.059
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 9.0%
 - 2:0 — 8.7%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.7%, draw 0.0%, team2_win 0.3%
+Whale-Signal (10 Wallets, heuristisch): team1_win 98.7%, draw 0.7%, team2_win 0.6%

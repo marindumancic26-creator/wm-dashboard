@@ -1,9 +1,9 @@
 # Ecuador vs. Curaçao
 
-Datum: 2026-06-20  |  Stand: 2026-06-19T09:24:51
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-ecu-kor-2026-06-20) (Volumen $783,265)
+Datum: 2026-06-20  |  Stand: 2026-06-19T16:00:37
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-ecu-kor-2026-06-20) (Volumen $817,858)
 
-Ensemble: Ecuador 82.7% / Remis 13.1% / Curacao 4.2%
+Ensemble: Ecuador 84.0% / Remis 11.1% / Curacao 4.9%
 Erwartete Tore: 3.174 : 0.697
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 3:1 — 7.7%
 - 2:1 — 7.2%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 76.7%, draw 22.5%, team2_win 0.8%
+Whale-Signal (10 Wallets, heuristisch): team1_win 86.4%, draw 7.6%, team2_win 5.9%

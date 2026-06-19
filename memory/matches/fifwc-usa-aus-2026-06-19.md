@@ -1,17 +1,17 @@
 # United States vs. Australia
 
-Datum: 2026-06-19  |  Stand: 2026-06-19T09:24:51
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-usa-aus-2026-06-19) (Volumen $2,679,920)
+Datum: 2026-06-19  |  Stand: 2026-06-19T16:00:37
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-usa-aus-2026-06-19) (Volumen $5,920,055)
 
-Ensemble: United States 57.0% / Remis 23.2% / Australia 19.8%
-Erwartete Tore: 2.013 : 1.128
+Ensemble: United States 57.9% / Remis 22.5% / Australia 19.7%
+Erwartete Tore: 2.012 : 1.128
 
 Top-Scorelines:
 
-- 1:1 — 10.8%
+- 1:1 — 10.9%
 - 2:1 — 9.3%
-- 2:0 — 8.5%
-- 1:0 — 8.0%
-- 3:1 — 6.6%
+- 2:0 — 8.4%
+- 1:0 — 7.9%
+- 3:1 — 6.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 66.8%, draw 21.3%, team2_win 11.9%
+Whale-Signal (10 Wallets, heuristisch): team1_win 75.3%, draw 16.7%, team2_win 8.0%
