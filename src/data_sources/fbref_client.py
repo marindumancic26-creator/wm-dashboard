@@ -10,28 +10,32 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import time
 
 from src import config
 
 _CACHE = config.DATA_RAW / "fbref_form.json"
 _CACHE_TTL = 20 * 3600
+_FETCH_TIMEOUT = 180
 
 
-def get_tournament_form(force: bool = False) -> dict:
-    """{"status", "teams": {name: {matches, gf_pm, ga_pm[, xg_pm, xga_pm]}}, ...}"""
-    if not force and _CACHE.exists() and (time.time() - _CACHE.stat().st_mtime) < _CACHE_TTL:
-        try:
-            return json.loads(_CACHE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+def _unavailable(note: str) -> dict:
+    return {"status": "unavailable", "teams": {}, "note": note}
+
+
+def _fetch_live_payload() -> dict:
+    """FBref im Worker laden; darf niemals direkt im Daily-Prozess laufen."""
     try:
         import soccerdata as sd
         fb = sd.FBref(leagues="INT-World Cup", seasons="2026")
         df = fb.read_schedule().reset_index()
     except Exception as exc:
-        return {"status": "unavailable", "teams": {},
-                "note": f"FBref/soccerdata-Fehler: {exc}"}
+        return _unavailable(f"FBref/soccerdata-Fehler: {exc}")
 
     has_xg = "home_xg" in df.columns and "away_xg" in df.columns
     agg: dict[str, dict] = {}
@@ -76,8 +80,69 @@ def get_tournament_form(force: bool = False) -> dict:
                "xg_available": has_xg and any("xg_pm" in v for v in teams.values()),
                "note": "In-Turnier-Form WM 2026 (FBref); xG sobald von FBref gefuellt.",
                "as_of": dt.datetime.now().isoformat(timespec="seconds")}
-    _CACHE.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     return payload
+
+
+def _run_isolated_fetch(timeout: int = _FETCH_TIMEOUT) -> dict:
+    """soccerdata mit eigener Prozessgruppe ausfuehren.
+
+    Chromium-/soccerdata-Abbrueche koennen unter Windows Ctrl+C an ihre
+    Prozessgruppe senden. Die Isolation verhindert, dass dabei der Daily-Runner
+    und damit Export, Commit und Push beendet werden.
+    """
+    config.DATA_RAW.mkdir(parents=True, exist_ok=True)
+    fd, output_name = tempfile.mkstemp(prefix="fbref_worker_", suffix=".json",
+                                       dir=config.DATA_RAW)
+    os.close(fd)
+    output_path = Path(output_name)
+    output_path.unlink(missing_ok=True)
+    command = [sys.executable, "-m", "src.data_sources.fbref_client",
+               "--worker", str(output_path)]
+    kwargs = {
+        "cwd": str(config.PROJECT_ROOT),
+        "timeout": timeout,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.PIPE,
+        "text": True,
+        "check": False,
+    }
+    if os.name == "nt":
+        kwargs["creationflags"] = (subprocess.CREATE_NEW_PROCESS_GROUP |
+                                   subprocess.CREATE_NO_WINDOW)
+    try:
+        completed = subprocess.run(command, **kwargs)
+        if output_path.exists():
+            return json.loads(output_path.read_text(encoding="utf-8"))
+        detail = (completed.stderr or "").strip().splitlines()
+        suffix = f": {detail[-1]}" if detail else ""
+        return _unavailable(
+            f"FBref-Worker beendet (Exit {completed.returncode}){suffix}")
+    except subprocess.TimeoutExpired:
+        return _unavailable(f"FBref-Worker Timeout nach {timeout} Sekunden")
+    except Exception as exc:
+        return _unavailable(f"FBref-Worker-Fehler: {exc}")
+    finally:
+        output_path.unlink(missing_ok=True)
+
+
+def get_tournament_form(force: bool = False) -> dict:
+    """{"status", "teams": {name: {matches, gf_pm, ga_pm[, xg_pm, xga_pm]}}, ...}"""
+    if not force and _CACHE.exists() and (time.time() - _CACHE.stat().st_mtime) < _CACHE_TTL:
+        try:
+            return json.loads(_CACHE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    payload = _run_isolated_fetch()
+    if payload.get("status") == "live":
+        _CACHE.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    return payload
+
+
+def _worker(output_path: str) -> int:
+    payload = _fetch_live_payload()
+    Path(output_path).write_text(
+        json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    return 0
 
 
 def form_factor(team: str, form: dict) -> dict | None:
@@ -95,3 +160,7 @@ def form_factor(team: str, form: dict) -> dict | None:
     return {"attack": round(max(0.75, min(1.25, atk)), 3),
             "concede": round(max(0.75, min(1.25, dfn)), 3),
             "matches": t["matches"], "basis": "xg" if t.get("xg_pm") else "goals"}
+
+
+if __name__ == "__main__" and len(sys.argv) == 3 and sys.argv[1] == "--worker":
+    raise SystemExit(_worker(sys.argv[2]))

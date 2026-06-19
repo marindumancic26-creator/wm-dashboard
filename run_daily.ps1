@@ -2,6 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $repo = $PSScriptRoot
 $log = Join-Path $repo "data\snapshots\automation_daily.log"
+$successMarker = Join-Path $repo ("data\snapshots\daily_success_{0}.ok" -f (Get-Date -Format "yyyy-MM-dd"))
 $mutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Daily")
 $hasLock = $false
 
@@ -74,6 +75,8 @@ try {
     }
 
     Write-RunLog "Automatischer Daily-Lauf erfolgreich beendet."
+    [IO.File]::WriteAllText($successMarker, (Get-Date).ToString("o"),
+                            [Text.UTF8Encoding]::new($false))
     exit 0
 }
 catch {

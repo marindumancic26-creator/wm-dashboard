@@ -157,6 +157,47 @@ def test_form_factor_damped_and_capped():
     assert form_factor("Unbekannt", form) is None
 
 
+def test_fbref_fetch_runs_in_isolated_process(monkeypatch, tmp_path):
+    import os
+    import subprocess
+
+    from src.data_sources import fbref_client
+
+    captured = {}
+    payload = {"status": "live", "teams": {}, "as_of": "2026-06-19T09:00:00"}
+
+    def fake_run(command, **kwargs):
+        captured.update(kwargs)
+        Path(command[-1]).write_text(json.dumps(payload), encoding="utf-8")
+        return subprocess.CompletedProcess(command, 0, stderr="")
+
+    monkeypatch.setattr(fbref_client.config, "DATA_RAW", tmp_path)
+    monkeypatch.setattr(fbref_client.subprocess, "run", fake_run)
+
+    assert fbref_client._run_isolated_fetch(timeout=7) == payload
+    assert captured["timeout"] == 7
+    if os.name == "nt":
+        assert captured["creationflags"] & subprocess.CREATE_NEW_PROCESS_GROUP
+
+
+def test_fbref_worker_timeout_is_nonfatal(monkeypatch, tmp_path):
+    import subprocess
+
+    from src.data_sources import fbref_client
+
+    def fake_run(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr(fbref_client.config, "DATA_RAW", tmp_path)
+    monkeypatch.setattr(fbref_client.subprocess, "run", fake_run)
+
+    result = fbref_client._run_isolated_fetch(timeout=3)
+
+    assert result["status"] == "unavailable"
+    assert result["teams"] == {}
+    assert "Timeout nach 3 Sekunden" in result["note"]
+
+
 def test_venue_altitude_and_weather_off():
     from src.data_sources import venue_client
     ctx = venue_client.get_context("Mexico City", "Mexico", "Brazil")
