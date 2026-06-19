@@ -132,3 +132,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Die drei neuen Aufloesungen vom 17.06.2026 trafen alle Ensemble-Picks; Tages-Brier: Whale 0.117, Kalshi 0.305, Ensemble 0.310, Modell 0.522.
 - [Hypothese] Die juengsten Favoriten-Treffer verbessern die Tagesbilanz, loesen aber die strukturelle Ensemble-Schwaeche nicht, weil Modell-Brier 0.654 und Whale-LogLoss 1.640 weiter zu hoch sind.
 - [Aktion] `weights_suggestion` data-driven/n=19 nur notieren, nicht anwenden; abwarten bis mindestens n>=20-25 und stabile Mehrtages-Tendenz, Parameter-Tuning prior/n=18 unveraendert lassen.
+
+## 2026-06-19
+
+- [Beobachtung] Rollierend fuehrt Kalshi bei n=23 mit Brier/RPS/LogLoss 0.516/0.150/0.862; Ensemble bleibt mit 0.536/0.157/0.892 schlechter als Polymarkt 0.520/0.151/0.866.
+- [Beobachtung] Die 4 neuen Aufloesungen liefern Tages-Brier Modell 0.383, Markt 0.397, Kalshi 0.399, Ensemble 0.410, Whale 0.630; Referenz-ROI steigt von -11.7% auf -7.8%, CLV faellt von -0.97% auf -1.32%.
+- [Hypothese] Der heutige Modell-Vorsprung ist noch kein stabiles Signal, weil Whale-Remisfehler und die rollierende Ensemble-Unterperformance gegen Markt/Kalshi weiter dominieren.
+- [Aktion] `weights_suggestion` data-driven/n=23 nur notieren: 0.189/0.182/0.191/0.318/0.120 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme, bis n>=30 und Ensemble-vs.-Markt mehrere Tage stabil positiv ist.

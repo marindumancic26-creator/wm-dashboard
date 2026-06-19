@@ -320,3 +320,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.61). Markt/Books/Kalshi korreli
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 18 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ **Modell schwach kalibriert** (Ø 0.607 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.536 vs. 0.520) → Gewichtung überdenken, sobald n≥5.
+
+## Hermes-Analyse
+
+Rollierend kalibriert Kalshi aktuell am besten: Brier/RPS/LogLoss 0.516/0.150/0.862 bei n=23, knapp vor Polymarkt mit 0.520/0.151/0.866. Buchmacher liegen mit 0.534/0.155/0.884 bei n=22 nur leicht dahinter. Schlechteste Quelle nach Brier ist Whale mit 0.649 bei n=18; nach LogLoss ist Whale mit 1.676 klar am riskantesten. Das Modell bleibt schwach: Brier 0.607, RPS 0.193, LogLoss 0.994 bei n=23 und nur 12/23 Treffern.
+
+Die vier neuen Aufloesungen seit gestern waren gemischt: Kanada-Katar 6:0, Schweiz-Bosnien 4:1 und Mexiko-Korea 1:0 waren fuer die Headline gut, Tschechien-Suedafrika 1:1 war der klare Remis-Fehler. Auf diesen vier Spielen war das Modell tatsaechlich Tagesbester mit Brier/RPS/LogLoss ca. 0.383/0.103/0.682; Ensemble lag bei 0.410/0.112/0.721, Markt bei 0.397/0.110/0.708. Der Tagesvorteil des Modells kommt vor allem von Mexiko-Korea, wo Modell-Brier 0.285 besser war als Markt 0.419 und Ensemble 0.387.
+
+Das Ensemble schlaegt den reinen Markt rollierend weiterhin nicht: Brier 0.536 vs. 0.520, RPS 0.157 vs. 0.151, LogLoss 0.892 vs. 0.866 bei jeweils n=23. Das Problem ist nicht ein einzelner Ausreisser, sondern die Beimischung zweier instabiler Komponenten: Modell bleibt im Mittel zu schwach kalibriert, Whale hat trotz 67% Hit-Rate extreme Fehler auf Remis-Spielen und eine Brier-Spannweite von 0.000 bis 1.996.
+
+Wettseitig verbessert sich die Referenz-Policy nur leicht: 21 Bets, 57% Trefferquote, ROI -7.8% nach zuvor -11.7%; die drei neuen abrechenbaren Bets ergeben netto +0.46 Einheiten. CLV verschlechtert sich aber von -0.97% auf -1.32%, und die Modell-Lehne schlug den Closing-Move nur in 47% der Faelle bei n=19. Das spricht gegen aggressiveres Staking, auch weil der aktuelle Lauf 0 Value-Bets und 0.0% Gesamt-Stake meldet.
+
+Die Gewichts-Empfehlung ist data-driven bei n=23: Polymarkt 0.189, Buchmacher 0.182, Kalshi 0.191, Modell 0.318, Whale 0.120 statt aktuell 0.300/0.250/0.100/0.200/0.150. Trotz n>15 wuerde ich sie noch nicht uebernehmen: sie erhoeht ausgerechnet das Modell deutlich, obwohl dessen rollierende Kalibrierung weiter hinter Markt/Kalshi liegt. Sinnvoll ist notieren, Whale defensiv senken im Blick behalten, und erst bei stabiler Mehrtageslage um n>=30 ueber eine manuelle Gewichtsaenderung entscheiden.
