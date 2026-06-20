@@ -1,17 +1,17 @@
 # Germany vs. Côte d'Ivoire
 
-Datum: 2026-06-20  |  Stand: 2026-06-20T16:00:46
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-ger-civ-2026-06-20) (Volumen $2,779,870)
+Datum: 2026-06-20  |  Stand: 2026-06-20T23:00:44
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-ger-civ-2026-06-20) (Volumen $30,860,405)
 
-Ensemble: Germany 67.7% / Remis 18.8% / Ivory Coast 13.5%
-Erwartete Tore: 2.259 : 1.018
+Ensemble: Germany 40.9% / Remis 25.2% / Ivory Coast 33.9%
+Erwartete Tore: 1.307 : 1.242
 
 Top-Scorelines:
 
-- 1:1 — 9.8%
-- 2:0 — 9.8%
-- 2:1 — 9.2%
-- 1:0 — 7.7%
-- 3:0 — 7.4%
+- 1:1 — 13.6%
+- 0:0 — 9.3%
+- 1:0 — 8.9%
+- 0:1 — 8.6%
+- 2:1 — 8.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 98.2%, draw 0.0%, team2_win 1.8%
+Whale-Signal (10 Wallets, heuristisch): team1_win 61.9%, draw 5.9%, team2_win 32.2%

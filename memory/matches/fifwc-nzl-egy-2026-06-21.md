@@ -1,9 +1,9 @@
 # New Zealand vs. Egypt
 
-Datum: 2026-06-21  |  Stand: 2026-06-20T16:00:46
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-nzl-egy-2026-06-21) (Volumen $141,196)
+Datum: 2026-06-21  |  Stand: 2026-06-20T23:00:44
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-nzl-egy-2026-06-21) (Volumen $162,081)
 
-Ensemble: New Zealand 17.7% / Remis 22.9% / Egypt 59.4%
+Ensemble: New Zealand 20.5% / Remis 21.2% / Egypt 58.3%
 Erwartete Tore: 0.952 : 1.882
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 1:2 — 9.5%
 - 0:0 — 7.3%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 13.5%, draw 15.6%, team2_win 70.9%
+Whale-Signal (10 Wallets, heuristisch): team1_win 35.9%, draw 1.6%, team2_win 62.4%
