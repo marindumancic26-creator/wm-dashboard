@@ -16,9 +16,14 @@ zeigt dann eine „Weiterkommen"-Zeile zusätzlich zum 90-Min-Ergebnis. Tests vo
 **Turnier-Tab (21.06. gebaut, `tournament.py`):** Vorwärts-Monte-Carlo der Gruppenphase
 (2500 Läufe über die Restspiele, Modell-λ) → P(Gruppensieg), P(Weiterkommen via Top 2 oder
 beste 8 Dritte, WM-2026-Format). Aktuelle Gruppentabellen aus beendeten Spielen. **Titel-Odds**
-aus dem Polymarket-„World Cup Winner"-Markt (`pm.fetch_outright_winner`, entvigt) — Markt ist
-hier die beste Quelle. Dashboard-Tab „Turnier". K.o.-Bracket-Zuordnung der besten Dritten ist
-nicht in den Fixtures → echter Bracket-Baum füllt sich erst nach der Gruppenphase.
+aus dem Polymarket-„World Cup Winner"-Markt (`pm.fetch_outright_winner`, entvigt).
+**Voller Turnierbaum (21.06. gebaut, `bracket_wc2026.py` + `tournament.simulate_full`):** offizielle
+WM-2026-R32-Struktur (Deutschland=1E, Mexiko=1A verifiziert) kodiert; beste 8 Dritte via Kuhn-
+Bipartite-Matching (respektiert FIFA-Eligibility). Vorwärts-MC (2000 Läufe): Gruppen → R32 → K.o.
+mit Verlängerung/Elfmeter → P(Titel)/P(Runde) je Team (Modell) + projizierter Baum (Modal-Sieger
+je Position). λ memoized (~1250 unique matchups, 0,8 s). Dashboard-Tab „Turnier" zeigt Baum +
+Modell-vs-Markt-Titelchancen. Modell aktuell bullisher als Markt (Argentinien 24 % vs. 11 %) —
+ehrlich gelabelt (Modell = schwächste Quelle).
 
 **Echte Datengrenzen (bleiben offen — extern bedingt):**
 - Lineup/Verletzung automatisch: keine freie Spieler-Stärkequelle → manuelles Override (`adjustments.json`).

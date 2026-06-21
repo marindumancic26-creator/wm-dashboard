@@ -605,3 +605,26 @@ if __name__ == "__main__":
             fn()
             print(f"OK  {name}")
     print("Alle Tests bestanden.")
+
+
+def test_bracket_structure_complete():
+    from src.model import bracket_wc2026 as bk
+    assert len(bk.R32) == 16
+    ws = {s[1] for (_, s1, s2) in bk.R32 for s in (s1, s2) if s[0] == "W"}
+    rus = {s[1] for (_, s1, s2) in bk.R32 for s in (s1, s2) if s[0] == "RU"}
+    assert ws == set("ABCDEFGHIJKL")
+    assert rus == set("ABCDEFGHIJKL")
+    assert len(bk.THIRD_SLOTS) == 8
+    # K.o.-Baum vollstaendig bis zum Finale
+    assert set(bk.FINAL) == {104} and set(bk.SF) == {101, 102}
+
+
+def test_bracket_kuhn_matching_respects_constraints():
+    from src.model import bracket_wc2026 as bk
+    # Beispiel-Kombination aus der offiziellen Doku
+    avail = set("EFGHIJKL")
+    m = bk._kuhn_match(bk.THIRD_SLOTS, avail)
+    assert len(m) == 8                       # alle 8 Dritten-Slots belegt
+    assert len(set(m.values())) == 8         # jede Gruppe genau einmal
+    for mid, g in m.items():                 # Eligibility eingehalten
+        assert g in bk.THIRD_SLOTS[mid] and g in avail

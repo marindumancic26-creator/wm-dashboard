@@ -126,6 +126,12 @@
     <div class="dim" id="champNote" style="margin-top:6px"></div>
   </div>
   <div class="card c12">
+    <h2>Turnierbaum — projiziert <span class="tag estimated">Modell-Simulation</span></h2>
+    <div id="bracketTree" style="overflow-x:auto"></div>
+    <table id="bracketTable" style="margin-top:10px"></table>
+    <div class="dim" id="bracketNote" style="margin-top:6px"></div>
+  </div>
+  <div class="card c12">
     <h2>Turnier — Gruppen (Stand &amp; Weiterkommen) <span class="tag estimated">Modell-Simulation</span></h2>
     <div id="groupGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px"></div>
     <div class="dim" id="groupNote" style="margin-top:6px"></div>
@@ -316,8 +322,29 @@ function renderTournament(){
   }).join('');
   const sim=tn.advance||{};
   $('groupNote').innerHTML='<b>Aktuell:</b> Punkte/Tordifferenz aus beendeten Spielen. <b>„Weiter":</b> Modell-Monte-Carlo der '+
-    (sim.n_remaining||0)+' Restspiele ('+(sim.n_runs||0)+' Läufe) → P(Top 2 oder beste 8 Dritte). Grün = aktuelle Top-2-Plätze. '+
-    'K.o.-Baum füllt sich, sobald die Gruppen entschieden sind (FIFA-Zuordnung der besten Dritten steht erst dann fest).';
+    (sim.n_remaining||0)+' Restspiele ('+(sim.n_runs||0)+' Läufe) → P(Top 2 oder beste 8 Dritte). Grün = aktuelle Top-2-Plätze.';
+  // Projizierter Turnierbaum (volle Bracket-Simulation)
+  const br=tn.bracket;
+  if(br&&br.projected_winner){
+    const pw=br.projected_winner;
+    const cols=[['Viertelfinale',[89,90,93,94,91,92,95,96]],['Halbfinale',[97,98,99,100]],
+                ['Finale',[101,102]],['Weltmeister',[104]]];
+    $('bracketTree').innerHTML='<div style="display:flex;gap:14px;min-width:600px">'+cols.map(([lab,ms])=>
+      '<div style="flex:1"><div class="dim" style="margin-bottom:4px">'+lab+'</div>'+
+      ms.map(m=>{const t=pw[m]; const champ=lab==='Weltmeister';
+        return '<div style="border:1px solid '+(champ?'var(--good)':'var(--line)')+';border-radius:5px;padding:6px 8px;margin-bottom:6px;'+(champ?'color:var(--good);font-weight:700':'')+'">'+esc(t||'?')+'</div>';}).join('')+
+      '</div>').join('')+'</div>';
+    // Modell-Titelchancen + Runden, neben Markt
+    const cm=br.champion_model||{}, mk=(tn.champion&&tn.champion.probs)||{}, rounds=br.rounds||{};
+    const top=Object.entries(cm).slice(0,10);
+    $('bracketTable').innerHTML='<tr><th style="text-align:left">Team</th><th>Titel (Modell)</th><th>Titel (Markt)</th><th>Finale</th><th>Halbfinale</th></tr>'+
+      top.map(([t,p])=>{const r=rounds[t]||{};
+        return '<tr><td>'+esc(t)+'</td><td class="mono"><b>'+pct(p)+'</b></td><td class="mono dim">'+pct(mk[t]!=null?mk[t]:null)+
+        '</td><td class="mono">'+pct(r.FINAL)+'</td><td class="mono">'+pct(r.SF)+'</td></tr>';}).join('');
+    $('bracketNote').innerHTML='<b>Vorwärts-Simulation</b> ('+(br.n_runs||0)+' Läufe): Gruppen → R32-Bracket (offizielle WM-2026-Struktur, beste 8 Dritte per Constraint-Matching) → K.o. mit Verlängerung/Elfmeter. '+
+      'Der Baum zeigt den <b>häufigsten</b> Sieger je Position (Modal). Titel (Modell) = unsere Simulation; Titel (Markt) = Polymarket. '+
+      'Abweichungen sind normal — das Modell ist unsere schwächste Quelle (siehe Kalibrierung), der Markt meist besser.';
+  } else { $('bracketTree').innerHTML=''; $('bracketTable').innerHTML=''; $('bracketNote').textContent=''; }
 }
 
 let activeTab='cockpit';

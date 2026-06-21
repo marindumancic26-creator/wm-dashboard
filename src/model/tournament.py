@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from src.model import bracket_wc2026 as bk
+
 ADVANCE_THIRDS = 8   # beste 8 Gruppendritte kommen weiter (WM 2026, 48 Teams)
 
 
@@ -144,3 +146,116 @@ def simulate_groups(groups: dict, get_lambdas, n_runs: int = 3000,
                   "p_third": round(c["third"] / n_runs, 4),
                   "group": team_group[t]}
     return {"teams": res, "n_runs": n_runs, "n_remaining": R}
+
+
+def _resolve_one_run(groups, base, remaining, glam, rng):
+    """Eine Gruppenphasen-Resolution: -> winners, runners, qualifizierte 8 Dritte."""
+    tbl = {g: {t: dict(s) for t, s in base[g].items()} for g in groups}
+    for (g, h, a) in remaining:
+        l1, l2 = glam[(g, h, a)]
+        hg, ag = int(rng.poisson(l1)), int(rng.poisson(l2))
+        th, ta = tbl[g][h], tbl[g][a]
+        th["gf"] += hg; th["gd"] += hg - ag
+        ta["gf"] += ag; ta["gd"] += ag - hg
+        if hg > ag:
+            th["pts"] += 3
+        elif ag > hg:
+            ta["pts"] += 3
+        else:
+            th["pts"] += 1; ta["pts"] += 1
+    winners, runners, thirds = {}, {}, []
+    for g in groups:
+        gl = g[-1]   # "GROUP_A" -> "A"
+        ranked = sorted(tbl[g].items(), key=lambda kv: (-kv[1]["pts"], -kv[1]["gd"], -kv[1]["gf"]))
+        winners[gl] = ranked[0][0]
+        runners[gl] = ranked[1][0]
+        if len(ranked) >= 3:
+            s = ranked[2][1]
+            thirds.append((gl, ranked[2][0], s["pts"], s["gd"], s["gf"]))
+    thirds.sort(key=lambda x: (-x[2], -x[3], -x[4]))
+    qual = thirds[:ADVANCE_THIRDS]
+    third_team = {gl: team for gl, team, *_ in qual}
+    return winners, runners, third_team
+
+
+def _sample_ko(t1, t2, lam_fn, rng):
+    """Ein K.o.-Spiel: 90 Min, sonst Verlängerung (1/3 λ), sonst Elfmeter (~50/50)."""
+    l1, l2 = lam_fn(t1, t2)
+    g1, g2 = rng.poisson(l1), rng.poisson(l2)
+    if g1 != g2:
+        return t1 if g1 > g2 else t2
+    e1, e2 = rng.poisson(l1 / 3.0), rng.poisson(l2 / 3.0)
+    if e1 != e2:
+        return t1 if e1 > e2 else t2
+    return t1 if rng.random() < 0.5 else t2
+
+
+def simulate_full(groups: dict, get_lambdas, n_runs: int = 2000,
+                  rho: float = -0.10, seed: int = 11) -> dict:
+    """Volle Turnier-Simulation inkl. K.o.-Bracket → P(Runde erreicht)/P(Titel) je Team
+    UND ein projizierter Bracket (häufigster Sieger je Match) für die Baum-Anzeige."""
+    rng = np.random.default_rng(seed)
+
+    # Gruppen-Restspiele + λ einmalig (deterministisch)
+    remaining, base = [], {}
+    for g, grp in groups.items():
+        base[g] = _base_table(grp)
+        for m in grp["matches"]:
+            if m["status"] != "FINISHED" or m["hg"] is None:
+                if m["home"] and m["away"]:
+                    remaining.append((g, m["home"], m["away"]))
+    glam = {(g, h, a): get_lambdas(h, a) for (g, h, a) in remaining}
+
+    lam_cache: dict = {}
+    def L(t1, t2):
+        key = (t1, t2)
+        if key not in lam_cache:
+            lam_cache[key] = get_lambdas(t1, t2)
+        return lam_cache[key]
+
+    teams = [t for grp in groups.values() for t in grp["teams"]]
+    reach = {t: {"R16": 0, "QF": 0, "SF": 0, "FINAL": 0, "CHAMPION": 0} for t in teams}
+    win_count: dict[int, dict] = {}   # match_id -> {team: count} (häufigster Sieger)
+
+    def bump(mid, team):
+        win_count.setdefault(mid, {})
+        win_count[mid][team] = win_count[mid].get(team, 0) + 1
+
+    for _ in range(n_runs):
+        winners, runners, third_team = _resolve_one_run(groups, base, remaining, glam, rng)
+        assign = bk._kuhn_match(bk.THIRD_SLOTS, set(third_team))   # {match_id: group}
+
+        def slot_team(mid, slot):
+            typ, val = slot
+            if typ == "W":
+                return winners.get(val)
+            if typ == "RU":
+                return runners.get(val)
+            return third_team.get(assign.get(mid))   # "3"
+
+        winner_of: dict[int, str] = {}
+        for (mid, s1, s2) in bk.R32:
+            t1, t2 = slot_team(mid, s1), slot_team(mid, s2)
+            if not t1 or not t2:
+                continue
+            w = _sample_ko(t1, t2, L, rng)
+            winner_of[mid] = w
+            reach[w]["R16"] += 1
+            bump(mid, w)
+        for label, rnd, key in (("R16", bk.R16, "QF"), ("QF", bk.QF, "SF"),
+                                ("SF", bk.SF, "FINAL"), ("FINAL", bk.FINAL, "CHAMPION")):
+            for mid, (f1, f2) in rnd.items():
+                t1, t2 = winner_of.get(f1), winner_of.get(f2)
+                if not t1 or not t2:
+                    continue
+                w = _sample_ko(t1, t2, L, rng)
+                winner_of[mid] = w
+                reach[w][key] += 1
+                bump(mid, w)
+
+    champ = {t: round(reach[t]["CHAMPION"] / n_runs, 4) for t in teams if reach[t]["CHAMPION"]}
+    rounds = {t: {k: round(v / n_runs, 4) for k, v in reach[t].items()} for t in teams}
+    projected = {mid: max(cnt.items(), key=lambda kv: kv[1])[0] for mid, cnt in win_count.items()}
+    return {"champion_model": dict(sorted(champ.items(), key=lambda kv: -kv[1])),
+            "rounds": rounds, "projected_winner": projected,
+            "n_runs": n_runs, "unique_matchups": len(lam_cache)}

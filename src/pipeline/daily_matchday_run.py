@@ -267,12 +267,16 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
                 return m["lambda1"], m["lambda2"]
             sim = tournament.simulate_groups(groups, _tourn_lambdas, n_runs=2500,
                                              rho=config.DIXON_COLES_RHO)
+            bracket = tournament.simulate_full(groups, _tourn_lambdas, n_runs=2000,
+                                               rho=config.DIXON_COLES_RHO)
             standings = tournament.current_standings(groups)
             champion = pm.fetch_outright_winner()
-            tourn_payload = {"standings": standings, "advance": sim, "champion": champion,
-                             "groups": sorted(groups.keys())}
-            print(f"  Turnier: {len(groups)} Gruppen, {sim['n_remaining']} Restspiele "
-                  f"({sim['n_runs']} Sim-Laeufe), Titel-Odds {'live' if champion else 'n/a'}")
+            tourn_payload = {"standings": standings, "advance": sim, "bracket": bracket,
+                             "champion": champion, "groups": sorted(groups.keys())}
+            top = next(iter(bracket["champion_model"].items()), (None, 0))
+            print(f"  Turnier: {len(groups)} Gruppen, {sim['n_remaining']} Restspiele, "
+                  f"Bracket-Sim Titel-Favorit {top[0]} {top[1]*100:.0f}% (Modell), "
+                  f"Markt-Odds {'live' if champion else 'n/a'}")
     except Exception as exc:
         log["warnings"].append(f"Turnier-Simulation fehlgeschlagen: {exc}")
 

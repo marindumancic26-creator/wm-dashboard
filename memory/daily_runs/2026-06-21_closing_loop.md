@@ -1,13 +1,13 @@
 # Closing-Loop-Report — 2026-06-21
 
-Stand: 2026-06-21T16:00:44 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-06-21T21:04:34 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
 
-**✅ 20 richtig · ❌ 11 falsch** — Trefferquote 65% über n=31 Spiele (Ensemble).
+**✅ 21 richtig · ❌ 11 falsch** — Trefferquote 66% über n=32 Spiele (Ensemble).
 
-## Aufgelöste Spiele (31)
+## Aufgelöste Spiele (32)
 
 ### fifwc-bra-mar-2026-06-13 — Ergebnis 1:1 (draw)
 Prognose-Stand: 2026-06-13T21:02:02
@@ -363,6 +363,18 @@ Prognose-Stand: 2026-06-20T14:00:28+00:00
 | Whale | 0.006 ✅ |
 | Ensemble | 0.246 |
 
+### fifwc-esp-ksa-2026-06-21 — Ergebnis 5:0 (team1_win)
+Prognose-Stand: 2026-06-21T14:00:16+00:00
+
+| Quelle | Brier |
+|---|---|
+| Polymarkt | 0.019 |
+| Buchmacher | 0.024 ❌ |
+| Kalshi | 0.022 |
+| Modell | 0.013 |
+| Whale | 0.000 ✅ |
+| Ensemble | 0.015 |
+
 ### fifwc-tun-jpn-2026-06-21 — Ergebnis 0:4 (team2_win)
 Prognose-Stand: 2026-06-20T21:00:34+00:00
 
@@ -379,12 +391,12 @@ Prognose-Stand: 2026-06-20T21:00:34+00:00
 
 | Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | R/F | n |
 |---|---|---|---|---|---|---|---|
-| 1 | Kalshi | 0.498 | 0.150 | 0.842 | 65% | 20/11 | 31 |
-| 2 | Polymarkt | 0.501 | 0.151 | 0.845 | 65% | 20/11 | 31 |
-| 3 | Buchmacher | 0.509 | 0.154 | 0.854 | 63% | 19/11 | 30 |
-| 4 | Ensemble | 0.510 | 0.155 | 0.859 | 65% | 20/11 | 31 |
-| 5 | Whale | 0.601 | 0.184 | 1.567 | 69% | 18/8 | 26 |
-| 6 | Modell | 0.571 | 0.186 | 0.940 | 58% | 18/13 | 31 |
+| 1 | Kalshi | 0.483 | 0.146 | 0.819 | 66% | 21/11 | 32 |
+| 2 | Polymarkt | 0.486 | 0.146 | 0.822 | 66% | 21/11 | 32 |
+| 3 | Buchmacher | 0.494 | 0.149 | 0.831 | 65% | 20/11 | 31 |
+| 4 | Ensemble | 0.495 | 0.151 | 0.835 | 66% | 21/11 | 32 |
+| 5 | Whale | 0.579 | 0.177 | 1.509 | 70% | 19/8 | 27 |
+| 6 | Modell | 0.553 | 0.181 | 0.914 | 59% | 19/13 | 32 |
 
 _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._
 
@@ -392,27 +404,27 @@ _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 
 
 _1 Einheit flat auf Ensemble-Favorit @ beste 1X2-Quote_
 
-- Wetten: 29 · Trefferquote 62% · **ROI -0.6%**
-- Ø CLV (Quoten): -0.67% · Markt bewegte sich zur Modell-Lehne: 54% (n=26)
+- Wetten: 30 · Trefferquote 63% · **ROI -0.2%**
+- Ø CLV (Quoten): -0.56% · Markt bewegte sich zur Modell-Lehne: 56% (n=27)
 
 ## Gewichts-Empfehlung
 
-_Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.67). Markt/Books/Kalshi korreliert -> Markt-Block als eine effektive Stimme. Nicht auto-angewandt._
+_Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.68). Markt/Books/Kalshi korreliert -> Markt-Block als eine effektive Stimme. Nicht auto-angewandt._
 
 | Quelle | aktuell | empfohlen |
 |---|---|---|
-| Polymarkt | 0.3 | 0.18 |
-| Buchmacher | 0.25 | 0.177 |
-| Kalshi | 0.1 | 0.181 |
+| Polymarkt | 0.3 | 0.178 |
+| Buchmacher | 0.25 | 0.175 |
+| Kalshi | 0.1 | 0.179 |
 | Modell | 0.2 | 0.336 |
-| Whale | 0.15 | 0.126 |
+| Whale | 0.15 | 0.131 |
 
 ## Parameter-Tuning (ELO_PER_GOAL)
 
-- Status `diagnostic` (n=30): Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.
+- Status `diagnostic` (n=31): Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.
 
 ## Automatische Flags
 
-- ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 26 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
-- ⚠️ **Modell schwach kalibriert** (Ø 0.571 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
-- ⚠️ Ensemble schlechter als reiner Markt (Ø 0.510 vs. 0.501) → Gewichtung überdenken, sobald n≥5.
+- ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 27 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
+- ⚠️ **Modell schwach kalibriert** (Ø 0.553 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
+- ⚠️ Ensemble schlechter als reiner Markt (Ø 0.495 vs. 0.486) → Gewichtung überdenken, sobald n≥5.

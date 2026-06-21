@@ -1,17 +1,17 @@
 # Uruguay vs. Cabo Verde
 
-Datum: 2026-06-21  |  Stand: 2026-06-21T16:00:44
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-ury-cvi-2026-06-21) (Volumen $952,582)
+Datum: 2026-06-21  |  Stand: 2026-06-21T21:04:34
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-ury-cvi-2026-06-21) (Volumen $2,083,802)
 
-Ensemble: Uruguay 70.0% / Remis 20.0% / Cabo Verde 10.0%
-Erwartete Tore: 1.837 : 0.666
+Ensemble: Uruguay 71.4% / Remis 19.1% / Cabo Verde 9.5%
+Erwartete Tore: 1.893 : 0.658
 
 Top-Scorelines:
 
-- 1:0 — 14.3%
-- 2:0 — 13.4%
-- 1:1 — 10.6%
-- 0:0 — 9.6%
-- 2:1 — 9.1%
+- 1:0 — 13.7%
+- 2:0 — 13.5%
+- 1:1 — 10.5%
+- 0:0 — 9.2%
+- 3:0 — 9.1%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 95.1%, draw 3.5%, team2_win 1.4%
+Whale-Signal (10 Wallets, heuristisch): team1_win 99.0%, draw 0.5%, team2_win 0.5%
