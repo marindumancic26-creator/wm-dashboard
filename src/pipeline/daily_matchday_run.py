@@ -27,8 +27,8 @@ from src.data_sources import results_client
 from src.data_sources import statsbomb_client as sb
 from src.data_sources import venue_client
 from src.model import (calibration, closing_loop, data_quality, ensemble, features,
-                       injuries, knockout, monte_carlo, parameter_tuning, value_betting,
-                       weight_optimizer, whale_scoring)
+                       injuries, knockout, monte_carlo, parameter_tuning, tournament,
+                       value_betting, weight_optimizer, whale_scoring)
 
 
 def _compact_parameter_tuning(result: dict) -> dict:
@@ -257,6 +257,25 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     if calib["status"] != "live":
         log["warnings"].append(calib.get("note", "Kalibrierung nicht verfuegbar."))
 
+    # --- Turnier-Simulation (Gruppenphase) + Titel-Odds (Markt) -----------
+    tourn_payload = None
+    try:
+        groups = tournament.build_groups(fixtures)
+        if groups:
+            def _tourn_lambdas(t1, t2):
+                m = features.attack_defense_lambdas(t1, t2, sb_profiles, elo_data, form=form)
+                return m["lambda1"], m["lambda2"]
+            sim = tournament.simulate_groups(groups, _tourn_lambdas, n_runs=2500,
+                                             rho=config.DIXON_COLES_RHO)
+            standings = tournament.current_standings(groups)
+            champion = pm.fetch_outright_winner()
+            tourn_payload = {"standings": standings, "advance": sim, "champion": champion,
+                             "groups": sorted(groups.keys())}
+            print(f"  Turnier: {len(groups)} Gruppen, {sim['n_remaining']} Restspiele "
+                  f"({sim['n_runs']} Sim-Laeufe), Titel-Odds {'live' if champion else 'n/a'}")
+    except Exception as exc:
+        log["warnings"].append(f"Turnier-Simulation fehlgeschlagen: {exc}")
+
     finished = dt.datetime.now()
     log["finished_at"] = finished.isoformat(timespec="seconds")
     log["duration_s"] = round((finished - started).total_seconds(), 1)
@@ -276,6 +295,7 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
         "parameter_tuning": None,
         "value_portfolio": portfolio,
         "opportunity_portfolio": opp_portfolio,
+        "tournament": tourn_payload,
         "matches": match_results,
     }
 

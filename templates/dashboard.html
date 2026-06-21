@@ -99,6 +99,7 @@
 
 <nav class="tabs" id="tabbar" style="display:none" role="tablist" aria-label="Dashboard-Bereiche">
   <button class="tabbtn active" role="tab" aria-selected="true" tabindex="0" data-tab="cockpit">Cockpit</button>
+  <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="turnier">Turnier</button>
   <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="detail">Spiel-Detail</button>
   <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="value">Value &amp; Wetten</button>
   <button class="tabbtn" role="tab" aria-selected="false" tabindex="-1" data-tab="calib">Kalibrierung</button>
@@ -117,6 +118,17 @@
     </h2>
     <table id="cockpitTable" aria-label="Cockpit-Tabelle aller Spiele"></table>
     <div class="dim" style="margin-top:6px">Klick auf eine Zeile öffnet das Spiel unten im Detail. Sortierbar per Klick auf Spaltenkopf. DQ = Datenqualität.</div>
+  </div>
+
+  <div class="card c12">
+    <h2>Turnier — Titelchancen <span class="tag live">Markt</span></h2>
+    <div id="champTable"></div>
+    <div class="dim" id="champNote" style="margin-top:6px"></div>
+  </div>
+  <div class="card c12">
+    <h2>Turnier — Gruppen (Stand &amp; Weiterkommen) <span class="tag estimated">Modell-Simulation</span></h2>
+    <div id="groupGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px"></div>
+    <div class="dim" id="groupNote" style="margin-top:6px"></div>
   </div>
 
   <div class="card c4">
@@ -271,8 +283,41 @@ async function load(){
   assignTabs();
   renderCockpit();
   renderValueRanking();
+  renderTournament();
   show(0);
   showTab('cockpit');
+}
+
+function renderTournament(){
+  const tn=DATA.tournament;
+  if(!tn){ $('champNote').textContent='Keine Turnierdaten (football-data.org-Key nötig).'; $('groupGrid').innerHTML=''; return; }
+  // Titelchancen (Markt)
+  const ch=tn.champion;
+  if(ch&&ch.probs){
+    const top=Object.entries(ch.probs).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    const mx=top[0][1]||1;
+    $('champTable').innerHTML='<table>'+top.map(([t,p])=>
+      '<tr><td style="width:130px">'+esc(t)+'</td><td style="width:55px" class="mono">'+pct(p)+
+      '</td><td><div class="bar" style="margin:0"><div style="background:#3b78c4;width:'+(p/mx*100).toFixed(0)+'%">&nbsp;</div></div></td></tr>').join('')+'</table>';
+    $('champNote').innerHTML='Titel-Wahrscheinlichkeiten aus dem <a class="src-link" target="_blank" rel="noopener noreferrer" href="'+esc(ch.url||'#')+'">Polymarket „World Cup Winner"-Markt</a> (entvigt). Der Markt ist hier die belastbarste Quelle für Außenseiter-Titelchancen.';
+  } else { $('champTable').innerHTML=''; $('champNote').textContent='Titel-Odds aktuell nicht verfügbar.'; }
+  // Gruppen (Stand + Weiterkommen)
+  const st=tn.standings||{}, adv=(tn.advance&&tn.advance.teams)||{};
+  const groups=(tn.groups||Object.keys(st)).sort();
+  $('groupGrid').innerHTML=groups.map(g=>{
+    const rows=(st[g]||[]).map((r,i)=>{
+      const a=adv[r.team]||{}, pa=a.p_advance, pw=a.p_win_group;
+      const lead=i<2?'color:var(--good)':'';
+      return '<tr><td style="'+lead+'">'+esc(r.team)+'</td><td class="mono">'+r.pts+'</td><td class="mono dim">'+(r.gd>0?'+':'')+r.gd+
+        '</td><td class="mono">'+(pa!=null?pct(pa):'–')+'</td></tr>';
+    }).join('');
+    return '<div style="border:1px solid var(--line);border-radius:6px;padding:6px 8px"><b>'+esc(g.replace('GROUP_','Gruppe '))+
+      '</b><table style="margin-top:4px"><tr><th style="text-align:left">Team</th><th>P</th><th>±</th><th>Weiter</th></tr>'+rows+'</table></div>';
+  }).join('');
+  const sim=tn.advance||{};
+  $('groupNote').innerHTML='<b>Aktuell:</b> Punkte/Tordifferenz aus beendeten Spielen. <b>„Weiter":</b> Modell-Monte-Carlo der '+
+    (sim.n_remaining||0)+' Restspiele ('+(sim.n_runs||0)+' Läufe) → P(Top 2 oder beste 8 Dritte). Grün = aktuelle Top-2-Plätze. '+
+    'K.o.-Baum füllt sich, sobald die Gruppen entschieden sind (FIFA-Zuordnung der besten Dritten steht erst dann fest).';
 }
 
 let activeTab='cockpit';
@@ -282,6 +327,7 @@ function assignTabs(){
     if(card.classList.contains('disclaimer')) tab='all';
     else { const h=card.querySelector('h2'); const t=h?h.textContent:'';
       if(t.includes('Cockpit')) tab='cockpit';
+      else if(t.includes('Turnier')) tab='turnier';
       else if(t.includes('Value-Ranking')||t.includes('Wettmarkt & Expected')) tab='value';
       else if(t.includes('Kalibrierung')) tab='calib'; }
     card.dataset.tab=tab;

@@ -36,10 +36,15 @@ def fetch_fixtures(force: bool = False) -> dict:
         r = requests.get(f"{config.FOOTBALL_DATA_BASE}/competitions/WC/matches",
                          headers={"X-Auth-Token": config.FOOTBALL_DATA_KEY}, timeout=25)
         r.raise_for_status()
-        fixtures = [{"date": (m.get("utcDate") or "")[:10],
-                     "home": m.get("homeTeam", {}).get("name", ""),
-                     "away": m.get("awayTeam", {}).get("name", ""),
-                     "stage": m.get("stage", "")} for m in r.json().get("matches", [])]
+        fixtures = []
+        for m in r.json().get("matches", []):
+            ft = m.get("score", {}).get("fullTime", {})
+            fixtures.append({"date": (m.get("utcDate") or "")[:10],
+                             "home": m.get("homeTeam", {}).get("name", ""),
+                             "away": m.get("awayTeam", {}).get("name", ""),
+                             "stage": m.get("stage", ""), "group": m.get("group"),
+                             "matchday": m.get("matchday"), "status": m.get("status"),
+                             "home_goals": ft.get("home"), "away_goals": ft.get("away")})
         payload = {"status": "live", "fixtures": fixtures,
                    "as_of": dt.datetime.now().isoformat(timespec="seconds")}
         _FIXTURES_CACHE.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")

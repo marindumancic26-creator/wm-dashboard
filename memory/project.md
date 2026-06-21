@@ -13,6 +13,13 @@ GitHub-Actions-CI, LICENSE, Parser-/Mapping-Tests (28 Tests). **Elo wird live t�
 104 Spiele, Stages GROUP_STAGE…FINAL). Aktiviert sich automatisch ab den K.o.-Spielen; Dashboard
 zeigt dann eine „Weiterkommen"-Zeile zusätzlich zum 90-Min-Ergebnis. Tests vorhanden.
 
+**Turnier-Tab (21.06. gebaut, `tournament.py`):** Vorwärts-Monte-Carlo der Gruppenphase
+(2500 Läufe über die Restspiele, Modell-λ) → P(Gruppensieg), P(Weiterkommen via Top 2 oder
+beste 8 Dritte, WM-2026-Format). Aktuelle Gruppentabellen aus beendeten Spielen. **Titel-Odds**
+aus dem Polymarket-„World Cup Winner"-Markt (`pm.fetch_outright_winner`, entvigt) — Markt ist
+hier die beste Quelle. Dashboard-Tab „Turnier". K.o.-Bracket-Zuordnung der besten Dritten ist
+nicht in den Fixtures → echter Bracket-Baum füllt sich erst nach der Gruppenphase.
+
 **Echte Datengrenzen (bleiben offen — extern bedingt):**
 - Lineup/Verletzung automatisch: keine freie Spieler-Stärkequelle → manuelles Override (`adjustments.json`).
 - Wetter live: braucht OpenWeather-Key (Integration + Forecast-Logik fertig, inaktiv bis Key).

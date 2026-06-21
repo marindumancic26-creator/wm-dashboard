@@ -74,6 +74,34 @@ def get_event(slug: str) -> Optional[dict]:
     return res[0] if res else None
 
 
+def fetch_outright_winner(slug: str = "world-cup-winner") -> Optional[dict]:
+    """Titelchancen je Team aus dem Polymarket-Outright-Markt (Yes-Preis, normalisiert).
+    Rückgabe: {"probs": {team: p}, "raw_sum", "n_teams", "url", "fetched_at"}."""
+    try:
+        ev = get_event(slug)
+    except Exception:
+        return None
+    if not ev:
+        return None
+    raw = {}
+    for m in ev.get("markets", []):
+        team = m.get("groupItemTitle") or ""
+        try:
+            yes = float(json.loads(m.get("outcomePrices", "[]"))[0])
+        except Exception:
+            continue
+        if team and yes > 0:
+            raw[config.canonical_team(team)] = raw.get(config.canonical_team(team), 0.0) + yes
+    if not raw:
+        return None
+    s = sum(raw.values()) or 1.0
+    return {"probs": {t: round(v / s, 4) for t, v in raw.items()},
+            "raw_sum": round(s, 4), "n_teams": len(raw),
+            "url": f"https://polymarket.com/event/{slug}",
+            "status": "live", "source": "polymarket-outright",
+            "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+
+
 def extract_1x2(event: dict) -> Optional[dict]:
     """Extrahiert Heim/Remis/Auswaerts-Preise aus den drei Ja/Nein-Maerkten.
 
