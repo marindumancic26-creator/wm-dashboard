@@ -59,7 +59,7 @@ n=30 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## Input-Audit
 
-- snapshots: `56`
+- snapshots: `57`
 - resolved: `31`
 - entries: `253`
 - missing_model_inputs: `126`

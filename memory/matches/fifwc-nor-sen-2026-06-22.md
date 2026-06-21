@@ -1,9 +1,9 @@
 # Norway vs. Senegal
 
-Datum: 2026-06-22  |  Stand: 2026-06-21T13:51:30
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-nor-sen-2026-06-22) (Volumen $801,200)
+Datum: 2026-06-22  |  Stand: 2026-06-21T16:00:44
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-nor-sen-2026-06-22) (Volumen $917,598)
 
-Ensemble: Norway 50.2% / Remis 23.7% / Senegal 26.1%
+Ensemble: Norway 49.5% / Remis 23.9% / Senegal 26.6%
 Erwartete Tore: 1.515 : 1.196
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 0:0 — 8.1%
 - 2:0 — 7.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 92.3%, draw 0.4%, team2_win 7.2%
+Whale-Signal (10 Wallets, heuristisch): team1_win 89.2%, draw 0.5%, team2_win 10.3%
