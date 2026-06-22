@@ -63,7 +63,7 @@ n=33 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 - resolved: `34`
 - entries: `278`
 - missing_model_inputs: `126`
-- missing_baseline_total_goals: `40`
+- missing_baseline_total_goals: `39`
 - cases: `33`
 
 _Keine automatische Aenderung an config.py. Parameter-Aenderungen bleiben Menschenentscheidung._
