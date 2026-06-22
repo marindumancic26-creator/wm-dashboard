@@ -1,17 +1,17 @@
 # France vs. Iraq
 
-Datum: 2026-06-22  |  Stand: 2026-06-21T21:04:34
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-irq-2026-06-22) (Volumen $786,586)
+Datum: 2026-06-22  |  Stand: 2026-06-22T15:15:08
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-irq-2026-06-22) (Volumen $2,250,650)
 
-Ensemble: France 90.8% / Remis 7.1% / Iraq 2.1%
-Erwartete Tore: 3.422 : 0.517
+Ensemble: France 89.9% / Remis 8.0% / Iraq 2.2%
+Erwartete Tore: 3.22 : 0.472
 
 Top-Scorelines:
 
-- 3:0 — 12.6%
-- 2:0 — 11.6%
-- 4:0 — 11.0%
-- 5:0 — 7.6%
-- 1:0 — 6.8%
+- 3:0 — 13.8%
+- 2:0 — 13.0%
+- 4:0 — 10.8%
+- 1:0 — 7.8%
+- 5:0 — 7.1%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 98.2%, draw 1.8%, team2_win 0.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 99.9%, draw 0.0%, team2_win 0.1%
