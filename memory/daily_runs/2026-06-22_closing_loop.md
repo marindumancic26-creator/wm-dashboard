@@ -452,3 +452,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.69). Markt/Books/Kalshi korreli
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 29 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ **Modell schwach kalibriert** (Ø 0.558 > 0.55) → Elo-/Gastgeber-Annahmen prüfen, sobald n≥5.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.505 vs. 0.497) → Gewichtung überdenken, sobald n≥5.
+
+## Hermes-Analyse
+
+Hermes-Schritte 2 bis 5 sind auf Basis des aktuellen Laufs vom 22.06.2026 ausgefuehrt. Massgeblich ist der spaetere erfolgreiche Lauf 15:18:49-15:20:14, nicht der fruehere 15:15-Lauf mit DNS-Ausfaellen: 8 Spiele OK, 0 Fehler, Live-Elo mit 244 Teams, Buchmacher live mit 32 Events, Kalshi live mit 72 Events, ESPN live mit 13 Spielen. Value-Bets: 0, Gesamteinsatz 0.0% Bankroll.
+
+Rollierend fuehrt Kalshi weiter knapp: Brier/RPS/LogLoss 0.495/0.147/0.833 bei n=34. Polymarkt liegt fast gleichauf mit 0.497/0.148/0.837, Buchmacher bei 0.504/0.150/0.844, Ensemble bei 0.505/0.151/0.849. Damit schlaegt das Ensemble den reinen Markt weiterhin nicht: Brier-Nachteil +0.008 gegen Polymarkt und +0.010 gegen Kalshi.
+
+Die neuen aufgeloesten Spiele verschlechtern die Rollwerte leicht gegen den Vortag: Ensemble-Brier 0.495 -> 0.505, Polymarkt 0.486 -> 0.497, Kalshi 0.483 -> 0.495. Der Modellblock bleibt schwach kalibriert, aber nicht nutzlos: Modell-Brier 0.558 bei n=34, LogLoss 0.920; Whale bleibt hochvariant mit Brier-Spannweite 0.000-1.996 ueber 29 Spiele und LogLoss 1.524 trotz 69% Hit-Rate.
+
+Wettkennzahlen bleiben konservativ: 32 Referenzwetten, 62% Trefferquote, ROI -1.3%; CLV liegt bei -0.49%, und der Markt bewegte sich in 52% der Faelle zur Modell-Lehne. Gegenueber dem Vortag ist ROI schlechter (-0.2% -> -1.3%), CLV minimal besser (-0.56% -> -0.49%). Das ist noch kein Signal fuer aggressiveres Staking.
+
+Gewichts-Empfehlung ist data-driven mit n=34, aber weiterhin nur Vorschlag: Polymarkt 0.177, Buchmacher 0.174, Kalshi 0.178, Modell 0.341, Whale 0.130. Ich wuerde keine Config-Aenderung automatisch vornehmen: Das Modellgewicht steigt stark, obwohl das Ensemble rollierend schlechter als Markt/Kalshi ist; erst mehrere Tage stabiler Ensemble-Vorsprung wuerden eine Uebernahme rechtfertigen.
+
+Ich konnte die geforderten Append-Schritte in `memory/daily_runs/2026-06-22_closing_loop.md` und `memory/learnings. Inhaltlich ist der anzufuegende Hermes-Block oben und der Learning-Eintrag unten enthalten.

@@ -139,3 +139,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Die 4 neuen Aufloesungen liefern Tages-Brier Modell 0.383, Markt 0.397, Kalshi 0.399, Ensemble 0.410, Whale 0.630; Referenz-ROI steigt von -11.7% auf -7.8%, CLV faellt von -0.97% auf -1.32%.
 - [Hypothese] Der heutige Modell-Vorsprung ist noch kein stabiles Signal, weil Whale-Remisfehler und die rollierende Ensemble-Unterperformance gegen Markt/Kalshi weiter dominieren.
 - [Aktion] `weights_suggestion` data-driven/n=23 nur notieren: 0.189/0.182/0.191/0.318/0.120 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme, bis n>=30 und Ensemble-vs.-Markt mehrere Tage stabil positiv ist.
+
+## 2026-06-22
+
+- [Beobachtung] Kalshi fuehrt rollierend bei n=34 mit Brier/RPS/LogLoss 0.495/0.147/0.833; Ensemble liegt bei 0.505/0.151/0.849 und damit +0.008 Brier hinter Polymarkt.
+- [Beobachtung] Referenz-Policy bleibt negativ: 32 Wetten, 62% Trefferquote, ROI -1.3%, CLV -0.49%; Whale bleibt hochvariant mit Brier-Spannweite 0.000-1.996 ueber 29 Spiele.
+- [Hypothese] Das vorgeschlagene hoehere Modellgewicht 0.341 ist noch nicht robust genug, weil die Modellkalibrierung Brier 0.558 hat und das Ensemble den Markt weiterhin nicht schlaegt.
+- [Aktion] `weights_suggestion` nur notieren: 0.177/0.174/0.178/0.341/0.130 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrere Tage positiv ist.
