@@ -1,17 +1,17 @@
 # South Africa vs. Korea Republic
 
-Datum: 2026-06-24  |  Stand: 2026-06-23T10:20:59
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-rsa-kr-2026-06-24) (Volumen $343,429)
+Datum: 2026-06-24  |  Stand: 2026-06-24T23:01:58
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-rsa-kr-2026-06-24) (Volumen $2,005,480)
 
-Ensemble: South Africa 14.6% / Remis 21.7% / South Korea 63.7%
-Erwartete Tore: 0.861 : 1.8
+Ensemble: South Africa 13.9% / Remis 21.7% / South Korea 64.4%
+Erwartete Tore: 0.861 : 1.897
 
 Top-Scorelines:
 
-- 1:1 — 11.8%
-- 0:1 — 11.4%
-- 0:2 — 11.3%
-- 1:2 — 9.4%
-- 0:0 — 8.5%
+- 0:1 — 11.2%
+- 1:1 — 11.0%
+- 0:2 — 11.0%
+- 1:2 — 9.6%
+- 0:0 — 7.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 1.3%, draw 2.7%, team2_win 96.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.7%, draw 1.3%, team2_win 97.9%
