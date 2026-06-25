@@ -1,9 +1,9 @@
 # Japan vs. Sweden
 
-Datum: 2026-06-25  |  Stand: 2026-06-25T08:15:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-jpn-swe-2026-06-25) (Volumen $3,021,492)
+Datum: 2026-06-25  |  Stand: 2026-06-25T09:01:19
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-jpn-swe-2026-06-25) (Volumen $3,061,985)
 
-Ensemble: Japan 59.3% / Remis 22.8% / Sweden 17.8%
+Ensemble: Japan 59.3% / Remis 22.8% / Sweden 17.9%
 Erwartete Tore: 1.777 : 1.03
 
 Top-Scorelines:

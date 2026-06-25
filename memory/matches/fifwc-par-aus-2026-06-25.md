@@ -1,9 +1,9 @@
 # Paraguay vs. Australia
 
-Datum: 2026-06-25  |  Stand: 2026-06-25T08:15:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-par-aus-2026-06-25) (Volumen $850,978)
+Datum: 2026-06-25  |  Stand: 2026-06-25T09:01:19
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-par-aus-2026-06-25) (Volumen $864,056)
 
-Ensemble: Paraguay 30.6% / Remis 46.6% / Australia 22.8%
+Ensemble: Paraguay 30.9% / Remis 46.1% / Australia 22.9%
 Erwartete Tore: 0.842 : 0.681
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 1:1 — 13.2%
 - 2:0 — 7.8%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 5.2%, draw 93.3%, team2_win 1.5%
+Whale-Signal (10 Wallets, heuristisch): team1_win 7.3%, draw 89.9%, team2_win 2.8%

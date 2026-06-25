@@ -1,9 +1,9 @@
 # Uruguay vs. Spain
 
-Datum: 2026-06-26  |  Stand: 2026-06-25T08:15:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-ury-esp-2026-06-26) (Volumen $369,718)
+Datum: 2026-06-26  |  Stand: 2026-06-25T09:01:19
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-ury-esp-2026-06-26) (Volumen $376,368)
 
-Ensemble: Uruguay 10.8% / Remis 21.2% / Spain 68.0%
+Ensemble: Uruguay 10.6% / Remis 21.7% / Spain 67.7%
 Erwartete Tore: 0.769 : 2.036
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 1:2 — 9.4%
 - 0:3 — 8.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 1.8%, draw 15.2%, team2_win 83.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 19.1%, team2_win 80.9%

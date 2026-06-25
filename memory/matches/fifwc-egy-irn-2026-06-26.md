@@ -1,9 +1,9 @@
 # Egypt vs. IR Iran
 
-Datum: 2026-06-26  |  Stand: 2026-06-25T08:15:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-egy-irn-2026-06-26) (Volumen $315,754)
+Datum: 2026-06-26  |  Stand: 2026-06-25T09:01:19
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-egy-irn-2026-06-26) (Volumen $333,870)
 
-Ensemble: Egypt 35.3% / Remis 40.8% / Iran 23.9%
+Ensemble: Egypt 36.0% / Remis 39.6% / Iran 24.3%
 Erwartete Tore: 1.04 : 0.812
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 0:1 — 11.4%
 - 2:0 — 8.7%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 12.5%, draw 80.8%, team2_win 6.6%
+Whale-Signal (10 Wallets, heuristisch): team1_win 17.8%, draw 72.5%, team2_win 9.7%
