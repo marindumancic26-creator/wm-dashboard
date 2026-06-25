@@ -606,3 +606,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.76). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.996 über 42 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.468 vs. 0.464) → Gewichtung überdenken, sobald n≥5.
+
+## Hermes-Analyse
+
+Der Lauf vom 25.06. steht bei 47 aufgeloesten Spielen: Ensemble 33/47 richtig, Trefferquote 70%. Rollierend kalibriert Kalshi am besten mit Brier/RPS/LogLoss 0.461/0.144/0.789, knapp vor Polymarkt mit 0.464/0.145/0.793. Schlechteste Quelle bleibt Whale mit 0.550/0.181/1.317 bei n=42; das Modell liegt mit 0.518/0.172/0.871 ebenfalls klar hinter Markt/Kalshi/Ensemble.
+
+Die fuenf neu hinzugekommenen Aufloesungen seit dem 24.06. waren fuer das Ensemble netto gut: 4 richtige und 1 falscher Headline-Pick, Tages-Brier ca. 0.349. Auffaellig ist RSA-Korea 1:0: alle Hauptquellen lagen daneben oder zu scharf auf Korea, Ensemble Brier 1.203, Whale 1.945. Dagegen waren CZE-Mexiko 0:3, Schottland-Brasilien 0:3 und Marokko-Haiti 4:2 klare Korrekturen zugunsten des Ensemble/Whale-Signals.
+
+Das Ensemble schlaegt den reinen Markt rollierend weiterhin nicht: Brier 0.468 vs. Polymarkt 0.464, RPS 0.148 vs. 0.145. Tagesbezogen war das Ensemble besser als Polymarkt, aber der rollierende Rueckstand bleibt strukturell: Markt/Kalshi sind stabiler, waehrend Modell und Whale zwar einzelne Favoritencluster verbessern, aber bei Remis oder Underdog-Siegen hohe Fehler produzieren.
+
+Die Referenz-Policy verbessert sich leicht: 44 Wetten, 68% Trefferquote, ROI +9.1% nach +8.5% am Vortag. CLV ist praktisch neutral: +0.01% bei n=40, nach -0.10% bei n=36. Das spricht nicht fuer einen belastbaren Closing-Line-Edge; die ROI-Verbesserung ist bislang eher Ergebnis- als Preisqualitaet.
+
+Die Gewichts-Empfehlung ist data-driven bei n=47 und lautet Polymarkt 0.168, Buchmacher 0.163, Kalshi 0.169, Modell 0.343, Whale 0.157 statt aktuell 0.300/0.250/0.100/0.200/0.150. Trotz n>=15 wuerde ich nicht automatisch uebernehmen: Das vorgeschlagene Modellgewicht 0.343 steht im Konflikt mit Modell-Brier 0.518 und dem Flag, dass das Ensemble den Markt noch nicht schlaegt. Parameter-Tuning bleibt nur diagnostisch: ELO_PER_GOAL 180 statt 240 mit RPS-Marge 0.0068, keine Auto-Uebernahme.
