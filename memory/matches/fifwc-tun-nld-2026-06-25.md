@@ -1,17 +1,17 @@
 # Tunisia vs. Netherlands
 
-Datum: 2026-06-25  |  Stand: 2026-06-24T23:01:58
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-tun-nld-2026-06-25) (Volumen $721,225)
+Datum: 2026-06-25  |  Stand: 2026-06-25T08:15:48
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-tun-nld-2026-06-25) (Volumen $1,608,272)
 
-Ensemble: Tunisia 3.0% / Remis 8.3% / Netherlands 88.6%
-Erwartete Tore: 0.595 : 3.201
+Ensemble: Tunisia 2.9% / Remis 8.2% / Netherlands 89.0%
+Erwartete Tore: 0.57 : 3.314
 
 Top-Scorelines:
 
-- 0:3 — 12.7%
-- 0:2 — 11.4%
-- 0:4 — 9.8%
-- 1:3 — 7.1%
-- 0:1 — 6.9%
+- 0:3 — 12.5%
+- 0:2 — 11.3%
+- 0:4 — 10.2%
+- 0:1 — 7.0%
+- 1:3 — 6.7%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 0.0%, team2_win 100.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.3%, draw 0.1%, team2_win 99.6%
