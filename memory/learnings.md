@@ -153,3 +153,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Seit 24.06. kamen 5 Aufloesungen dazu: Ensemble 4/5 richtig, Tages-Brier ca. 0.349; groesster Fehler RSA-Korea mit Ensemble-Brier 1.203 und Whale-Brier 1.945.
 - [Hypothese] Das Ensemble profitiert kurzfristig von Favoritenclustern, aber Modell- und Whale-Varianz verhindern noch robuste Markt-Outperformance; CLV +0.01% bei n=40 stuetzt keinen klaren Preis-Edge.
 - [Aktion] `weights_suggestion` data-driven/n=47 nur notieren: 0.168/0.163/0.169/0.343/0.157 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrtaegig positiv ist.
+
+## 2026-06-27
+
+- [Beobachtung] Rollierend fuehrt Kalshi bei n=58 mit Brier/RPS/LogLoss 0.455/0.144/0.779; Polymarkt liegt praktisch gleichauf bei 0.456/0.145/0.782, Ensemble bleibt bei 0.462/0.148/0.792 dahinter.
+- [Beobachtung] Seit 25.06. kamen 11 Aufloesungen hinzu; Tages-Brier ca. Buchmacher 0.419, Polymarkt 0.424, Kalshi 0.426, Ensemble 0.437, Modell 0.494, Whale 0.612.
+- [Hypothese] Die ROI-Verbesserung auf +11.0% kommt eher aus Favoriten-/Ergebnisclustern als aus robuster Wahrscheinlichkeitskalibrierung, weil das Ensemble den Markt bei Brier/RPS/LogLoss weiter nicht schlaegt.
+- [Aktion] `weights_suggestion` data-driven/n=58 nur notieren: 0.169/0.166/0.170/0.355/0.141 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrtaegig positiv ist und Modell-Brier klar unter Marktblock-Niveau faellt.

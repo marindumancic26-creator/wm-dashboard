@@ -738,3 +738,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.79). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 53 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.462 vs. 0.456) → Gewichtung überdenken, sobald n≥5.
+
+## Hermes-Analyse
+
+Der Lauf vom 27.06. steht bei 58 aufgeloesten Spielen: Ensemble 41/58 richtig, Trefferquote 71%. Rollierend kalibriert Kalshi knapp am besten mit Brier/RPS/LogLoss 0.455/0.144/0.779, direkt vor Polymarkt mit 0.456/0.145/0.782. Buchmacher folgen bei 0.464/0.147/0.790, Ensemble liegt trotz besserer Hit-Rate nur bei 0.462/0.148/0.792. Schwach bleiben Modell mit 0.514/0.169/0.868 und Whale mit 0.563/0.196/1.391 bei n=53.
+
+Seit dem 25.06. kamen 11 Aufloesungen dazu; grob tagesbezogen lagen Buchmacher und Markt vorn: Brier ca. 0.419 bzw. 0.424, Kalshi ca. 0.426, Ensemble ca. 0.437, Modell ca. 0.494, Whale ca. 0.612. Die groessten Fehler waren Ecuador-Deutschland 2:1, Japan-Schweden 1:1 und Tuerkei-USA 3:2: jeweils hohe Whale-Fehler um 1.955 bis 1.998 und Ensemble-Brier 0.979 bis 1.192. Positiv waren klare Favoriten wie Korea-Elfenbeinkueste, Niederlande-Tunesien, Neuseeland-Belgien, Senegal-Irak und Uruguay-Spanien mit Ensemble-Brier 0.048 bis 0.162.
+
+Das Ensemble schlaegt den reinen Markt weiterhin nicht: Brier 0.462 gegen Polymarkt 0.456, RPS 0.148 gegen 0.145, LogLoss 0.792 gegen 0.782. Die hoehere Ensemble-Hit-Rate von 71% gegen 69% bei Kalshi/Polymarkt ist daher kein Kalibrierungssieg, sondern eher bessere Richtungswahl bei einigen Favoriten. Fuer Value-Semantik zaehlen die Wahrscheinlichkeiten, und dort bleibt der Marktblock stabiler.
+
+Die Referenz-Policy verbessert sich: 55 Wetten, 69% Trefferquote, ROI +11.0%, nach 44 Wetten und +9.1% am 25.06. Auch CLV steigt von +0.01% auf +0.75% bei n=46; das ist erstmals ein brauchbares positives Signal, aber noch kein Freibrief, weil nur 46 CLV-Beobachtungen und nur 46% Marktbewegung zur Modell-Lehne vorliegen. Aktuell gibt es zudem 0 Value-Bets und 0.0% Gesamtstake im Snapshot.
+
+`weights_suggestion` ist data-driven bei n=58: Polymarkt 0.169, Buchmacher 0.166, Kalshi 0.170, Modell 0.355, Whale 0.141 statt aktuell 0.300/0.250/0.100/0.200/0.150. Nicht automatisch uebernehmen: Das hoehere Modellgewicht widerspricht der weiter schwachen Modellkalibrierung und dem Auto-Flag, dass das Ensemble schlechter als der Markt ist. Whale bleibt wegen Spannweite 0.000-1.998 defensiv; ELO_PER_GOAL bleibt nur diagnostisch mit Vorschlag 180 statt 240 bei n=57.
