@@ -1,17 +1,17 @@
 # Algeria vs. Austria
 
-Datum: 2026-06-27  |  Stand: 2026-06-27T16:00:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-alg-aut-2026-06-27) (Volumen $1,796,308)
+Datum: 2026-06-27  |  Stand: 2026-06-27T23:00:40
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-alg-aut-2026-06-27) (Volumen $2,844,470)
 
-Ensemble: Algeria 21.8% / Remis 48.3% / Austria 29.9%
-Erwartete Tore: 0.618 : 0.775
+Ensemble: Algeria 23.9% / Remis 49.0% / Austria 27.1%
+Erwartete Tore: 0.659 : 0.718
 
 Top-Scorelines:
 
-- 0:0 — 26.5%
-- 0:1 — 17.9%
-- 1:0 — 13.8%
-- 1:1 — 12.8%
-- 0:2 — 7.5%
+- 0:0 — 26.9%
+- 0:1 — 16.8%
+- 1:0 — 14.9%
+- 1:1 — 13.1%
+- 0:2 — 6.6%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 2.7%, draw 90.6%, team2_win 6.7%
+Whale-Signal (10 Wallets, heuristisch): team1_win 5.4%, draw 87.6%, team2_win 7.0%

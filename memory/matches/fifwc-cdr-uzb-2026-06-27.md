@@ -1,17 +1,17 @@
 # DR Congo vs. Uzbekistan
 
-Datum: 2026-06-27  |  Stand: 2026-06-27T16:00:48
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-cdr-uzb-2026-06-27) (Volumen $1,477,827)
+Datum: 2026-06-27  |  Stand: 2026-06-27T23:00:40
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-cdr-uzb-2026-06-27) (Volumen $3,152,016)
 
-Ensemble: DR Congo 58.6% / Remis 22.2% / Uzbekistan 19.2%
-Erwartete Tore: 1.834 : 1.06
+Ensemble: DR Congo 58.0% / Remis 22.5% / Uzbekistan 19.4%
+Erwartete Tore: 1.777 : 1.059
 
 Top-Scorelines:
 
-- 1:1 — 11.9%
-- 2:1 — 9.4%
-- 2:0 — 9.3%
-- 1:0 — 9.2%
-- 0:0 — 6.8%
+- 1:1 — 12.1%
+- 2:1 — 9.7%
+- 1:0 — 9.4%
+- 2:0 — 9.1%
+- 0:0 — 7.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 96.8%, draw 2.0%, team2_win 1.2%
+Whale-Signal (10 Wallets, heuristisch): team1_win 98.0%, draw 1.2%, team2_win 0.8%
