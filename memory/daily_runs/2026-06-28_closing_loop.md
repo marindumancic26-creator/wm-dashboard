@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-06-28
 
-Stand: 2026-06-28T12:47:18 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-06-28T16:00:28 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -798,17 +798,3 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.81). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 58 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.452 vs. 0.447) → Gewichtung überdenken, sobald n≥5.
-
-## Hermes-Analyse
-
-Der Lauf vom 28.06.2026 ist auswertbar: 4 aktuelle Fixtures wurden erfolgreich verarbeitet, 0 Matches sind fehlgeschlagen, alle Kernquellen sind live bzw. verfuegbar. Elo ist live mit 244 Teams, Books liefern 16 Events, Kalshi 88 Events, ESPN 10 Spiele, FBref-Form 48 Teams; StatsBomb bleibt historisch. Value-Bets: 0, Gesamtstake 0.0%. Modellversion m-1cd2d4dc, MC-Runs 20000.
-
-Rollierend fuehrt weiter der Marktblock: Kalshi ist knapp beste Quelle mit Brier/RPS/LogLoss 0.4458/0.1389/0.7672 bei n=63, direkt vor Polymarkt mit 0.4470/0.1391/0.7696. Buchmacher liegen bei 0.4541/0.1412/0.7770. Schlechteste Quelle bleibt Whale mit 0.5466/0.1866/1.3809 bei n=58; das reine Modell bleibt ebenfalls schwach gegen den Marktblock mit 0.5020/0.1610/0.8509.
-
-Das Ensemble verbessert die Trefferquote, aber noch nicht die Kalibrierung: 45/63 Treffer = 71.43%, hoeher als Kalshi/Polymarkt mit 44/63. Gleichzeitig schlaegt es den reinen Markt rollierend nicht: Ensemble Brier/RPS/LogLoss 0.4518/0.1422/0.7778 gegen Polymarkt 0.4470/0.1391/0.7696 und Kalshi 0.4458/0.1389/0.7672. Die Headline-Picks sind also praktisch besser im Trefferzaehler, aber probabilistisch noch nicht besser kalibriert.
-
-Die fuenf neuen Aufloesungen seit dem letzten Report waren fuer das Ensemble gut: 4/5 Treffer, Tages-Brier ca. 0.329, Tages-RPS ca. 0.069, Tages-LogLoss ca. 0.608. Damit lag das Ensemble an diesem Tag vor Polymarkt mit ca. 0.341/0.074/0.622. Der groesste Fehler war Kolumbien-Portugal 0:0: Ensemble-Brier 0.9437, Whale-Brier 1.7551, Pick team2_win statt draw. Auffaellig positiv waren Algerien-Oesterreich 3:3, wo Whale und Ensemble den Draw stark einfingen, sowie klare Favoritensiege bei Argentinien und England.
-
-Die Referenz-Policy steht nun bei 60 Wetten, 70.0% Trefferquote und ROI +12.55%; seit dem letzten Stand kamen netto +1.46 Einheiten aus 5 Wetten hinzu. CLV bleibt aber nur schwach positiv: durchschnittlich +0.69% Quoten-CLV, beat-close-rate 47.06% bei n=51. Das spricht gegen eine bereits robuste Preis-Edge-Erklaerung; die ROI-Verbesserung kann weiterhin aus Ergebnis-/Favoritenclustern stammen.
-
-`weights_suggestion` ist data-driven mit n=63 und alpha=0.81: empfohlen werden Polymarkt 0.168, Buchmacher 0.165, Kalshi 0.168, Modell 0.359, Whale 0.140 gegen aktuell 0.300/0.250/0.100/0.200/0.150. Keine automatische Uebernahme: Trotz n>=15 ist das Ensemble rollierend weiter schlechter als Kalshi/Polymarkt, das Modell liegt noch klar hinter dem Marktblock, und Whale bleibt hochvariant. Parameter-Tuning nennt ELO_PER_GOAL 180 und rho 0.0 als Kandidat mit RPS-Marge +0.0082, aber `adoption_ready=false`, also nur beobachten.
