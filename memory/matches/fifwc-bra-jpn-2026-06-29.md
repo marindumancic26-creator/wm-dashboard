@@ -1,9 +1,9 @@
 # Brazil vs. Japan
 
-Datum: 2026-06-29  |  Stand: 2026-06-28T16:00:28
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-bra-jpn-2026-06-29) (Volumen $2,260,622)
+Datum: 2026-06-29  |  Stand: 2026-06-28T23:32:15
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-bra-jpn-2026-06-29) (Volumen $3,471,676)
 
-Ensemble: Brazil 62.2% / Remis 22.3% / Japan 15.5%
+Ensemble: Brazil 62.8% / Remis 21.7% / Japan 15.5%
 Erwartete Tore: 1.854 : 0.952
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 9.6%
 - 0:0 — 7.1%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 89.2%, draw 10.0%, team2_win 0.8%
+Whale-Signal (10 Wallets, heuristisch): team1_win 95.0%, draw 4.1%, team2_win 0.9%
