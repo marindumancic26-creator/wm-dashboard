@@ -6,11 +6,21 @@ $marker = Join-Path $repo "data\snapshots\daily_success_${today}.ok"
 $log = Join-Path $repo "data\snapshots\automation_watchdog.log"
 $runner = Join-Path $repo "run_daily.ps1"
 $powershell = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+$dailyMutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Daily")
+$hasDailyLock = $false
 
 function Write-WatchdogLog {
     param([string]$Message)
-    "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message |
-        Out-File -LiteralPath $log -Append -Encoding utf8
+    $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        try {
+            $line | Out-File -LiteralPath $log -Append -Encoding utf8
+            return
+        }
+        catch {
+            Start-Sleep -Milliseconds (200 * $attempt)
+        }
+    }
 }
 
 try {
@@ -18,6 +28,19 @@ try {
         Write-WatchdogLog "Daily-Lauf fuer $today bereits erfolgreich; kein Recovery noetig."
         exit 0
     }
+
+    try {
+        $hasDailyLock = $dailyMutex.WaitOne(0)
+    }
+    catch [Threading.AbandonedMutexException] {
+        $hasDailyLock = $true
+    }
+    if (-not $hasDailyLock) {
+        Write-WatchdogLog "Daily-Lauf fuer $today ist bereits aktiv; Watchdog startet keinen zweiten Lauf."
+        exit 0
+    }
+    $dailyMutex.ReleaseMutex()
+    $hasDailyLock = $false
 
     Write-WatchdogLog "Erfolgsmarke fuer $today fehlt; Recovery-Lauf wird gestartet."
     & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $runner
@@ -27,8 +50,8 @@ try {
         exit $runnerCode
     }
     if (-not (Test-Path -LiteralPath $marker)) {
-        Write-WatchdogLog "Recovery-Lauf ohne Erfolgsmarke beendet; vermutlich laeuft bereits eine andere Instanz."
-        exit 1
+        Write-WatchdogLog "Recovery-Lauf ohne Erfolgsmarke beendet; naechster Watchdog prueft erneut."
+        exit 0
     }
 
     Write-WatchdogLog "Recovery-Lauf erfolgreich abgeschlossen."
@@ -37,4 +60,10 @@ try {
 catch {
     Write-WatchdogLog "FEHLER im Daily-Watchdog: $($_.Exception.Message)"
     exit 1
+}
+finally {
+    if ($hasDailyLock) {
+        $dailyMutex.ReleaseMutex()
+    }
+    $dailyMutex.Dispose()
 }

@@ -7,6 +7,8 @@ $log = Join-Path $repo "data\snapshots\automation_hermes.log"
 $codex = "C:\Users\marin\AppData\Roaming\npm\codex.cmd"
 $output = Join-Path $repo "data\snapshots\hermes_last.json"
 $schema = Join-Path $repo "automation\hermes_output_schema.json"
+$mutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Hermes")
+$hasLock = $false
 $prompt = @"
 Lies HERMES.md in diesem Projekt und fuehre die taegliche Hermes-Analyse aus (Schritte 2 bis 5).
 Lies den heutigen Snapshot data/processed/dashboard_data.json und die heutigen Dateien in memory/daily_runs/.
@@ -21,8 +23,16 @@ Staking-Parametern.
 
 function Write-HermesLog {
     param([string]$Message)
-    "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message |
-        Out-File -LiteralPath $log -Append -Encoding utf8
+    $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        try {
+            $line | Out-File -LiteralPath $log -Append -Encoding utf8
+            return
+        }
+        catch {
+            Start-Sleep -Milliseconds (200 * $attempt)
+        }
+    }
 }
 
 function Invoke-Logged {
@@ -64,9 +74,39 @@ function Set-MarkdownSection {
 }
 
 try {
+    try {
+        $hasLock = $mutex.WaitOne(0)
+    }
+    catch [Threading.AbandonedMutexException] {
+        $hasLock = $true
+    }
+    if (-not $hasLock) {
+        Write-HermesLog "Hermes-Lauf uebersprungen: Ein anderer Hermes-Lauf ist noch aktiv."
+        exit 0
+    }
+
     Set-Location -LiteralPath $repo
     $env:OPENAI_API_KEY = $null
     Write-HermesLog "Automatische Hermes-Analyse gestartet."
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $successMarker = Join-Path $repo "data\snapshots\daily_success_${today}.ok"
+    $closingLoop = Join-Path $repo "memory\daily_runs\${today}_closing_loop.md"
+    $learnings = Join-Path $repo "memory\learnings.md"
+    $deadline = (Get-Date).AddMinutes(90)
+    while ((-not (Test-Path -LiteralPath $successMarker) -or
+            -not (Test-Path -LiteralPath $closingLoop) -or
+            -not (Test-Path -LiteralPath $learnings)) -and
+           (Get-Date) -lt $deadline) {
+        Write-HermesLog "Daily-Artefakte fuer $today fehlen noch; Hermes wartet."
+        Start-Sleep -Seconds 60
+    }
+    if (-not (Test-Path -LiteralPath $successMarker) -or
+        -not (Test-Path -LiteralPath $closingLoop) -or
+        -not (Test-Path -LiteralPath $learnings)) {
+        Write-HermesLog "FEHLER: Heutiger Daily-Success-Marker, Closing-Loop oder learnings.md fehlt nach Wartezeit."
+        exit 1
+    }
+
     if (-not $UseExistingOutput) {
         Remove-Item -LiteralPath $output -Force -ErrorAction SilentlyContinue
         $codexCode = Invoke-Logged $codex @(
@@ -81,9 +121,6 @@ try {
         }
     }
 
-    $today = Get-Date -Format "yyyy-MM-dd"
-    $closingLoop = Join-Path $repo "memory\daily_runs\${today}_closing_loop.md"
-    $learnings = Join-Path $repo "memory\learnings.md"
     if (-not (Test-Path -LiteralPath $closingLoop) -or -not (Test-Path -LiteralPath $learnings)) {
         Write-HermesLog "FEHLER: Heutiger Closing-Loop oder learnings.md fehlt."
         exit 1
@@ -152,4 +189,10 @@ try {
 catch {
     Write-HermesLog "FEHLER im Hermes-Runner: $($_.Exception.Message)"
     exit 1
+}
+finally {
+    if ($hasLock) {
+        $mutex.ReleaseMutex()
+    }
+    $mutex.Dispose()
 }

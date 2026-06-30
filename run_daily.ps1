@@ -8,8 +8,16 @@ $hasLock = $false
 
 function Write-RunLog {
     param([string]$Message)
-    "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message |
-        Out-File -LiteralPath $log -Append -Encoding utf8
+    $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        try {
+            $line | Out-File -LiteralPath $log -Append -Encoding utf8
+            return
+        }
+        catch {
+            Start-Sleep -Milliseconds (200 * $attempt)
+        }
+    }
 }
 
 function Invoke-Logged {
