@@ -842,3 +842,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.82). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 62 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ⚠️ Ensemble schlechter als reiner Markt (Ø 0.465 vs. 0.462) → Gewichtung überdenken, sobald n≥5.
+
+## Hermes-Analyse
+
+Der heutige Hermes-Lauf steht auf 2026-06-30T09:21:41 mit 67 aufgeloesten Spielen, 47 richtigen und 20 falschen Ensemble-Headline-Picks, also 70% Trefferquote. Datenlage ist operativ sauber: keine `matches_failed`, Elo live mit 244 Teams, Buecher live mit 13 Events, Kalshi live mit 89 Events, ESPN live mit 9 Spielen; StatsBomb bleibt historisch und FBref-xG ist weiterhin leer. Value-seitig gibt es heute 0 Value-Bets und 0.0% Gesamtstake, also kein Handlungsdruck aus der Wett-Policy.
+
+Rollierend kalibriert Kalshi weiterhin am besten: Brier/RPS/LogLoss 0.446/0.139/0.767 bei n=63. Dahinter liegen Polymarkt 0.462/0.150/0.797 bei n=67 und Buchmacher 0.469/0.152/0.803 bei n=65. Das Ensemble steht bei 0.465/0.152/0.801 und schlaegt den reinen Markt damit rollierend nicht; das Modell bleibt mit 0.507/0.167/0.859 schwach, Whale ist mit 0.568/0.201/1.459 klar hochvariant.
+
+Seit dem letzten Hermes-Eintrag kamen vier Aufloesungen dazu: RSA-Kanada, Brasilien-Japan, Deutschland-Paraguay und Niederlande-Marokko. Tages-Brier ueber diese vier: Modell 0.578, Ensemble 0.671, Buchmacher 0.688, Polymarkt 0.696, Whale 0.873; Kalshi hatte in diesen vier Paarungen keine Werte. Das Modell war an diesem Mini-Tag also am besten, vor allem weil es bei Deutschland-Paraguay und Niederlande-Marokko weniger falsch lag als Markt und Whale. Trotzdem ist das nur n=4 und kein ausreichender Grund, das Modellgewicht automatisch zu erhoehen.
+
+Die auffaelligsten Fehlprognosen sind Deutschland-Paraguay 4:5 und Niederlande-Marokko 3:4. Beide treffen genau die bekannte Schwachstelle: Favoriten-/Whale-Exposures kippen bei Upsets hart, waehrend das Modell zwar ebenfalls falsch lag, aber moderater bestraft wurde. Brasilien-Japan und RSA-Kanada waren dagegen gute Ensemble-Treffer; sie reichen aber nicht, um die rollierende Unterperformance gegen Kalshi und Polymarkt zu drehen.
+
+ROI bleibt positiv, aber nicht stark bestaetigt: Referenz-Policy 64 Wetten, 69% Trefferquote, ROI +10.9%, durchschnittlicher CLV +0.63% bei n=54 und Modell-beat-close 46%. Gegenueber 2026-06-28 ist der ROI von +12.55% auf +10.9% gefallen und CLV von +0.69% auf +0.63%; das spricht weiter fuer vorsichtige Interpretation statt fuer einen stabilen Preis-Edge.
+
+`weights_suggestion` ist data-driven bei n=67 und empfiehlt Polymarkt 0.165, Buchmacher 0.163, Kalshi 0.175, Modell 0.370, Whale 0.128 statt aktuell 0.300/0.250/0.100/0.200/0.150. Ich wuerde das heute nur notieren: Das hoehere Modellgewicht passt zum Tagesdelta, aber rollierend schlaegt das Ensemble den Markt noch nicht, Whale bleibt mit Brier-Spannweite 0.000-1.998 ueber 62 Spiele hochvariant, und Parameter-Tuning ist nur diagnostic bei n=66 mit ELO_PER_GOAL 180 als Vorschlag, nicht als Auto-Uebernahme.
