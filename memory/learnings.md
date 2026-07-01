@@ -174,3 +174,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Die 4 neuen Aufloesungen liefern Tages-Brier Modell 0.578, Ensemble 0.671, Buchmacher 0.688, Polymarkt 0.696, Whale 0.873; ROI faellt von +12.55% auf +10.9%, CLV von +0.69% auf +0.63%.
 - [Hypothese] Das erhoehte Modellgewicht wird durch den Mini-Tag gestuetzt, ist aber noch nicht robust, weil das Ensemble rollierend den Marktblock nicht schlaegt und Whale-Upsets weiter grosse Fehler erzeugen.
 - [Aktion] `weights_suggestion` data-driven/n=67 nur notieren: 0.165/0.163/0.175/0.370/0.128 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrere Tage positiv ist und CLV klar >1% bei n>=60 liegt.
+
+## 2026-07-01
+
+- [Beobachtung] Kalshi fuehrt rollierend bei n=63 mit Brier/RPS/LogLoss 0.446/0.139/0.767; Ensemble liegt bei n=70 mit 0.457/0.150/0.790 nicht vor Polymarkt 0.457/0.149/0.790.
+- [Beobachtung] Die 3 neuen Aufloesungen liefern Tages-Brier ca. Whale 0.157, Ensemble 0.281, Modell 0.294, Polymarkt 0.340, Buchmacher 0.346; ROI steigt auf +14.7%, CLV bleibt nur +0.60% bei n=54.
+- [Hypothese] Das Modellgewicht 0.370 ist als Richtung plausibel, aber noch nicht uebernahmefaehig, weil Modell rollierend mit Brier 0.497 schlechter als Markt/Kalshi bleibt und Ensemble den Markt probabilistisch nicht schlaegt.
+- [Aktion] `weights_suggestion` data-driven/n=70 nur notieren: 0.163/0.161/0.170/0.370/0.137 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrtaegig positiv ist und CLV >1.0% bei n>=60 liegt.
