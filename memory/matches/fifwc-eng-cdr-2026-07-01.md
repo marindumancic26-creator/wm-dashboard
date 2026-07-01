@@ -1,17 +1,17 @@
 # England vs. DR Congo
 
-Datum: 2026-07-01  |  Stand: 2026-06-30T09:21:41
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-cdr-2026-07-01) (Volumen $432,163)
+Datum: 2026-07-01  |  Stand: 2026-07-01T11:14:06
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-cdr-2026-07-01) (Volumen $2,400,904)
 
-Ensemble: England 78.3% / Remis 15.7% / DR Congo 6.0%
-Erwartete Tore: 2.28 : 0.546
+Ensemble: England 75.8% / Remis 19.0% / DR Congo 5.2%
+Erwartete Tore: 2.15 : 0.462
 
 Top-Scorelines:
 
-- 2:0 — 14.8%
-- 1:0 — 13.1%
-- 3:0 — 11.5%
+- 2:0 — 16.7%
+- 1:0 — 15.3%
+- 3:0 — 12.2%
 - 1:1 — 8.3%
-- 2:1 — 8.0%
+- 0:0 — 8.2%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 89.9%, draw 7.4%, team2_win 2.7%
+Whale-Signal (10 Wallets, heuristisch): team1_win 73.3%, draw 26.3%, team2_win 0.4%

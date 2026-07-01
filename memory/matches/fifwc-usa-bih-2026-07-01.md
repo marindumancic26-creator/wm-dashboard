@@ -1,17 +1,17 @@
 # United States vs. Bosnia and Herzegovina
 
-Datum: 2026-07-01  |  Stand: 2026-06-30T09:21:41
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-usa-bih-2026-07-01) (Volumen $578,439)
+Datum: 2026-07-01  |  Stand: 2026-07-01T11:14:06
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-usa-bih-2026-07-01) (Volumen $1,156,449)
 
-Ensemble: United States 73.6% / Remis 16.9% / Bosnia and Herzegovina 9.6%
-Erwartete Tore: 2.165 : 0.779
+Ensemble: United States 72.4% / Remis 17.4% / Bosnia and Herzegovina 10.2%
+Erwartete Tore: 2.121 : 0.799
 
 Top-Scorelines:
 
-- 2:0 — 12.4%
-- 1:0 — 10.4%
-- 1:1 — 9.7%
-- 2:1 — 9.1%
-- 3:0 — 8.9%
+- 2:0 — 11.7%
+- 1:0 — 10.9%
+- 1:1 — 9.8%
+- 2:1 — 9.7%
+- 3:0 — 8.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.6%, draw 0.2%, team2_win 0.2%
+Whale-Signal (10 Wallets, heuristisch): team1_win 98.8%, draw 0.1%, team2_win 1.1%
