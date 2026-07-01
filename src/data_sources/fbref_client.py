@@ -12,6 +12,7 @@ import datetime as dt
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import tempfile
@@ -98,43 +99,92 @@ def _run_isolated_fetch(timeout: int = _FETCH_TIMEOUT) -> dict:
     output_path.unlink(missing_ok=True)
     command = [sys.executable, "-m", "src.data_sources.fbref_client",
                "--worker", str(output_path)]
+    err_fd, err_name = tempfile.mkstemp(prefix="fbref_worker_", suffix=".err",
+                                        dir=config.DATA_RAW)
+    os.close(err_fd)
+    err_path = Path(err_name)
+    stderr_handle = err_path.open("w", encoding="utf-8")
     kwargs = {
         "cwd": str(config.PROJECT_ROOT),
-        "timeout": timeout,
         "stdout": subprocess.DEVNULL,
-        "stderr": subprocess.PIPE,
+        "stderr": stderr_handle,
         "text": True,
-        "check": False,
     }
     if os.name == "nt":
         kwargs["creationflags"] = (subprocess.CREATE_NEW_PROCESS_GROUP |
                                    subprocess.CREATE_NO_WINDOW)
     try:
-        completed = subprocess.run(command, **kwargs)
+        completed = subprocess.Popen(command, **kwargs)
+        try:
+            completed.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _kill_process_tree(completed.pid)
+            return _unavailable(f"FBref-Worker Timeout nach {timeout} Sekunden")
         if output_path.exists():
             return json.loads(output_path.read_text(encoding="utf-8"))
-        detail = (completed.stderr or "").strip().splitlines()
+        detail = err_path.read_text(encoding="utf-8", errors="replace").strip().splitlines()
         suffix = f": {detail[-1]}" if detail else ""
         return _unavailable(
             f"FBref-Worker beendet (Exit {completed.returncode}){suffix}")
-    except subprocess.TimeoutExpired:
-        return _unavailable(f"FBref-Worker Timeout nach {timeout} Sekunden")
     except Exception as exc:
         return _unavailable(f"FBref-Worker-Fehler: {exc}")
     finally:
+        try:
+            stderr_handle.close()
+        except Exception:
+            pass
         output_path.unlink(missing_ok=True)
+        try:
+            err_path.unlink(missing_ok=True)
+        except PermissionError:
+            pass
+
+
+def _kill_process_tree(pid: int) -> None:
+    """Worker inklusive Browser-Kindprozessen hart beenden."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       timeout=10, check=False)
+    else:
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except Exception:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except Exception:
+                pass
+
+
+def _cached_payload(stale: bool = False) -> dict | None:
+    try:
+        payload = json.loads(_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if stale:
+        payload = dict(payload)
+        payload["status"] = "stale"
+        payload["note"] = (
+            f"FBref-Cache aelter als {int(_CACHE_TTL / 3600)}h; "
+            "Daily nutzt stale Form statt Live-Fetch zu blockieren."
+        )
+    return payload
 
 
 def get_tournament_form(force: bool = False) -> dict:
     """{"status", "teams": {name: {matches, gf_pm, ga_pm[, xg_pm, xga_pm]}}, ...}"""
-    if not force and _CACHE.exists() and (time.time() - _CACHE.stat().st_mtime) < _CACHE_TTL:
-        try:
-            return json.loads(_CACHE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+    if not force and _CACHE.exists():
+        age = time.time() - _CACHE.stat().st_mtime
+        cached = _cached_payload(stale=age >= _CACHE_TTL)
+        if cached is not None:
+            return cached
     payload = _run_isolated_fetch()
     if payload.get("status") == "live":
         _CACHE.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+    elif _CACHE.exists():
+        cached = _cached_payload(stale=True)
+        if cached is not None:
+            return cached
     return payload
 
 

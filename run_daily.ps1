@@ -23,18 +23,52 @@ function Write-RunLog {
 function Invoke-Logged {
     param(
         [string]$Command,
-        [string[]]$Arguments
+        [string[]]$Arguments,
+        [int]$TimeoutSeconds = 600
     )
 
-    $previousPreference = $ErrorActionPreference
+    $stdout = [IO.Path]::GetTempFileName()
+    $stderr = [IO.Path]::GetTempFileName()
     try {
-        $ErrorActionPreference = "Continue"
-        & $Command @Arguments 2>&1 | Out-File -LiteralPath $log -Append -Encoding utf8
-        return $LASTEXITCODE
+        $process = Start-Process -FilePath $Command -ArgumentList $Arguments `
+            -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            Append-CommandOutput $stdout
+            Append-CommandOutput $stderr
+            Write-RunLog "FEHLER: $Command Zeitlimit nach $TimeoutSeconds Sekunden; Prozessbaum wird beendet."
+            Stop-ProcessTree $process.Id
+            return 124
+        }
+        $process.WaitForExit()
+        $process.Refresh()
+        Append-CommandOutput $stdout
+        Append-CommandOutput $stderr
+        if ($null -eq $process.ExitCode) {
+            return 0
+        }
+        return $process.ExitCode
     }
     finally {
-        $ErrorActionPreference = $previousPreference
+        Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
     }
+}
+
+function Append-CommandOutput {
+    param([string]$Path)
+    if ((Test-Path -LiteralPath $Path) -and (Get-Item -LiteralPath $Path).Length -gt 0) {
+        Get-Content -LiteralPath $Path -Raw -Encoding utf8 |
+            Out-File -LiteralPath $log -Append -Encoding utf8
+    }
+}
+
+function Stop-ProcessTree {
+    param([int]$ProcessId)
+    $children = @(Get-CimInstance Win32_Process |
+        Where-Object { $_.ParentProcessId -eq $ProcessId })
+    foreach ($child in $children) {
+        Stop-ProcessTree ([int]$child.ProcessId)
+    }
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
 try {
@@ -53,30 +87,30 @@ try {
     Set-Location -LiteralPath $repo
     Write-RunLog "Automatischer Daily-Lauf gestartet."
 
-    $pullCode = Invoke-Logged "git" @("pull", "--rebase", "--autostash")
+    $pullCode = Invoke-Logged "git" @("pull", "--rebase", "--autostash") 180
     if ($pullCode -ne 0) {
         Write-RunLog "WARNUNG: git pull fehlgeschlagen (Exit $pullCode); Pipeline laeuft mit lokalem Stand weiter."
     }
 
-    $pipelineCode = Invoke-Logged "python" @("-m", "src.pipeline.daily_matchday_run")
+    $pipelineCode = Invoke-Logged "python" @("-m", "src.pipeline.daily_matchday_run") 1200
     if ($pipelineCode -ne 0) {
         Write-RunLog "FEHLER: Pipeline fehlgeschlagen (Exit $pipelineCode); kein Commit und kein Push."
         exit $pipelineCode
     }
 
-    $addCode = Invoke-Logged "git" @("add", "-A")
+    $addCode = Invoke-Logged "git" @("add", "-A") 180
     if ($addCode -ne 0) {
         Write-RunLog "FEHLER: git add fehlgeschlagen (Exit $addCode)."
         exit $addCode
     }
 
     $commitMessage = "Daily run {0}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    $commitCode = Invoke-Logged "git" @("commit", "-m", $commitMessage)
+    $commitCode = Invoke-Logged "git" @("commit", "-m", $commitMessage) 180
     if ($commitCode -ne 0) {
         Write-RunLog "Kein Commit noetig oder Commit fehlgeschlagen (Exit $commitCode)."
     }
 
-    $pushCode = Invoke-Logged "git" @("push")
+    $pushCode = Invoke-Logged "git" @("push") 300
     if ($pushCode -ne 0) {
         Write-RunLog "FEHLER: git push fehlgeschlagen (Exit $pushCode)."
         exit $pushCode

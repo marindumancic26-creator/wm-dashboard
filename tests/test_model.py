@@ -166,13 +166,21 @@ def test_fbref_fetch_runs_in_isolated_process(monkeypatch, tmp_path):
     captured = {}
     payload = {"status": "live", "teams": {}, "as_of": "2026-06-19T09:00:00"}
 
-    def fake_run(command, **kwargs):
+    class FakeProcess:
+        returncode = 0
+        pid = 12345
+
+        def wait(self, timeout):
+            captured["timeout"] = timeout
+            return self.returncode
+
+    def fake_popen(command, **kwargs):
         captured.update(kwargs)
         Path(command[-1]).write_text(json.dumps(payload), encoding="utf-8")
-        return subprocess.CompletedProcess(command, 0, stderr="")
+        return FakeProcess()
 
     monkeypatch.setattr(fbref_client.config, "DATA_RAW", tmp_path)
-    monkeypatch.setattr(fbref_client.subprocess, "run", fake_run)
+    monkeypatch.setattr(fbref_client.subprocess, "Popen", fake_popen)
 
     assert fbref_client._run_isolated_fetch(timeout=7) == payload
     assert captured["timeout"] == 7
@@ -185,17 +193,28 @@ def test_fbref_worker_timeout_is_nonfatal(monkeypatch, tmp_path):
 
     from src.data_sources import fbref_client
 
-    def fake_run(command, **kwargs):
-        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+    class FakeProcess:
+        pid = 12345
+
+        def wait(self, timeout):
+            raise subprocess.TimeoutExpired(["worker"], timeout)
+
+    def fake_popen(command, **kwargs):
+        return FakeProcess()
+
+    killed = {}
 
     monkeypatch.setattr(fbref_client.config, "DATA_RAW", tmp_path)
-    monkeypatch.setattr(fbref_client.subprocess, "run", fake_run)
+    monkeypatch.setattr(fbref_client.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(fbref_client, "_kill_process_tree",
+                        lambda pid: killed.setdefault("pid", pid))
 
     result = fbref_client._run_isolated_fetch(timeout=3)
 
     assert result["status"] == "unavailable"
     assert result["teams"] == {}
     assert "Timeout nach 3 Sekunden" in result["note"]
+    assert killed["pid"] == 12345
 
 
 def test_venue_altitude_and_weather_off():
