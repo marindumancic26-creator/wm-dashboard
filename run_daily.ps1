@@ -30,7 +30,8 @@ function Invoke-Logged {
     $stdout = [IO.Path]::GetTempFileName()
     $stderr = [IO.Path]::GetTempFileName()
     try {
-        $process = Start-Process -FilePath $Command -ArgumentList $Arguments `
+        $argumentLine = ($Arguments | ForEach-Object { ConvertTo-CommandArgument $_ }) -join " "
+        $process = Start-Process -FilePath $Command -ArgumentList $argumentLine `
             -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
             Append-CommandOutput $stdout
@@ -51,6 +52,14 @@ function Invoke-Logged {
     finally {
         Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
     }
+}
+
+function ConvertTo-CommandArgument {
+    param([string]$Argument)
+    if ($Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+    return '"' + ($Argument -replace '\\', '\\' -replace '"', '\"') + '"'
 }
 
 function Append-CommandOutput {
