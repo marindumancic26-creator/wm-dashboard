@@ -878,12 +878,12 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.82). Markt/Books/Kalshi korreli
 
 ## Hermes-Analyse
 
-Rollierend bleibt Kalshi die sauberste Quelle: Ø Brier/RPS/LogLoss 0.446/0.139/0.767 bei n=63. Polymarkt und Ensemble liegen beim Brier beide bei 0.457, aber Polymarkt ist bei RPS minimal besser 0.149 vs. 0.150; das Ensemble gewinnt nur bei der Hit-Rate 71% vs. 70%, nicht bei der probabilistischen Kalibrierung. Schwächste Quelle ist Whale mit Ø Brier 0.549, RPS 0.194 und LogLoss 1.403 bei n=65; das passt zur Auto-Flag-Spannweite 0.000-1.998 und rechtfertigt weiter defensive Gewichtung.
+Der heutige Fallback-Hermes nutzt den deterministischen Snapshot 2026-07-01T11:14:06. Der Daily-Lauf verarbeitete 6 Spiele mit 0 Fehlern; Value-Bets stehen bei 0 und Gesamtstake 0.0%. FBref-Form steht auf stale; alle Modell- und Staking-Parameter bleiben unveraendert.
 
-Die drei neuen Auflösungen verbessern den Tag klar: CIV-NOR, FRA-SWE und MEX-ECU ergeben Tages-Brier ungefähr Whale 0.157, Ensemble 0.281, Modell 0.294, Polymarkt 0.340, Buchmacher 0.346. Das ist ein guter Tag für Whale/Ensemble, aber kein struktureller Beweis, weil Whale rollierend weiterhin der schlechteste LogLoss-Träger ist und das Ensemble über n=70 den Marktblock nicht schlägt.
+Rollierend sind 70 Spiele aufgeloest. Beste Quelle nach Brier ist kalshi mit Brier/RPS/LogLoss 0.4458/0.1389/0.7672. Das Ensemble liegt bei 0.457/0.1502/0.7905 und 71.4% Trefferquote. Markt und Kalshi liegen bei Brier 0.4567 bzw. 0.4458.
 
-Auffällig ist, dass das Modell bei den drei neuen Spielen solide war: 0.363, 0.068 und 0.452 Brier, also Ø 0.294. Das stützt die Idee eines höheren Modellgewichts, aber nur moderat; die rollierende Modell-Kalibrierung bleibt mit Ø Brier 0.497 und LogLoss 0.847 schlechter als Markt/Kalshi. Die FBref-Form ist zudem stale >20h, während Elo live ist; Form-/xG-Signale sollten deshalb heute nicht als starke Erklärung übergewichtet werden.
+Das reine Modell bleibt mit Brier 0.4975 hinter dem Marktblock, Whale bleibt mit LogLoss 1.4025 hochvariant. Daraus folgt keine automatische Gewichts-, Parameter- oder Staking-Aenderung.
 
-Die Referenz-Policy steht bei 67 Wetten, 70% Trefferquote und ROI +14.7%, der CLV bleibt aber nur +0.60% bei 46% Marktbewegung zur Modell-Lehne über n=54. Das ist profitabel im Backlog, aber noch kein sauberer Preissignal-Beweis; CLV <1% und Beat-Close <50% sprechen gegen aggressivere Stake- oder Gewichtsanpassungen.
+Die Referenz-Policy steht bei 67 Wetten, ROI +0.00% und durchschnittlichem CLV +0.00%. Das ist ein Beobachtungssignal, aber kein Freibrief, solange Ensemble-vs.-Markt nicht stabil positiv ist.
 
-Die Gewichts-Empfehlung ist data-driven bei n=70 und lautet Polymarkt 0.163, Buchmacher 0.161, Kalshi 0.170, Modell 0.370, Whale 0.137. Nicht automatisch übernehmen: Die Richtung Modell hoch / Whale niedrig ist plausibel, aber Ensemble-vs.-Markt ist noch nicht positiv genug. Der heutige Value-Lauf meldet 0 Value-Bets und 0.0% Gesamtstake; diese konservative Blockade bleibt korrekt.
+`weights_suggestion` wird nur notiert: market 0.163, books 0.161, kalshi 0.170, model 0.370, whale 0.137. Parameter-Tuning bleibt Report-only (Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.).

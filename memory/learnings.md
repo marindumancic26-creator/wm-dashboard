@@ -177,7 +177,7 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 
 ## 2026-07-01
 
-- [Beobachtung] Kalshi fuehrt rollierend bei n=63 mit Brier/RPS/LogLoss 0.446/0.139/0.767; Ensemble liegt bei n=70 mit 0.457/0.150/0.790 nicht vor Polymarkt 0.457/0.149/0.790.
-- [Beobachtung] Die 3 neuen Aufloesungen liefern Tages-Brier ca. Whale 0.157, Ensemble 0.281, Modell 0.294, Polymarkt 0.340, Buchmacher 0.346; ROI steigt auf +14.7%, CLV bleibt nur +0.60% bei n=54.
-- [Hypothese] Das Modellgewicht 0.370 ist als Richtung plausibel, aber noch nicht uebernahmefaehig, weil Modell rollierend mit Brier 0.497 schlechter als Markt/Kalshi bleibt und Ensemble den Markt probabilistisch nicht schlaegt.
-- [Aktion] `weights_suggestion` data-driven/n=70 nur notieren: 0.163/0.161/0.170/0.370/0.137 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme bis Ensemble-vs.-Markt mehrtaegig positiv ist und CLV >1.0% bei n>=60 liegt.
+- [Beobachtung] kalshi fuehrt rollierend bei n=70 mit Brier/RPS/LogLoss 0.4458/0.1389/0.7672; Ensemble liegt bei 0.457/0.1502/0.7905.
+- [Beobachtung] Daily verarbeitete 6 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
+- [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
+- [Aktion] `weights_suggestion` nur notieren (market 0.163, books 0.161, kalshi 0.170, model 0.370, whale 0.137); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
