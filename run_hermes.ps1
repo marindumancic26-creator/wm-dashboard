@@ -7,6 +7,7 @@ $log = Join-Path $repo "data\snapshots\automation_hermes.log"
 $codex = "C:\Users\marin\AppData\Roaming\npm\codex.cmd"
 $output = Join-Path $repo "data\snapshots\hermes_last.json"
 $schema = Join-Path $repo "automation\hermes_output_schema.json"
+$fallback = Join-Path $repo "automation\hermes_fallback.py"
 $mutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Hermes")
 $hasLock = $false
 $prompt = @"
@@ -38,18 +39,71 @@ function Write-HermesLog {
 function Invoke-Logged {
     param(
         [string]$Command,
-        [string[]]$Arguments
+        [string[]]$Arguments,
+        [int]$TimeoutSeconds = 900
     )
 
-    $previousPreference = $ErrorActionPreference
+    $stdout = [IO.Path]::GetTempFileName()
+    $stderr = [IO.Path]::GetTempFileName()
     try {
-        $ErrorActionPreference = "Continue"
-        & $Command @Arguments 2>&1 | Out-File -LiteralPath $log -Append -Encoding utf8
-        return $LASTEXITCODE
+        $argumentLine = ($Arguments | ForEach-Object { ConvertTo-CommandArgument $_ }) -join " "
+        $process = Start-Process -FilePath $Command -ArgumentList $argumentLine `
+            -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            Append-CommandOutput $stdout
+            Append-CommandOutput $stderr
+            Write-HermesLog "FEHLER: $Command Zeitlimit nach $TimeoutSeconds Sekunden; Prozessbaum wird beendet."
+            Stop-ProcessTree $process.Id
+            return 124
+        }
+        $process.WaitForExit()
+        $process.Refresh()
+        Append-CommandOutput $stdout
+        Append-CommandOutput $stderr
+        if ($null -eq $process.ExitCode) {
+            return 0
+        }
+        return $process.ExitCode
     }
     finally {
-        $ErrorActionPreference = $previousPreference
+        Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
     }
+}
+
+function ConvertTo-CommandArgument {
+    param([string]$Argument)
+    if ($Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+    return '"' + ($Argument -replace '\\', '\\' -replace '"', '\"') + '"'
+}
+
+function Append-CommandOutput {
+    param([string]$Path)
+    if ((Test-Path -LiteralPath $Path) -and (Get-Item -LiteralPath $Path).Length -gt 0) {
+        Get-Content -LiteralPath $Path -Raw -Encoding utf8 |
+            Out-File -LiteralPath $log -Append -Encoding utf8
+    }
+}
+
+function Stop-ProcessTree {
+    param([int]$ProcessId)
+    $children = @(Get-CimInstance Win32_Process |
+        Where-Object { $_.ParentProcessId -eq $ProcessId })
+    foreach ($child in $children) {
+        Stop-ProcessTree ([int]$child.ProcessId)
+    }
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+function Invoke-HermesFallback {
+    Write-HermesLog "WARNUNG: Codex-Hermes unbrauchbar; deterministischer Fallback wird erzeugt."
+    $fallbackCode = Invoke-Logged "python" @($fallback, $output) 120
+    if ($fallbackCode -ne 0) {
+        Write-HermesLog "FEHLER: Hermes-Fallback fehlgeschlagen (Exit $fallbackCode)."
+        return $false
+    }
+    return $true
 }
 
 function Set-MarkdownSection {
@@ -116,8 +170,10 @@ try {
             "--output-schema", $schema, "-o", $output, $prompt
         )
         if ($codexCode -ne 0) {
-            Write-HermesLog "FEHLER: Hermes-Analyse fehlgeschlagen (Exit $codexCode); kein Commit und kein Push."
-            exit $codexCode
+            Write-HermesLog "WARNUNG: Hermes-Analyse fehlgeschlagen (Exit $codexCode)."
+            if (-not (Invoke-HermesFallback)) {
+                exit $codexCode
+            }
         }
     }
 
@@ -130,8 +186,11 @@ try {
         $analysis = Get-Content -LiteralPath $output -Raw -Encoding utf8 | ConvertFrom-Json
     }
     catch {
-        Write-HermesLog "FEHLER: Hermes-Ausgabe ist kein gueltiges JSON."
-        exit 1
+        Write-HermesLog "WARNUNG: Hermes-Ausgabe ist kein gueltiges JSON."
+        if (-not (Invoke-HermesFallback)) {
+            exit 1
+        }
+        $analysis = Get-Content -LiteralPath $output -Raw -Encoding utf8 | ConvertFrom-Json
     }
     if ([string]::IsNullOrWhiteSpace($analysis.narrative) -or
         [string]::IsNullOrWhiteSpace($analysis.learning)) {
@@ -150,8 +209,20 @@ try {
         $learningLines[1] -notmatch '^- \[Beobachtung\]' -or
         $learningLines[2] -notmatch '^- \[Hypothese\]' -or
         $learningLines[3] -notmatch '^- \[Aktion\]') {
-        Write-HermesLog "FEHLER: Hermes-Ausgabe erfuellt die inhaltlichen Format-Gates nicht."
-        exit 1
+        Write-HermesLog "WARNUNG: Hermes-Ausgabe erfuellt die inhaltlichen Format-Gates nicht."
+        if (-not (Invoke-HermesFallback)) {
+            exit 1
+        }
+        $analysis = Get-Content -LiteralPath $output -Raw -Encoding utf8 | ConvertFrom-Json
+        $learningLines = @($analysis.learning -split "\r?\n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        if ($analysis.narrative.Length -lt 500 -or
+            $learningLines.Count -ne 4 -or $learningLines[0] -notmatch '^- \[Beobachtung\]' -or
+            $learningLines[1] -notmatch '^- \[Beobachtung\]' -or
+            $learningLines[2] -notmatch '^- \[Hypothese\]' -or
+            $learningLines[3] -notmatch '^- \[Aktion\]') {
+            Write-HermesLog "FEHLER: Hermes-Fallback erfuellt die Format-Gates nicht."
+            exit 1
+        }
     }
 
     Set-MarkdownSection $closingLoop "## Hermes-Analyse" $analysis.narrative
@@ -166,18 +237,18 @@ try {
         exit 1
     }
 
-    $addCode = Invoke-Logged "git" @("add", "memory\daily_runs\${today}_closing_loop.md", "memory\learnings.md")
+    $addCode = Invoke-Logged "git" @("add", "memory\daily_runs\${today}_closing_loop.md", "memory\learnings.md") 180
     if ($addCode -ne 0) {
         Write-HermesLog "FEHLER: git add fehlgeschlagen (Exit $addCode)."
         exit $addCode
     }
 
-    $commitCode = Invoke-Logged "git" @("commit", "-m", ("Hermes-Analyse {0}" -f (Get-Date -Format "yyyy-MM-dd")))
+    $commitCode = Invoke-Logged "git" @("commit", "-m", ("Hermes-Analyse {0}" -f (Get-Date -Format "yyyy-MM-dd"))) 180
     if ($commitCode -ne 0) {
         Write-HermesLog "Kein Hermes-Commit noetig oder Commit fehlgeschlagen (Exit $commitCode)."
     }
 
-    $pushCode = Invoke-Logged "git" @("push")
+    $pushCode = Invoke-Logged "git" @("push") 300
     if ($pushCode -ne 0) {
         Write-HermesLog "FEHLER: git push fehlgeschlagen (Exit $pushCode)."
         exit $pushCode
