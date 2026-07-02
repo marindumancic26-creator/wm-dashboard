@@ -181,3 +181,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Daily verarbeitete 6 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
 - [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
 - [Aktion] `weights_suggestion` nur notieren (market 0.163, books 0.161, kalshi 0.170, model 0.370, whale 0.137); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
+
+## 2026-07-02
+
+- [Beobachtung] 2026-07-02: Ensemble verbessert sich von Brier 0,457/n=70 auf 0,451/n=72 und liegt minimal vor Polymarkt 0,452/n=72, aber weiter hinter Kalshi 0,446/n=63.
+- [Beobachtung] Die 2 neuen Aufloesungen BEL-SEN 3:2 und USA-BIH 2:0 wurden beide vom Ensemble getroffen; Tages-Brier Ensemble 0,373 und 0,117 vs. Polymarkt 0,450 und 0,138.
+- [Hypothese] Der neue Ensemble-Vorsprung ist noch ein Mini-Cluster-Signal, weil RPS gegen Polymarkt leicht schlechter bleibt (0,149 vs. 0,148) und CLV nur +0,64% bei 48% Beat-Close-Rate erreicht.
+- [Aktion] Gewichte nur notieren: 0,162/0,158/0,168/0,369/0,143 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Uebernahme bis Ensemble-vs.-Markt mehrtaegig positiv bleibt und CLV >1% bei n>=60 liegt.
