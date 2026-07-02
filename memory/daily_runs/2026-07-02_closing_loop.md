@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-07-02
 
-Stand: 2026-07-02T09:30:43 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-07-02T16:01:01 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -896,17 +896,3 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.83). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 67 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.451 vs. 0.452).
-
-## Hermes-Analyse
-
-Stand 2026-07-02T09:30:43: Der Daily-Lauf verarbeitete 6 Spiele mit 0 Fehlern; Value-Bets 0 und Gesamtstake 0,0%. Datenlage ist brauchbar, aber nicht perfekt: Elo live mit 244 Teams, Books live mit 11 Events, Kalshi live mit 93 Events, ESPN live mit 9 Games; FBref-Form ist stale und xG dort nicht verfuegbar. StatsBomb bleibt historisch/fresh, also weiter kein tagesaktueller 2026-xG-Input.
-
-Rollierend kalibriert Kalshi aktuell am besten: Brier/RPS/LogLoss 0,446/0,139/0,767 bei n=63. Das Ensemble liegt sehr knapp vor Polymarkt im Brier und LogLoss: 0,451/0,149/0,783 bei n=72 vs. Polymarkt 0,452/0,148/0,784 bei n=72. Buchmacher folgen mit 0,463/0,152/0,796 bei n=69. Modell und Whale bleiben die klar schwächeren Quellen: Modell 0,493/0,164/0,841, Whale 0,533/0,188/1,364.
-
-Seit dem 2026-07-01-Report kamen 2 aufgeloeste Spiele hinzu, beide richtig fuer das Ensemble: Belgien-Senegal 3:2 und USA-Bosnien 2:0. In beiden Faellen schlug das Ensemble den Markt beim Brier: Belgien-Senegal 0,373 vs. Polymarkt 0,450; USA-Bosnien 0,117 vs. Polymarkt 0,138. Whale war an diesem Mini-Tag extrem stark mit 0,053 und 0,000, aber genau das bestaetigt eher die hohe Varianz als eine Gewichtserhoehung, weil die rollierende Whale-Spannweite weiter 0,000-1,998 ueber 67 Spiele betraegt.
-
-Das Ensemble schlaegt den reinen Markt aktuell formal, aber nur hauchduenn: Brier 0,451 vs. 0,452 und LogLoss 0,783 vs. 0,784; RPS ist leicht schlechter mit 0,149 vs. 0,148. Gegen Kalshi verliert das Ensemble weiterhin deutlich genug, dass ich keine robuste Ensemble-Outperformance ausrufe. Die positive Bewegung kommt gerade aus einem kleinen Favoriten-/Whale-treffenden Cluster, nicht aus einem stabilen Modellvorsprung.
-
-ROI/CLV tendieren besser, aber noch nicht stark genug fuer aggressivere Schluesse: Referenz-Policy 68 Wetten, Trefferquote 71%, ROI +16,3%, durchschnittlicher CLV +0,64%, Beat-Close-Rate 48% bei n=56. ROI ist damit positiv und verbessert sich gegenueber 2026-07-01 (+14,7%), aber CLV bleibt unter +1% und die Beat-Close-Rate unter 50%, also kein klarer Preis-Edge-Beleg.
-
-`weights_suggestion` ist data-driven bei n=72 und empfiehlt Polymarkt 0,162, Buchmacher 0,158, Kalshi 0,168, Modell 0,369, Whale 0,143 statt aktuell 0,300/0,250/0,100/0,200/0,150. Ich wuerde das nur notieren, nicht uebernehmen: Modellgewicht 0,369 passt zur Optimiererdiagnose, aber das Modell liegt rollierend noch hinter dem Marktblock; Whale bleibt wegen Varianz defensiv. Parameter-Tuning fuer ELO_PER_GOAL ist ebenfalls nur diagnostic bei n=71, Kandidat 180 vs. aktuell 240 mit Walk-forward-RPS-Marge 0,0075, keine Auto-Uebernahme.

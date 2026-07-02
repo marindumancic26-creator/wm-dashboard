@@ -1,17 +1,17 @@
 # Spain vs. Austria
 
-Datum: 2026-07-02  |  Stand: 2026-07-02T09:30:43
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-aut-2026-07-02) (Volumen $1,585,532)
+Datum: 2026-07-02  |  Stand: 2026-07-02T16:01:01
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-aut-2026-07-02) (Volumen $3,169,465)
 
-Ensemble: Spain 77.4% / Remis 15.4% / Austria 7.2%
-Erwartete Tore: 2.373 : 0.668
+Ensemble: Spain 78.8% / Remis 14.3% / Austria 6.9%
+Erwartete Tore: 2.482 : 0.687
 
 Top-Scorelines:
 
-- 2:0 — 13.1%
-- 1:0 — 10.5%
-- 3:0 — 10.3%
-- 2:1 — 8.7%
-- 1:1 — 8.3%
+- 2:0 — 12.7%
+- 3:0 — 10.6%
+- 1:0 — 9.9%
+- 2:1 — 9.0%
+- 1:1 — 7.9%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.8%, draw 0.0%, team2_win 0.2%
+Whale-Signal (10 Wallets, heuristisch): team1_win 95.3%, draw 0.9%, team2_win 3.9%
