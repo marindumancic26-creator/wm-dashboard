@@ -1,9 +1,9 @@
 # Colombia vs. Ghana
 
-Datum: 2026-07-03  |  Stand: 2026-07-03T12:23:03
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-col-gha-2026-07-03) (Volumen $928,292)
+Datum: 2026-07-03  |  Stand: 2026-07-03T16:00:32
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-col-gha-2026-07-03) (Volumen $1,144,007)
 
-Ensemble: Colombia 74.8% / Remis 17.9% / Ghana 7.3%
+Ensemble: Colombia 73.9% / Remis 18.0% / Ghana 8.1%
 Erwartete Tore: 2.021 : 0.569
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 1:1 — 9.5%
 - 0:0 — 8.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 99.3%, draw 0.6%, team2_win 0.1%
+Whale-Signal (10 Wallets, heuristisch): team1_win 93.0%, draw 1.6%, team2_win 5.4%
