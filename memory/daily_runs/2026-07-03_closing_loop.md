@@ -929,3 +929,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.83). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 70 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.441 vs. 0.444).
+
+## Hermes-Analyse
+
+Der heutige Fallback-Hermes nutzt den deterministischen Snapshot 2026-07-03T12:23:03. Der Daily-Lauf verarbeitete 5 Spiele mit 0 Fehlern; Value-Bets stehen bei 0 und Gesamtstake 0.0%. FBref-Form steht auf stale; alle Modell- und Staking-Parameter bleiben unveraendert.
+
+Rollierend sind 75 Spiele aufgeloest. Beste Quelle nach Brier ist ensemble mit Brier/RPS/LogLoss 0.4408/0.1458/0.7686. Das Ensemble liegt bei 0.4408/0.1458/0.7686 und 73.3% Trefferquote. Markt und Kalshi liegen bei Brier 0.4443 bzw. 0.4458.
+
+Das reine Modell bleibt mit Brier 0.4834 hinter dem Marktblock, Whale bleibt mit LogLoss 1.308 hochvariant. Daraus folgt keine automatische Gewichts-, Parameter- oder Staking-Aenderung.
+
+Die Referenz-Policy steht bei 71 Wetten, ROI +0.00% und durchschnittlichem CLV +0.00%. Das ist ein Beobachtungssignal, aber kein Freibrief, solange Ensemble-vs.-Markt nicht stabil positiv ist.
+
+`weights_suggestion` wird nur notiert: market 0.160, books 0.157, kalshi 0.162, model 0.367, whale 0.153. Parameter-Tuning bleibt Report-only (Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.).
