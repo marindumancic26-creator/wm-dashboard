@@ -929,3 +929,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.83). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 70 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.441 vs. 0.444).
+
+## Hermes-Analyse
+
+Die aktuelle Kalibrierung kippt erstmals leicht zugunsten des Ensembles: Brier 0.4408 bei n=75 gegen Polymarkt 0.4443 bei n=75 und Buchmacher 0.4543 bei n=72. Kalshi bleibt auf den robusteren Nebenmetriken sehr stark: RPS 0.139 und LogLoss 0.767 bei n=63, waehrend das Ensemble RPS 0.146 und LogLoss 0.769 erreicht. Schlechteste Quelle bleibt Whale mit Brier 0.511, RPS 0.180 und LogLoss 1.308 bei n=70; die Spannweite 0.000 bis 1.998 bestaetigt weiter hohe Varianz statt stabilem Edge.
+
+Die drei neu aufgeloesten Spiele verbessern das Ensemble klar: Schweiz-Algerien 2:0 mit Ensemble-Brier 0.276, Spanien-Oesterreich 3:0 mit 0.070 und Portugal-Kroatien 2:1 mit 0.232. In allen drei Faellen schlug das Ensemble Polymarkt und Buchmacher beim Brier; besonders Schweiz-Algerien war wertvoll, weil Markt 0.400 und Buchmacher 0.392 deutlich schlechter lagen. Whale war in diesen Favoritensiegen wieder extrem stark mit 0.002, 0.004 und 0.020, bleibt aber wegen der frueheren Remis- und Upset-Fehler nicht hoeher zu gewichten.
+
+Das Ensemble schlaegt den reinen Markt jetzt knapp beim rollierenden Brier: 0.441 vs. 0.444. Das ist ein echtes, aber noch kleines Signal, weil RPS weiter nicht besser als Kalshi ist und der Abstand zu Polymarkt nur 0.0035 Brier-Punkte betraegt. Die Verbesserung kommt vor allem aus einem Favoritencluster und aus Whale-Treffern, nicht aus einer sauber belegten Modellueberlegenheit; das reine Modell bleibt mit Brier 0.483 und LogLoss 0.828 hinter dem Marktblock.
+
+Die Wettkennzahlen sind positiv, aber noch nicht stark genug fuer aggressivere Parameterentscheidungen: 71 Referenzwetten, 72% Trefferquote, ROI +18.6%, durchschnittlicher CLV +0.77% bei n=59 und Beat-Close-Rate 49%. ROI ist damit besser als an den Vortagen, aber CLV liegt weiter unter der 1%-Schwelle und zeigt keine klare Marktbewegungsbestaetigung. Keine Value-Bets im Tageslauf und Gesamtstake 0.0% passen zur konservativen Policy.
+
+Die Gewichtsempfehlung ist data-driven und liegt bei Polymarkt 0.160, Buchmacher 0.157, Kalshi 0.162, Modell 0.367 und Whale 0.153. Trotz n=75 sollte sie nicht automatisch uebernommen werden: Das vorgeschlagene Modellgewicht ist hoch, obwohl das Modell weiterhin schlechter kalibriert ist als Markt, Kalshi und Ensemble. Sinnvoll ist: Empfehlung notieren, Whale nicht erhoehen, Modellgewicht nur dann zur Uebernahme empfehlen, wenn Ensemble-vs.-Markt mehrere weitere Tage positiv bleibt und CLV bei n>=60 klar ueber +1% steigt.
