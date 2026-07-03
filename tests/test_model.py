@@ -529,6 +529,34 @@ def test_daily_pipeline_parameter_tuning_proposal_is_prominent(monkeypatch):
     assert "Nicht automatisch angewandt" in report
 
 
+def test_closing_loop_preserves_existing_hermes_section():
+    from src.model.closing_loop import generate_report
+
+    calib = {"status": "live",
+             "matches": [{"slug": "m1", "result": "1-0", "outcome": "team1_win",
+                          "forecast_at": "2026-06-10T10:00:00+00:00",
+                          "brier": {"ensemble": 0.1}}],
+             "summary": {"ensemble": {"mean_brier": 0.1, "mean_rps": 0.05,
+                                       "mean_log_loss": 0.2, "hit_rate": 1.0,
+                                       "hits": 1, "misses": 0, "n": 1}},
+             "record": {"hits": 1, "misses": 0, "hit_rate": 1.0, "n": 1,
+                        "source": "ensemble"},
+             "betting": {}}
+    existing = "\n".join([
+        "# Closing-Loop-Report",
+        "",
+        "## Hermes-Analyse",
+        "",
+        "Hermes-Kernaussage bleibt erhalten.",
+    ])
+
+    report = generate_report(calib, "2026-06-15T08:00:00", existing_report=existing)
+
+    assert "Narrative Hermes-Analyse: siehe Abschnitt unten." in report
+    assert "Hermes-Kernaussage bleibt erhalten." in report
+    assert report.count("## Hermes-Analyse") == 1
+
+
 def test_daily_pipeline_parameter_tuning_does_not_mutate_config(monkeypatch):
     from src import config
     from src.pipeline import daily_matchday_run

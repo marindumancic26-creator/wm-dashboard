@@ -333,9 +333,13 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     _write_markdown(payload, today)
 
     # Deterministischer Closing-Loop-Report (automatische Tages-Lernzusammenfassung)
+    closing_loop_path = config.DAILY_RUNS_DIR / f"{today}_closing_loop.md"
+    existing_closing_loop = (closing_loop_path.read_text(encoding="utf-8")
+                             if closing_loop_path.exists() else None)
     report = closing_loop.generate_report(calib, payload["generated_at"], weights_suggestion,
-                                          parameter_tuning_result=tuning_result)
-    (config.DAILY_RUNS_DIR / f"{today}_closing_loop.md").write_text(report, encoding="utf-8")
+                                          parameter_tuning_result=tuning_result,
+                                          existing_report=existing_closing_loop)
+    closing_loop_path.write_text(report, encoding="utf-8")
 
     # Static-Export fürs Handy/GitHub Pages (self-contained docs/index.html)
     try:

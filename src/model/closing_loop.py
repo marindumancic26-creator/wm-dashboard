@@ -12,10 +12,37 @@ import statistics
 SOURCES = ("market", "books", "kalshi", "model", "whale", "ensemble")
 SOURCE_LABEL = {"market": "Polymarkt", "books": "Buchmacher", "kalshi": "Kalshi",
                 "model": "Modell", "whale": "Whale", "ensemble": "Ensemble"}
+HERMES_HEADING = "## Hermes-Analyse"
 
 
 def _fmt(x):
     return f"{x:.3f}" if x is not None else "–"
+
+
+def _extract_hermes_section(existing_report: str | None) -> list[str]:
+    """Bestehenden Hermes-Block beim deterministischen Neuschreiben erhalten."""
+    if not existing_report:
+        return []
+    report_lines = existing_report.splitlines()
+    start = next((i for i, line in enumerate(report_lines)
+                  if line.strip() == HERMES_HEADING), None)
+    if start is None:
+        return []
+    end = len(report_lines)
+    for i in range(start + 1, len(report_lines)):
+        if report_lines[i].startswith("## ") and report_lines[i].strip() != HERMES_HEADING:
+            end = i
+            break
+    section = report_lines[start:end]
+    while section and not section[-1].strip():
+        section.pop()
+    return section
+
+
+def _finish(lines: list[str], hermes_section: list[str]) -> str:
+    if hermes_section:
+        lines += hermes_section + [""]
+    return "\n".join(lines)
 
 
 def _parameter_tuning_section(parameter_tuning_result: dict | None) -> list[str]:
@@ -40,20 +67,24 @@ def _parameter_tuning_section(parameter_tuning_result: dict | None) -> list[str]
 
 
 def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | None = None,
-                    parameter_tuning_result: dict | None = None) -> str:
+                    parameter_tuning_result: dict | None = None,
+                    existing_report: str | None = None) -> str:
     """calib = Rueckgabe von calibration.evaluate(). Gibt Markdown zurueck."""
+    hermes_section = _extract_hermes_section(existing_report)
+    hermes_note = ("Narrative Hermes-Analyse: siehe Abschnitt unten."
+                   if hermes_section else "Narrative Hermes-Analyse: auf Anfrage.")
     lines = [f"# Closing-Loop-Report — {generated_at[:10]}", "",
              f"Stand: {generated_at} · automatisch erzeugt (deterministisch, ohne Claude).",
-             "Narrative Hermes-Analyse: auf Anfrage.", ""]
+             hermes_note, ""]
 
     if calib.get("status") != "live":
         lines.append(f"> Kalibrierung nicht verfügbar: {calib.get('note', '')}")
-        return "\n".join(lines)
+        return _finish(lines, hermes_section)
 
     matches = calib.get("matches", [])
     if not matches:
         lines.append("> Noch keine aufgelösten Spiele mit sauberer Pre-Kickoff-Prognose.")
-        return "\n".join(lines)
+        return _finish(lines, hermes_section)
 
     # --- Trefferbilanz (richtig/falsch der Headline-Prognose) -----------
     rec = calib.get("record")
@@ -162,4 +193,4 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     lines += ["## Automatische Flags", ""]
     lines += [f"- {f}" for f in flags] if flags else ["- Keine Auffälligkeiten."]
     lines.append("")
-    return "\n".join(lines)
+    return _finish(lines, hermes_section)
