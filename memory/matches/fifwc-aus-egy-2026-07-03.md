@@ -1,17 +1,17 @@
 # Australia vs. Egypt
 
-Datum: 2026-07-03  |  Stand: 2026-07-03T00:01:50
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-aus-egy-2026-07-03) (Volumen $263,111)
+Datum: 2026-07-03  |  Stand: 2026-07-03T12:23:03
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-aus-egy-2026-07-03) (Volumen $1,495,551)
 
-Ensemble: Australia 27.5% / Remis 34.8% / Egypt 37.7%
-Erwartete Tore: 0.959 : 1.116
+Ensemble: Australia 27.4% / Remis 31.7% / Egypt 41.0%
+Erwartete Tore: 0.923 : 1.128
 
 Top-Scorelines:
 
-- 1:1 — 14.5%
-- 0:0 — 13.9%
-- 0:1 — 12.7%
-- 1:0 — 10.6%
-- 0:2 — 7.8%
+- 1:1 — 14.6%
+- 0:0 — 14.4%
+- 0:1 — 13.1%
+- 1:0 — 10.5%
+- 0:2 — 8.1%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 14.0%, draw 46.0%, team2_win 40.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 20.9%, draw 25.6%, team2_win 53.6%

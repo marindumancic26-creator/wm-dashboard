@@ -1,9 +1,9 @@
 # Paraguay vs. France
 
-Datum: 2026-07-04  |  Stand: 2026-07-03T00:01:50
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-par-fra-2026-07-04) (Volumen $487,345)
+Datum: 2026-07-04  |  Stand: 2026-07-03T12:23:03
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-par-fra-2026-07-04) (Volumen $592,479)
 
-Ensemble: Paraguay 4.5% / Remis 12.1% / France 83.4%
+Ensemble: Paraguay 4.6% / Remis 12.4% / France 83.0%
 Erwartete Tore: 0.578 : 2.713
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 0:4 — 8.2%
 - 1:2 — 7.8%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 0.0%, team2_win 100.0%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.1%, draw 0.0%, team2_win 99.9%
