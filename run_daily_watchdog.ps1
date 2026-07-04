@@ -5,6 +5,7 @@ $today = Get-Date -Format "yyyy-MM-dd"
 $marker = Join-Path $repo "data\snapshots\daily_success_${today}.ok"
 $log = Join-Path $repo "data\snapshots\automation_watchdog.log"
 $runner = Join-Path $repo "run_daily.ps1"
+$pagesWatchdog = Join-Path $repo "run_pages_watchdog.ps1"
 $powershell = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $dailyMutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Daily")
 $hasDailyLock = $false
@@ -25,7 +26,12 @@ function Write-WatchdogLog {
 
 try {
     if (Test-Path -LiteralPath $marker) {
-        Write-WatchdogLog "Daily-Lauf fuer $today bereits erfolgreich; kein Recovery noetig."
+        Write-WatchdogLog "Daily-Lauf fuer $today bereits erfolgreich; Pages-Status wird geprueft."
+        & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
+        $pagesCode = $LASTEXITCODE
+        if ($pagesCode -ne 0) {
+            Write-WatchdogLog "Pages-Watchdog meldete Exit $pagesCode; Daily-Recovery bleibt unberuehrt."
+        }
         exit 0
     }
 

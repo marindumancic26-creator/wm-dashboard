@@ -368,6 +368,30 @@ def test_inline_json_escapes_script_breakout():
     assert back["y"] == "a b c"           # Leerzeichen unveraendert
 
 
+def test_pages_publish_check_classifies_fresh_and_stale():
+    from src.pipeline import pages_publish_check
+
+    fresh = pages_publish_check.classify("2026-07-04T09:00:42", "2026-07-04T09:00:42")
+    stale = pages_publish_check.classify("2026-07-04T09:00:42", "2026-07-04T00:01:54")
+
+    assert fresh["status"] == "fresh"
+    assert stale["status"] == "stale"
+    assert "aelter" in stale["note"]
+
+
+def test_pages_publish_check_handles_missing_and_unreachable(tmp_path):
+    from src.pipeline import pages_publish_check
+
+    local_file = tmp_path / "index.html"
+    local_file.write_text('<script>{"generated_at": "2026-07-04T09:00:42"}</script>',
+                          encoding="utf-8")
+
+    assert pages_publish_check.read_local_generated_at(local_file) == "2026-07-04T09:00:42"
+    assert pages_publish_check.classify(None, "2026-07-04T09:00:42")["status"] == "missing_local"
+    assert pages_publish_check.classify("2026-07-04T09:00:42", None, "timeout")["status"] == "unreachable"
+    assert pages_publish_check.classify("2026-07-04T09:00:42", None)["status"] == "missing_remote"
+
+
 def test_log_loss_and_hit():
     from src.model.calibration import log_loss, brier, argmax_outcome
     perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}
