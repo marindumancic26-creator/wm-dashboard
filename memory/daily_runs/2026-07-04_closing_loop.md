@@ -1,13 +1,13 @@
 # Closing-Loop-Report — 2026-07-04
 
-Stand: 2026-07-04T16:00:25 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-07-04T23:00:23 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: siehe Abschnitt unten.
 
 ## Trefferbilanz (Headline-Prognose)
 
-**✅ 57 richtig · ❌ 20 falsch** — Trefferquote 74% über n=77 Spiele (Ensemble).
+**✅ 58 richtig · ❌ 20 falsch** — Trefferquote 74% über n=78 Spiele (Ensemble).
 
-## Aufgelöste Spiele (77)
+## Aufgelöste Spiele (78)
 
 ### fifwc-bra-mar-2026-06-13 — Ergebnis 1:1 (draw)
 Prognose-Stand: 2026-06-13T21:02:02
@@ -911,16 +911,27 @@ Prognose-Stand: 2026-07-03T22:01:41+00:00
 | Whale | 0.001 ✅ |
 | Ensemble | 0.100 |
 
+### fifwc-can-mar-2026-07-04 — Ergebnis 0:3 (team2_win)
+Prognose-Stand: 2026-07-04T14:00:11+00:00
+
+| Quelle | Brier |
+|---|---|
+| Polymarkt | 0.302 |
+| Buchmacher | 0.282 |
+| Modell | 0.569 ❌ |
+| Whale | 0.000 ✅ |
+| Ensemble | 0.256 |
+
 ## Rollierende Bestenliste (alle aufgelösten Spiele)
 
 | Rang | Quelle | Ø Brier | Ø RPS | Ø LogLoss | Hit-Rate | R/F | n |
 |---|---|---|---|---|---|---|---|
 | 1 | Kalshi | 0.446 | 0.139 | 0.767 | 70% | 44/19 | 63 |
-| 2 | Ensemble | 0.438 | 0.145 | 0.764 | 74% | 57/20 | 77 |
-| 3 | Polymarkt | 0.442 | 0.146 | 0.770 | 73% | 56/21 | 77 |
-| 4 | Buchmacher | 0.451 | 0.149 | 0.781 | 72% | 53/21 | 74 |
-| 5 | Modell | 0.480 | 0.161 | 0.824 | 66% | 51/26 | 77 |
-| 6 | Whale | 0.502 | 0.177 | 1.281 | 72% | 52/20 | 72 |
+| 2 | Ensemble | 0.435 | 0.144 | 0.761 | 74% | 58/20 | 78 |
+| 3 | Polymarkt | 0.440 | 0.145 | 0.767 | 73% | 57/21 | 78 |
+| 4 | Buchmacher | 0.449 | 0.148 | 0.778 | 72% | 54/21 | 75 |
+| 5 | Modell | 0.481 | 0.162 | 0.825 | 67% | 52/26 | 78 |
+| 6 | Whale | 0.495 | 0.174 | 1.263 | 73% | 53/20 | 73 |
 
 _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._
 
@@ -928,8 +939,8 @@ _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 
 
 _1 Einheit flat auf Ensemble-Favorit @ beste 1X2-Quote_
 
-- Wetten: 73 · Trefferquote 73% · **ROI +20.8%**
-- Ø CLV (Quoten): +0.91% · Markt bewegte sich zur Modell-Lehne: 49% (n=61)
+- Wetten: 74 · Trefferquote 73% · **ROI +21.5%**
+- Ø CLV (Quoten): +0.94% · Markt bewegte sich zur Modell-Lehne: 48% (n=62)
 
 ## Gewichts-Empfehlung
 
@@ -939,18 +950,18 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.84). Markt/Books/Kalshi korreli
 |---|---|---|
 | Polymarkt | 0.3 | 0.159 |
 | Buchmacher | 0.25 | 0.156 |
-| Kalshi | 0.1 | 0.16 |
-| Modell | 0.2 | 0.366 |
-| Whale | 0.15 | 0.158 |
+| Kalshi | 0.1 | 0.159 |
+| Modell | 0.2 | 0.364 |
+| Whale | 0.15 | 0.162 |
 
 ## Parameter-Tuning (ELO_PER_GOAL)
 
-- Status `diagnostic` (n=76): Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.
+- Status `diagnostic` (n=77): Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.
 
 ## Automatische Flags
 
-- ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 72 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
-- ✅ Ensemble schlägt/erreicht Markt (Ø 0.438 vs. 0.442).
+- ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 73 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
+- ✅ Ensemble schlägt/erreicht Markt (Ø 0.435 vs. 0.440).
 
 ## Hermes-Analyse
 
