@@ -1,17 +1,17 @@
 # Canada vs. Morocco
 
-Datum: 2026-07-04  |  Stand: 2026-07-04T09:00:42
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-can-mar-2026-07-04) (Volumen $5,143,125)
+Datum: 2026-07-04  |  Stand: 2026-07-04T16:00:25
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-can-mar-2026-07-04) (Volumen $7,592,026)
 
-Ensemble: Canada 18.4% / Remis 24.2% / Morocco 57.4%
-Erwartete Tore: 0.861 : 1.463
+Ensemble: Canada 17.3% / Remis 23.8% / Morocco 58.9%
+Erwartete Tore: 0.842 : 1.498
 
 Top-Scorelines:
 
-- 1:1 — 13.0%
-- 0:1 — 12.8%
-- 0:0 — 11.5%
-- 0:2 — 10.6%
-- 1:2 — 8.9%
+- 1:1 — 12.9%
+- 0:1 — 12.9%
+- 0:0 — 11.2%
+- 0:2 — 11.2%
+- 1:2 — 9.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 0.9%, team2_win 99.1%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.1%, draw 1.0%, team2_win 98.9%
