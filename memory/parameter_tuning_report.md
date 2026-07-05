@@ -59,11 +59,11 @@ n=78 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## Input-Audit
 
-- snapshots: `88`
+- snapshots: `90`
 - resolved: `79`
 - entries: `449`
 - missing_model_inputs: `126`
-- missing_baseline_total_goals: `40`
+- missing_baseline_total_goals: `41`
 - cases: `78`
 
 _Keine automatische Aenderung an config.py. Parameter-Aenderungen bleiben Menschenentscheidung._
