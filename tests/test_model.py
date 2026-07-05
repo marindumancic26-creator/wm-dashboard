@@ -453,6 +453,88 @@ def test_pages_watchdogs_retry_policy_is_bounded_and_immediate():
     assert 'Pages-Watchdog nach Recovery' in daily_watchdog
 
 
+def _workflow_run(name, status="completed", conclusion="success",
+                  created_at="2026-07-05T11:00:00Z"):
+    return {
+        "id": 123,
+        "run_number": 7,
+        "name": name,
+        "status": status,
+        "conclusion": conclusion,
+        "created_at": created_at,
+        "head_sha": "abc123",
+        "html_url": "https://github.test/run",
+    }
+
+
+def test_github_pages_health_classifies_clean_state():
+    from src.pipeline import github_pages_health
+
+    pages = {"status": "fresh", "local_generated_at": "2026-07-05T10:00:00Z",
+             "remote_generated_at": "2026-07-05T10:00:00Z", "note": "ok"}
+    runs = [_workflow_run("pages"), _workflow_run("tests")]
+
+    result = github_pages_health.classify_health(
+        pages_result=pages,
+        workflow_runs=runs,
+        settings={"build_type": "workflow"},
+    )
+
+    assert result["status"] == "ok"
+    assert result["checks"]["pages_public"]["status"] == "ok"
+    assert result["checks"]["legacy_branch_deploy"]["status"] == "ok"
+
+
+def test_github_pages_health_flags_stale_failed_and_legacy():
+    from src.pipeline import github_pages_health
+
+    pages = {"status": "stale", "local_generated_at": "2026-07-05T10:00:00Z",
+             "remote_generated_at": "2026-07-05T09:00:00Z", "note": "stale"}
+    runs = [
+        _workflow_run("pages", conclusion="failure"),
+        _workflow_run("tests"),
+        _workflow_run("pages build and deployment", created_at="2026-07-05T12:00:00Z"),
+    ]
+
+    result = github_pages_health.classify_health(
+        pages_result=pages,
+        workflow_runs=runs,
+        settings={"build_type": "workflow"},
+    )
+
+    assert result["status"] == "error"
+    assert result["checks"]["pages_public"]["status"] == "error"
+    assert result["checks"]["workflow_pages"]["status"] == "error"
+    assert result["checks"]["legacy_branch_deploy"]["status"] == "error"
+    assert "Pages-Source pruefen" in result["checks"]["legacy_branch_deploy"]["note"]
+
+
+def test_github_pages_health_tokenless_settings_are_warning_only():
+    from src.pipeline import github_pages_health
+
+    pages = {"status": "fresh", "local_generated_at": "2026-07-05T10:00:00Z",
+             "remote_generated_at": "2026-07-05T10:00:00Z", "note": "ok"}
+    runs = [_workflow_run("pages"), _workflow_run("tests")]
+
+    result = github_pages_health.classify_health(pages, runs, settings=None)
+
+    assert result["status"] == "warning"
+    assert result["checks"]["pages_settings"]["status"] == "warning"
+    assert "ohne GitHub-Token" in result["checks"]["pages_settings"]["note"]
+
+
+def test_daily_watchdog_runs_github_pages_health_check():
+    root = Path(__file__).resolve().parent.parent
+    daily_watchdog = (root / "run_daily_watchdog.ps1").read_text(encoding="utf-8")
+    health_runner = (root / "run_github_pages_health.ps1").read_text(encoding="utf-8")
+
+    assert 'run_github_pages_health.ps1' in daily_watchdog
+    assert 'GitHub-Pages-Health-Check' in daily_watchdog
+    assert 'python -m src.pipeline.github_pages_health' in health_runner
+    assert 'github_pages_health_last.json' in health_runner
+    assert 'config.py' not in health_runner
+
+
 def test_log_loss_and_hit():
     from src.model.calibration import log_loss, brier, argmax_outcome
     perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}
