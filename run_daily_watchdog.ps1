@@ -61,6 +61,11 @@ try {
     }
 
     Write-WatchdogLog "Recovery-Lauf erfolgreich abgeschlossen."
+    & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
+    $pagesCode = $LASTEXITCODE
+    if ($pagesCode -ne 0) {
+        Write-WatchdogLog "Pages-Watchdog nach Recovery meldete Exit $pagesCode."
+    }
     exit 0
 }
 catch {

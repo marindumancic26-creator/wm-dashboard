@@ -392,6 +392,67 @@ def test_pages_publish_check_handles_missing_and_unreachable(tmp_path):
     assert pages_publish_check.classify("2026-07-04T09:00:42", None)["status"] == "missing_remote"
 
 
+def test_pages_publish_check_compares_real_timestamps():
+    from src.pipeline import pages_publish_check
+
+    same_in_utc = pages_publish_check.classify(
+        "2026-07-04T09:00:42+00:00",
+        "2026-07-04T11:00:42+02:00",
+    )
+    stale = pages_publish_check.classify(
+        "2026-07-04T09:00:42Z",
+        "2026-07-04T08:59:00+00:00",
+    )
+    invalid = pages_publish_check.classify("keine-zeit", "2026-07-04T09:00:42")
+
+    assert same_in_utc["status"] == "fresh"
+    assert stale["status"] == "stale"
+    assert invalid["status"] == "invalid_timestamp"
+
+
+def test_pages_workflow_deploys_docs_only_with_retries():
+    workflow = (Path(__file__).resolve().parent.parent /
+                ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+
+    assert 'paths:' in workflow
+    assert '"docs/**"' in workflow
+    assert '"memory/**"' not in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "concurrency:" in workflow
+    assert "cancel-in-progress: false" in workflow
+    assert workflow.count("actions/deploy-pages@v5") == 3
+    assert "Resolve deployed Pages URL" in workflow
+    assert "Verify public Pages freshness" in workflow
+    assert 'url = "${{ steps.page-url.outputs.url }}"' in workflow
+    assert "pages_publish_check.check(url=url" in workflow
+
+
+def test_github_setup_documents_actions_pages_source():
+    setup = (Path(__file__).resolve().parent.parent /
+             "SETUP_GITHUB.md").read_text(encoding="utf-8")
+
+    assert "Source: **GitHub Actions**" in setup
+    assert "Source: Deploy from a branch" not in setup
+    assert ".github/workflows/pages.yml" in setup
+
+
+def test_pages_watchdogs_retry_policy_is_bounded_and_immediate():
+    root = Path(__file__).resolve().parent.parent
+    pages_watchdog = (root / "run_pages_watchdog.ps1").read_text(encoding="utf-8")
+    daily_watchdog = (root / "run_daily_watchdog.ps1").read_text(encoding="utf-8")
+
+    assert '$maxRetriesPerCommit = 3' in pages_watchdog
+    assert '$retryableStatuses = @("stale", "missing_remote")' in pages_watchdog
+    assert 'docs\\.pages-retry' in pages_watchdog
+    assert '--allow-empty' not in pages_watchdog
+    assert '$stateKey = (($check.local_generated_at, $check.remote_generated_at, $check.status) -join "_")' in pages_watchdog
+    assert pages_watchdog.index('$addCode = Invoke-Logged "git" @("add", "docs\\.pages-retry")') < \
+        pages_watchdog.index('$commitCode = Invoke-Logged "git" @("commit", "-m", $msg)')
+    assert pages_watchdog.index('$pushCode = Invoke-Logged "git" @("push")') < \
+        pages_watchdog.index('[IO.File]::WriteAllText($stateFile')
+    assert 'Pages-Watchdog nach Recovery' in daily_watchdog
+
+
 def test_log_loss_and_hit():
     from src.model.calibration import log_loss, brier, argmax_outcome
     perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}

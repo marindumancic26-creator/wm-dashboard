@@ -8,6 +8,7 @@ Statusobjekt fuer den Watchdog.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import urllib.error
@@ -46,6 +47,21 @@ def fetch_remote_generated_at(url: str = DEFAULT_PAGES_URL, timeout: int = 20) -
         return None, str(exc)
 
 
+def _parse_generated_at(value: str | None) -> dt.datetime | None:
+    if not value:
+        return None
+    normalized = value.strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        parsed = dt.datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=dt.timezone.utc)
+    return parsed.astimezone(dt.timezone.utc)
+
+
 def classify(local_generated_at: str | None, remote_generated_at: str | None,
              remote_error: str | None = None) -> dict:
     if not local_generated_at:
@@ -57,12 +73,18 @@ def classify(local_generated_at: str | None, remote_generated_at: str | None,
     elif not remote_generated_at:
         status = "missing_remote"
         note = "Oeffentliche Pages-Seite enthaelt kein generated_at."
-    elif remote_generated_at < local_generated_at:
-        status = "stale"
-        note = "GitHub Pages ist aelter als der lokale Static-Export."
     else:
-        status = "fresh"
-        note = "GitHub Pages ist aktuell."
+        local_dt = _parse_generated_at(local_generated_at)
+        remote_dt = _parse_generated_at(remote_generated_at)
+        if not local_dt or not remote_dt:
+            status = "invalid_timestamp"
+            note = "generated_at konnte nicht als ISO-Zeitstempel geparst werden."
+        elif remote_dt < local_dt:
+            status = "stale"
+            note = "GitHub Pages ist aelter als der lokale Static-Export."
+        else:
+            status = "fresh"
+            note = "GitHub Pages ist aktuell."
     return {
         "status": status,
         "local_generated_at": local_generated_at,

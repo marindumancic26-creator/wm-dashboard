@@ -3,6 +3,7 @@ $ErrorActionPreference = "Stop"
 $repo = $PSScriptRoot
 $log = Join-Path $repo "data\snapshots\automation_pages_watchdog.log"
 $stateDir = Join-Path $repo "data\snapshots\pages_retry_state"
+$retryFile = Join-Path $repo "docs\.pages-retry"
 $mutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-PagesWatchdog")
 $hasLock = $false
 $maxRetriesPerCommit = 3
@@ -92,19 +93,25 @@ try {
     if ($check.status -eq "fresh") {
         exit 0
     }
-    if ($check.status -ne "stale") {
+    $retryableStatuses = @("stale", "missing_remote")
+    if ($retryableStatuses -notcontains $check.status) {
         Write-PagesLog "Kein Retry: Status ist $($check.status)."
         exit 0
     }
 
     $head = (& git rev-parse --short HEAD).Trim()
-    $stateFile = Join-Path $stateDir "$head.txt"
+    $stateKey = (($check.local_generated_at, $check.remote_generated_at, $check.status) -join "_")
+    $stateKey = [Regex]::Replace($stateKey, "[^0-9A-Za-z._-]", "_")
+    if ([string]::IsNullOrWhiteSpace($stateKey)) {
+        $stateKey = $head
+    }
+    $stateFile = Join-Path $stateDir "$stateKey.txt"
     $retryCount = 0
     if (Test-Path -LiteralPath $stateFile) {
         [int]::TryParse((Get-Content -LiteralPath $stateFile -Raw).Trim(), [ref]$retryCount) | Out-Null
     }
     if ($retryCount -ge $maxRetriesPerCommit) {
-        Write-PagesLog "Kein Retry: Limit $maxRetriesPerCommit fuer Commit $head erreicht."
+        Write-PagesLog "Kein Retry: Limit $maxRetriesPerCommit fuer Pages-Stand $stateKey erreicht."
         exit 0
     }
 
@@ -114,10 +121,23 @@ try {
         exit 0
     }
 
-    $retryCount += 1
-    [IO.File]::WriteAllText($stateFile, [string]$retryCount, [Text.UTF8Encoding]::new($false))
-    $msg = "Retry GitHub Pages deploy $head attempt $retryCount"
-    $commitCode = Invoke-Logged "git" @("commit", "--allow-empty", "-m", $msg) 180
+    $attempt = $retryCount + 1
+    $msg = "Retry GitHub Pages deploy $head attempt $attempt"
+    $retryPayload = @(
+        "retry_at=$((Get-Date).ToString('o'))",
+        "source_head=$head",
+        "status=$($check.status)",
+        "local_generated_at=$($check.local_generated_at)",
+        "remote_generated_at=$($check.remote_generated_at)",
+        "attempt=$attempt"
+    ) -join "`n"
+    [IO.File]::WriteAllText($retryFile, $retryPayload, [Text.UTF8Encoding]::new($false))
+    $addCode = Invoke-Logged "git" @("add", "docs\.pages-retry") 180
+    if ($addCode -ne 0) {
+        Write-PagesLog "FEHLER: Retry-Datei konnte nicht gestaged werden (Exit $addCode)."
+        exit 0
+    }
+    $commitCode = Invoke-Logged "git" @("commit", "-m", $msg) 180
     if ($commitCode -ne 0) {
         Write-PagesLog "FEHLER: Retry-Commit fehlgeschlagen (Exit $commitCode)."
         exit 0
@@ -127,6 +147,7 @@ try {
         Write-PagesLog "FEHLER: Retry-Push fehlgeschlagen (Exit $pushCode)."
         exit 0
     }
+    [IO.File]::WriteAllText($stateFile, [string]$attempt, [Text.UTF8Encoding]::new($false))
     Write-PagesLog "Retry-Push ausgeloest: $msg"
     exit 0
 }
