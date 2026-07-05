@@ -973,3 +973,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.84). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 74 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.430 vs. 0.435).
+
+## Hermes-Analyse
+
+Rollierend ist das Ensemble jetzt die beste Quelle nach Brier und LogLoss: 0.4302 Brier und 0.7536 LogLoss über n=79, knapp vor Polymarkt mit 0.4350/0.7600. Kalshi bleibt trotz kleinerer Stichprobe die beste RPS-Quelle mit 0.1389 bei n=63; das Ensemble liegt dort bei 0.1429 und Polymarkt bei 0.1436. Schlechteste Quelle bleibt Whale nach LogLoss 1.2464 und RPS 0.1721, trotz 73.0% Hit-Rate, weil die Fehler weiter extrem teuer sind.
+
+Der jüngste neue Treffer war Paraguay - Frankreich 0:1: Ensemble korrekt auf team2_win, Brier 0.0442, besser als Polymarkt 0.0461, Buchmacher 0.0475 und Modell 0.0987; Whale lag mit 0.000 nahezu perfekt. Das ist ein sauberer Favoriten-/Whale-Treffer, aber kein Grund, Whale aggressiver zu gewichten, weil die rollierende Whale-Spannweite weiter 0.000 bis 1.998 über n=74 beträgt.
+
+Das Ensemble schlägt den reinen Markt inzwischen knapp: Brier 0.4302 vs. 0.4350, LogLoss 0.7536 vs. 0.7600, RPS 0.1429 vs. 0.1436. Der Vorsprung ist positiv, aber klein und wahrscheinlich durch die letzten Favoritencluster gestützt. Das Modell allein bleibt mit Brier 0.4766 und RPS 0.1606 klar schwächer als Markt/Ensemble, liefert aber genug diversifizierende Information, dass der Optimierer weiter ein höheres Modellgewicht vorschlägt.
+
+Die Referenz-Policy bleibt stark, aber nicht beweisend: 75 Flat-Bets, 73.3% Trefferquote, ROI +21.5%. CLV liegt bei +0.95% über n=62, die Beat-Close-Rate aber nur bei 48.4%; die Quoten bewegen sich also nicht konsistent genug zur Modellseite, um von einem robusten Preis-Edge zu sprechen. Im aktuellen Tageslauf wurden 4 kommende Spiele verarbeitet, 0 Value-Bets freigegeben und Gesamtstake bleibt 0.0%.
+
+Weights-Suggestion ist data-driven bei n=79: Polymarkt 0.159, Buchmacher 0.156, Kalshi 0.157, Modell 0.363, Whale 0.165. Keine automatische Übernahme: Die Empfehlung ist gegenüber gestern praktisch stabil, aber Whale bleibt hochvariant und Parameter-Tuning ist nur diagnostic bei n=78; bester Kandidat ELO_PER_GOAL 180 mit RPS-Vorteil 0.0072 ist nicht adoption_ready.
