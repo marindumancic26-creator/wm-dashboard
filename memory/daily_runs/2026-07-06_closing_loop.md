@@ -995,3 +995,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.84). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 76 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.440 vs. 0.444).
+
+## Hermes-Analyse
+
+Die heutige Hermes-Auswertung ist fachlich durchgeführt; Anhängen war in dieser Sitzung durch Leserechte blockiert. Der Daily-Lauf selbst ist sauber: 4 Spiele verarbeitet, 0 Fehler, 0 Value-Bets, Gesamtstake 0.0%. Datenstatus ist gemischt, aber brauchbar: Elo, Bücher, Kalshi und ESPN live; StatsBomb historisch; FBref-Form stale als einzige Warnung.
+
+Rollierend ist das Bild knapp: Das Ensemble hat über n=81 den besten Brier und LogLoss mit 0.440 und 0.768, minimal vor Polymarkt mit 0.444 und 0.774. Kalshi bleibt wegen kleinerer Stichprobe vorsichtig zu lesen, ist aber nach RPS weiter stark: 0.139 bei n=63. Schlechteste Quelle bleibt Whale: Brier 0.508, RPS 0.184, LogLoss 1.274 bei n=76; die Hit-Rate von 71% kaschiert die hohe Fehlerhärte.
+
+Die zwei neuen Auflösungen waren eher Gegenwind. Brasilien-Norwegen 1:2 war ein klarer Ensemble-Fehler mit Brier 1.129; Buchmacher waren mit 1.007 noch am wenigsten falsch, Whale lag mit 1.867 erneut extrem daneben. Mexiko-England 2:3 war weniger schlimm: Modell war mit Brier 0.448 beste Quelle, Ensemble 0.529, Polymarkt 0.583, Whale 0.609. Das deutet eher auf Modell-Diversifikation bei engen Knockout-Spielen als auf einen stabilen Whale-Vorteil.
+
+Das Ensemble schlägt den reinen Markt jetzt knapp, aber nicht dominant: Brier 0.440 vs. 0.444 und LogLoss 0.768 vs. 0.774, RPS aber gleichauf bei 0.149. Gegenüber gestern verschlechterte sich das Ensemble durch die zwei neuen Spiele von Brier 0.430 auf 0.440 und LogLoss 0.754 auf 0.768; der Vorsprung gegen Polymarkt bleibt, ist aber klein genug, dass ich ihn nicht als robuste Modellüberlegenheit werte.
+
+ROI/CLV bleibt positiv, aber noch kein sauberer Preis-Edge. Die Referenz-Policy steht bei 77 Flat-Bets, 73% Treffern und ROI +21.7%; CLV liegt bei +0.93% mit nur 48% Beat-Close-Rate bei n=64. Die Gewichts-Empfehlung ist data-driven bei n=81: Polymarkt 0.158, Buchmacher 0.156, Kalshi 0.161, Modell 0.365, Whale 0.161. Nicht automatisch übernehmen: Whale bleibt hochvariant, und Parameter-Tuning ist nur diagnostic; ELO_PER_GOAL 180 hat zwar +0.0068 Walk-forward-RPS gegen 240, ist aber nicht übernahme-reif.

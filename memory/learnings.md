@@ -209,3 +209,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Referenz-Policy bleibt stabil: 75 Bets, ROI +21.5%, CLV +0.95% bei n=62, Beat-Close-Rate 48.4%; aktuelle Value-Bets 0 und Gesamtstake 0.0%.
 - [Hypothese] Der Ensemble-Vorsprung gegen Polymarkt ist ein echtes, aber noch kleines Signal; Whale-Treffer helfen kurzfristig, bleiben wegen Brier-Spannweite 0.000-1.998 bei n=74 nicht verlässlich.
 - [Aktion] Gewichte nur notieren: 0.159/0.156/0.157/0.363/0.165 für Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Übernahme bis Ensemble-vs.-Markt und CLV über mehrere Tage stabil bleiben.
+
+## 2026-07-06
+
+- [Beobachtung] Ensemble liegt rollierend bei n=81 knapp vor Polymarkt: Brier 0.440 vs. 0.444, LogLoss 0.768 vs. 0.774; RPS ist mit 0.149 vs. 0.149 praktisch gleich.
+- [Beobachtung] Die zwei neuen Auflösungen verschlechtern das Ensemble von Brier 0.430/n=79 auf 0.440/n=81; Brasilien-Norwegen war der Hauptschaden mit Ensemble-Brier 1.129 und Whale-Brier 1.867.
+- [Hypothese] Der Ensemble-Vorsprung ist real, aber fragil: Modell-Diversifikation hilft bei Mexiko-England (Modell-Brier 0.448 bester Wert), während Whale wegen LogLoss 1.274/n=76 weiter kein höheres Vertrauen verdient.
+- [Aktion] Gewichte nur notieren, nicht übernehmen: Empfehlung 0.158/0.156/0.161/0.365/0.161 für Polymarkt/Buchmacher/Kalshi/Modell/Whale; abwarten bis CLV >1.0% bei Beat-Close-Rate >50% und Ensemble-vs.-Markt mehrere Tage stabil bleibt.
