@@ -1,17 +1,17 @@
 # Portugal vs. Spain
 
-Datum: 2026-07-06  |  Stand: 2026-07-06T16:53:05
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-prt-esp-2026-07-06) (Volumen $5,056,078)
+Datum: 2026-07-06  |  Stand: 2026-07-06T23:00:44
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-prt-esp-2026-07-06) (Volumen $21,755,719)
 
-Ensemble: Portugal 20.0% / Remis 24.2% / Spain 55.8%
-Erwartete Tore: 1.048 : 1.71
+Ensemble: Portugal 8.6% / Remis 25.8% / Spain 65.6%
+Erwartete Tore: 0.424 : 2.767
 
 Top-Scorelines:
 
-- 1:1 — 12.5%
-- 0:1 — 9.9%
-- 1:2 — 9.5%
-- 0:2 — 9.4%
-- 0:0 — 7.4%
+- 0:2 — 15.7%
+- 0:3 — 14.4%
+- 0:1 — 11.3%
+- 0:4 — 10.0%
+- 1:2 — 6.4%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 7.0%, draw 11.5%, team2_win 81.5%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 2.6%, team2_win 97.4%
