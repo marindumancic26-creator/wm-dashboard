@@ -1039,3 +1039,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.85). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 80 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.441 vs. 0.446).
+
+## Hermes-Analyse
+
+Der Lauf vom 2026-07-08 ist auswertbar: 85 aufgeloeste Ensemble-Spiele, 63 richtige Headline-Picks und 22 Fehler, also 74% Trefferquote. Die beste rollierende Quelle nach RPS/LogLoss bleibt Kalshi mit RPS 0,139 und LogLoss 0,767 bei n=63; nach Brier liegt das Ensemble mit 0,441 knapp vor Polymarkt und Kalshi mit jeweils rund 0,446. Schlechteste Quelle bleibt Whale: Brier 0,513, RPS 0,189, LogLoss 1,263 bei n=80, trotz 71% Trefferquote.
+
+Die neuen aufgeloesten Spiele zeigen ein gemischtes Signal. Argentinien-Aegypten 3:2 war sauber fuer das Ensemble mit Brier 0,075; Modell 0,051 und Whale 0,002 waren dort besser. Schweiz-Kolumbien 4:3 war dagegen der Tages-Schaden: Ensemble Brier 0,874, Polymarkt 0,819, Modell 0,695, Whale 1,771. Das spricht nicht gegen das Ensemble insgesamt, zeigt aber, dass Whale bei knappen High-Variance-Spielen weiter harte Ausreisser produziert.
+
+Das Ensemble schlaegt den reinen Markt inzwischen knapp, aber nicht dominant: Brier 0,441 vs. Polymarkt 0,446, RPS 0,151 vs. 0,152 und LogLoss 0,770 vs. 0,777. Gegenueber dem Stand 2026-07-07 hat sich das Ensemble von Brier 0,436 auf 0,441 und LogLoss 0,763 auf 0,770 verschlechtert; der Vorsprung gegen Polymarkt bleibt aber bestehen. Ich werte das als reales, kleines Signal, nicht als Freigabe fuer aggressivere Staking- oder Gewichtsaenderungen.
+
+Die Wett-Kennzahlen bleiben positiv, aber nicht stark genug fuer eine echte Preis-Edge-These: 81 Flat-Bets auf Ensemble-Favoriten, 73% Trefferquote, ROI +23,4%. CLV liegt bei +0,89%, und die Beat-Close-Rate bleibt mit 49% bei n=67 unter der Schwelle, die ich fuer robuste Marktbewegungsqualitaet sehen will. Positiver ROI ohne klare CLV-Bestaetigung kann weiterhin durch Ergebniscluster entstehen.
+
+Die Gewichts-Empfehlung ist data-driven und empfiehlt Polymarkt 0,156, Buchmacher 0,153, Kalshi 0,159, Modell 0,368 und Whale 0,163. Keine automatische Uebernahme: Whale ist mit Brier-Spannweite 0,000 bis 1,998 ueber 80 Spiele explizit hochvariant, und das Parameter-Tuning steht nur auf diagnostic bei n=84.

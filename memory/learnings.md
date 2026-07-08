@@ -216,3 +216,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Die zwei neuen Auflösungen verschlechtern das Ensemble von Brier 0.430/n=79 auf 0.440/n=81; Brasilien-Norwegen war der Hauptschaden mit Ensemble-Brier 1.129 und Whale-Brier 1.867.
 - [Hypothese] Der Ensemble-Vorsprung ist real, aber fragil: Modell-Diversifikation hilft bei Mexiko-England (Modell-Brier 0.448 bester Wert), während Whale wegen LogLoss 1.274/n=76 weiter kein höheres Vertrauen verdient.
 - [Aktion] Gewichte nur notieren, nicht übernehmen: Empfehlung 0.158/0.156/0.161/0.365/0.161 für Polymarkt/Buchmacher/Kalshi/Modell/Whale; abwarten bis CLV >1.0% bei Beat-Close-Rate >50% und Ensemble-vs.-Markt mehrere Tage stabil bleibt.
+
+## 2026-07-08
+
+- [Beobachtung] Ensemble liegt rollierend bei n=85 knapp vor Polymarkt: Brier 0,441 vs. 0,446, RPS 0,151 vs. 0,152, LogLoss 0,770 vs. 0,777.
+- [Beobachtung] Whale bleibt die riskanteste Quelle: Brier 0,513, RPS 0,189, LogLoss 1,263 bei n=80 und Spannweite 0,000-1,998; Schweiz-Kolumbien lieferte erneut Whale-Brier 1,771.
+- [Hypothese] Der Ensemble-Vorsprung ist ein echtes, aber kleines Diversifikationssignal; ohne CLV >1,0% und Beat-Close-Rate >50% ist der ROI +23,4% noch kein belastbarer Preis-Edge.
+- [Aktion] Gewichte nur notieren, nicht uebernehmen: 0,156/0,153/0,159/0,368/0,163 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; abwarten bis Ensemble-vs.-Markt und CLV mehrere Tage stabil positiv bleiben.
