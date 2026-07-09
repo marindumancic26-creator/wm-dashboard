@@ -1,9 +1,9 @@
 # France vs. Morocco
 
-Datum: 2026-07-09  |  Stand: 2026-07-09T10:36:09
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-mar-2026-07-09) (Volumen $5,954,848)
+Datum: 2026-07-09  |  Stand: 2026-07-09T10:39:11
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-mar-2026-07-09) (Volumen $5,959,956)
 
-Ensemble: France 65.8% / Remis 21.2% / Morocco 12.9%
+Ensemble: France 65.8% / Remis 21.3% / Morocco 12.9%
 Erwartete Tore: 1.826 : 0.75
 
 Top-Scorelines:

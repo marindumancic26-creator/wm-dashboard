@@ -1,6 +1,6 @@
 # Spain vs. Belgium
 
-Datum: 2026-07-10  |  Stand: 2026-07-09T10:36:09
+Datum: 2026-07-10  |  Stand: 2026-07-09T10:39:11
 Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-bel-2026-07-10) (Volumen $1,289,240)
 
 Ensemble: Spain 64.5% / Remis 21.1% / Belgium 14.4%
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 9.2%
 - 0:0 — 7.3%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 96.2%, draw 3.1%, team2_win 0.7%
+Whale-Signal (10 Wallets, heuristisch): team1_win 96.1%, draw 3.1%, team2_win 0.8%
