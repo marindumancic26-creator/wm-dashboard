@@ -223,3 +223,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Whale bleibt die riskanteste Quelle: Brier 0,513, RPS 0,189, LogLoss 1,263 bei n=80 und Spannweite 0,000-1,998; Schweiz-Kolumbien lieferte erneut Whale-Brier 1,771.
 - [Hypothese] Der Ensemble-Vorsprung ist ein echtes, aber kleines Diversifikationssignal; ohne CLV >1,0% und Beat-Close-Rate >50% ist der ROI +23,4% noch kein belastbarer Preis-Edge.
 - [Aktion] Gewichte nur notieren, nicht uebernehmen: 0,156/0,153/0,159/0,368/0,163 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; abwarten bis Ensemble-vs.-Markt und CLV mehrere Tage stabil positiv bleiben.
+
+## 2026-07-09
+
+- [Beobachtung] 2026-07-09 brachte 2 verarbeitete Pre-Match-Spiele, 0 Fehler und 0 neue Aufloesungen; Kalibrierung bleibt bei n=85 mit Ensemble Brier/RPS/LogLoss 0,441/0,151/0,770.
+- [Beobachtung] Ensemble schlaegt Polymarkt knapp mit Brier 0,441 vs. 0,446 und LogLoss 0,770 vs. 0,777, aber CLV bleibt nur +0,89% bei n=67 und Beat-Close-Rate 49%.
+- [Hypothese] Der Ensemble-Vorsprung ist ein kleines Diversifikationssignal, aber noch kein belastbarer Preis-Edge, weil Kalshi in RPS/LogLoss fuehrt und Whale mit Brier-Spannweite 0,000-1,998 hochvariant bleibt.
+- [Aktion] `weights_suggestion` data-driven/n=85 nur notieren: 0,156/0,153/0,159/0,368/0,163 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine automatische Uebernahme bis CLV >1,0% und Ensemble-vs.-Markt mehrere Tage stabil positiv sind.

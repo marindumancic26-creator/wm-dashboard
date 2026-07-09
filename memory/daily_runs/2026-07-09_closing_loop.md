@@ -1039,3 +1039,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.85). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 80 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.441 vs. 0.446).
+
+## Hermes-Analyse
+
+Der Lauf vom 2026-07-09 hat 2 Spiele verarbeitet, 0 Fehler gemeldet und keine neuen aufgeloesten Spiele gegenueber n=85 in der Kalibrierung hinzugefuegt. Die heutige Auswertung ist daher ein Stabilitaets-Check statt ein neuer Ergebnis-Lerntag: Ensemble bleibt bei 63/22 Treffern, Brier 0,441, RPS 0,151 und LogLoss 0,770; die Referenz-Policy steht bei 81 Wetten, 73% Trefferquote, ROI +23,4% und CLV +0,89% bei n=67.
+
+Kalibrierungsseitig ist das Bild zweigeteilt: Nach Brier fuehrt das Ensemble knapp mit 0,441 ueber n=85, nach RPS und LogLoss bleibt Kalshi mit 0,139 und 0,767 ueber n=63 die sauberste Quelle. Polymarkt liegt praktisch gleichauf mit Kalshi im Brier bei 0,446 ueber n=85, aber leicht schlechter in RPS/LogLoss. Schwaechste Quelle bleibt Whale: Brier 0,513, RPS 0,189, LogLoss 1,263 bei n=80 und Spannweite 0,000-1,998; das Auto-Flag "Whale hochvariant" bleibt deshalb entscheidend.
+
+Das Ensemble schlaegt den reinen Markt aktuell knapp, aber nicht breit genug fuer eine automatische Modellentscheidung: Brier 0,441 vs. 0,446, RPS 0,151 vs. 0,152, LogLoss 0,770 vs. 0,777. Das ist ein echtes kleines Diversifikationssignal, aber der Vorsprung ist nur 0,005 Brier und 0,007 LogLoss; gleichzeitig bleibt CLV mit +0,89% unter der vorherigen >1,0%-Schwelle und die Beat-Close-Rate liegt nur bei 49%.
+
+Auffaellige neue Treffer oder Fehlprognosen gibt es heute nicht, weil France-Morocco und Spain-Belgium noch Pre-Match-Prognosen sind. Beide haben gruene Datenqualitaet, je 41 Buchmacher und keine Value-Bets: France wird vom Ensemble mit 65,8% gegen Morocco bewertet, Spain mit 64,5% gegen Belgium. Auffaellig ist, dass Whale beide Favoriten stark hochzieht, besonders France mit 90,4% Whale gegen 61,8% Markt und 62,7% Modell; wegen der historischen Whale-Varianz sollte diese Schiefe nicht als eigenstaendiger Beleg gewertet werden.
+
+Die Gewichts-Empfehlung ist `data-driven` bei n=85 und lautet Polymarkt 0,156, Buchmacher 0,153, Kalshi 0,159, Modell 0,368, Whale 0,163 gegen aktuell 0,300/0,250/0,100/0,200/0,150. Trotz n>15 keine automatische Uebernahme: Das vorgeschlagene Modellgewicht ist hoch, waehrend das Modell rollierend mit Brier 0,480 und LogLoss 0,824 weiter hinter Marktblock und Ensemble liegt. Empfehlung: Gewichte nur notieren, Whale defensiv lassen, keine Parameter- oder Staking-Aenderung vor stabiler Ensemble-vs.-Markt-Outperformance plus CLV >1,0% ueber mehrere Tage.
