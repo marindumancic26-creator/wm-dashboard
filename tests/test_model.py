@@ -556,7 +556,8 @@ def test_daily_runner_does_not_mark_success_after_commit_failure():
     root = Path(__file__).resolve().parent.parent
     runner = (root / "run_daily.ps1").read_text(encoding="utf-8")
 
-    assert 'git" @("diff", "--cached", "--quiet")' in runner
+    assert '& git diff --cached --quiet' in runner
+    assert '$diffCode = $LASTEXITCODE' in runner
     assert 'Kein Commit noetig: keine gestagten Aenderungen.' in runner
     assert 'FEHLER: git commit fehlgeschlagen' in runner
     assert runner.index('FEHLER: git commit fehlgeschlagen') < \

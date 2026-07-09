@@ -114,7 +114,8 @@ try {
     }
 
     $hasStagedChanges = $true
-    $diffCode = Invoke-Logged "git" @("diff", "--cached", "--quiet") 180
+    & git diff --cached --quiet
+    $diffCode = $LASTEXITCODE
     if ($diffCode -eq 0) {
         $hasStagedChanges = $false
         Write-RunLog "Kein Commit noetig: keine gestagten Aenderungen."
