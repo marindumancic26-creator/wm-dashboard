@@ -576,6 +576,7 @@ def test_watchdog_errors_are_visible_to_scheduler():
     assert 'exit $pushCode' in pages_watchdog
     assert 'exit 2' in pages_watchdog
     assert 'exit 2' in health_runner
+    assert 'HINWEIS: GitHub-Stand mit Warnung' in health_runner
     assert 'exit 1' in health_runner
     assert 'exit $pagesCode' in daily_watchdog
     assert 'exit $healthCode' in daily_watchdog

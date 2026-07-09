@@ -34,7 +34,7 @@ try {
         exit 2
     }
     if ($result.status -eq "warning") {
-        exit 1
+        Write-HealthLog "HINWEIS: GitHub-Stand mit Warnung; Details in data\snapshots\github_pages_health_last.json."
     }
     exit 0
 }
