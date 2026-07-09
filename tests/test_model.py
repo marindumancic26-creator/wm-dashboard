@@ -535,6 +535,52 @@ def test_daily_watchdog_runs_github_pages_health_check():
     assert 'config.py' not in health_runner
 
 
+def test_automation_repair_registers_catchup_tasks_safely():
+    root = Path(__file__).resolve().parent.parent
+    repair = (root / "repair_automation_tasks.ps1").read_text(encoding="utf-8")
+
+    assert 'Register-ProjectTask' in repair
+    assert 'run_daily.ps1' in repair
+    assert 'run_daily_watchdog.ps1' in repair
+    assert 'MSFT_TaskRepetitionPattern' in repair
+    assert 'Interval = "PT10M"' in repair
+    assert 'Duration = "P1D"' in repair
+    assert '-StartWhenAvailable' in repair
+    assert '-AllowStartIfOnBatteries' in repair
+    assert '-DontStopIfGoingOnBatteries' in repair
+    assert '-WakeToRun' in repair
+    assert 'run_daily.bat' not in repair
+
+
+def test_daily_runner_does_not_mark_success_after_commit_failure():
+    root = Path(__file__).resolve().parent.parent
+    runner = (root / "run_daily.ps1").read_text(encoding="utf-8")
+
+    assert 'git" @("diff", "--cached", "--quiet")' in runner
+    assert 'Kein Commit noetig: keine gestagten Aenderungen.' in runner
+    assert 'FEHLER: git commit fehlgeschlagen' in runner
+    assert runner.index('FEHLER: git commit fehlgeschlagen') < \
+        runner.index('$pushCode = Invoke-Logged "git" @("push")')
+    assert runner.index('$pushCode = Invoke-Logged "git" @("push")') < \
+        runner.index('[IO.File]::WriteAllText($successMarker')
+
+
+def test_watchdog_errors_are_visible_to_scheduler():
+    root = Path(__file__).resolve().parent.parent
+    pages_watchdog = (root / "run_pages_watchdog.ps1").read_text(encoding="utf-8")
+    health_runner = (root / "run_github_pages_health.ps1").read_text(encoding="utf-8")
+    daily_watchdog = (root / "run_daily_watchdog.ps1").read_text(encoding="utf-8")
+
+    assert 'git" @("pull", "--rebase", "--autostash")' in pages_watchdog
+    assert 'git status --porcelain' in pages_watchdog
+    assert 'exit $pushCode' in pages_watchdog
+    assert 'exit 2' in pages_watchdog
+    assert 'exit 2' in health_runner
+    assert 'exit 1' in health_runner
+    assert 'exit $pagesCode' in daily_watchdog
+    assert 'exit $healthCode' in daily_watchdog
+
+
 def test_log_loss_and_hit():
     from src.model.calibration import log_loss, brier, argmax_outcome
     perfect = {"team1_win": 1.0, "draw": 0.0, "team2_win": 0.0}

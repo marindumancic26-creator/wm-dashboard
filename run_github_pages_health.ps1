@@ -25,16 +25,20 @@ try {
     $code = $LASTEXITCODE
     if ($code -ne 0) {
         Write-HealthLog "FEHLER: GitHub-Pages-Health-Check fehlgeschlagen (Exit $code)."
-        exit 0
+        exit $code
     }
     $result = $json | ConvertFrom-Json
     Write-HealthLog ("GitHub-Pages-Health {0}: {1}" -f $result.status, $result.note)
     if ($result.status -eq "error") {
         Write-HealthLog "WARNUNG: GitHub-Stand ist nicht konsistent; Details in data\snapshots\github_pages_health_last.json."
+        exit 2
+    }
+    if ($result.status -eq "warning") {
+        exit 1
     }
     exit 0
 }
 catch {
     Write-HealthLog "FEHLER im GitHub-Pages-Health-Runner: $($_.Exception.Message)"
-    exit 0
+    exit 1
 }

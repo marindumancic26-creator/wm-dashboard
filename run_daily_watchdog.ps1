@@ -38,6 +38,12 @@ try {
         if ($healthCode -ne 0) {
             Write-WatchdogLog "GitHub-Pages-Health-Check meldete Exit $healthCode; Daily-Recovery bleibt unberuehrt."
         }
+        if ($pagesCode -ne 0) {
+            exit $pagesCode
+        }
+        if ($healthCode -ne 0) {
+            exit $healthCode
+        }
         exit 0
     }
 
@@ -76,6 +82,12 @@ try {
     $healthCode = $LASTEXITCODE
     if ($healthCode -ne 0) {
         Write-WatchdogLog "GitHub-Pages-Health-Check nach Recovery meldete Exit $healthCode."
+    }
+    if ($pagesCode -ne 0) {
+        exit $pagesCode
+    }
+    if ($healthCode -ne 0) {
+        exit $healthCode
     }
     exit 0
 }

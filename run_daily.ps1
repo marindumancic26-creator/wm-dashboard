@@ -113,10 +113,24 @@ try {
         exit $addCode
     }
 
-    $commitMessage = "Daily run {0}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    $commitCode = Invoke-Logged "git" @("commit", "-m", $commitMessage) 180
-    if ($commitCode -ne 0) {
-        Write-RunLog "Kein Commit noetig oder Commit fehlgeschlagen (Exit $commitCode)."
+    $hasStagedChanges = $true
+    $diffCode = Invoke-Logged "git" @("diff", "--cached", "--quiet") 180
+    if ($diffCode -eq 0) {
+        $hasStagedChanges = $false
+        Write-RunLog "Kein Commit noetig: keine gestagten Aenderungen."
+    }
+    elseif ($diffCode -ne 1) {
+        Write-RunLog "FEHLER: git diff --cached --quiet fehlgeschlagen (Exit $diffCode)."
+        exit $diffCode
+    }
+
+    if ($hasStagedChanges) {
+        $commitMessage = "Daily run {0}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        $commitCode = Invoke-Logged "git" @("commit", "-m", $commitMessage) 180
+        if ($commitCode -ne 0) {
+            Write-RunLog "FEHLER: git commit fehlgeschlagen (Exit $commitCode); kein Push und keine Erfolgsmarke."
+            exit $commitCode
+        }
     }
 
     $pushCode = Invoke-Logged "git" @("push") 300

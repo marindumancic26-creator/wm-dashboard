@@ -84,7 +84,7 @@ try {
     $checkCode = $LASTEXITCODE
     if ($checkCode -ne 0) {
         Write-PagesLog "FEHLER: Pages-Check fehlgeschlagen (Exit $checkCode)."
-        exit 0
+        exit $checkCode
     }
     $check = $checkJson | ConvertFrom-Json
     Write-PagesLog ("Pages-Status {0}: lokal={1}, remote={2}, note={3}" -f
@@ -115,10 +115,16 @@ try {
         exit 0
     }
 
-    $stagedDiff = & git diff --cached --name-only
-    if (-not [string]::IsNullOrWhiteSpace($stagedDiff)) {
-        Write-PagesLog "Kein Retry: Es gibt bereits staged Changes; Watchdog fasst den Index nicht an."
-        exit 0
+    $pullCode = Invoke-Logged "git" @("pull", "--rebase", "--autostash") 180
+    if ($pullCode -ne 0) {
+        Write-PagesLog "FEHLER: git pull vor Pages-Retry fehlgeschlagen (Exit $pullCode)."
+        exit $pullCode
+    }
+
+    $worktreeStatus = & git status --porcelain
+    if (-not [string]::IsNullOrWhiteSpace($worktreeStatus)) {
+        Write-PagesLog "FEHLER: Worktree ist nicht sauber; Pages-Retry wird nicht ueber lokale Aenderungen gelegt."
+        exit 2
     }
 
     $attempt = $retryCount + 1
@@ -135,17 +141,17 @@ try {
     $addCode = Invoke-Logged "git" @("add", "docs\.pages-retry") 180
     if ($addCode -ne 0) {
         Write-PagesLog "FEHLER: Retry-Datei konnte nicht gestaged werden (Exit $addCode)."
-        exit 0
+        exit $addCode
     }
     $commitCode = Invoke-Logged "git" @("commit", "-m", $msg) 180
     if ($commitCode -ne 0) {
         Write-PagesLog "FEHLER: Retry-Commit fehlgeschlagen (Exit $commitCode)."
-        exit 0
+        exit $commitCode
     }
     $pushCode = Invoke-Logged "git" @("push") 300
     if ($pushCode -ne 0) {
         Write-PagesLog "FEHLER: Retry-Push fehlgeschlagen (Exit $pushCode)."
-        exit 0
+        exit $pushCode
     }
     [IO.File]::WriteAllText($stateFile, [string]$attempt, [Text.UTF8Encoding]::new($false))
     Write-PagesLog "Retry-Push ausgeloest: $msg"
@@ -153,7 +159,7 @@ try {
 }
 catch {
     Write-PagesLog "FEHLER im Pages-Watchdog: $($_.Exception.Message)"
-    exit 0
+    exit 1
 }
 finally {
     if ($hasLock) {
