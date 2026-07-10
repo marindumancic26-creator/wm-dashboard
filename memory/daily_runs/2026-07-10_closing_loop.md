@@ -1050,3 +1050,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.85). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 81 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.438 vs. 0.443).
+
+## Hermes-Analyse
+
+Der Tageslauf steht auf 2026-07-10 13:27 mit 3/3 Matches erfolgreich, 0 Fehlern und 0 aktuellen Value-Bets bei 0.0% Gesamtstake. Die Datenlage ist operativ gruen genug: Elo live mit 244 Teams, Buecher live mit 3 Events und 412 Requests Rest, Kalshi live mit 100 Events; der einzige Warnpunkt ist stale FBref-Form aelter als 20h, waehrend StatsBomb weiterhin nur historisch 2018/2022 ist.
+
+Rollierend ist das Ensemble nach Brier und LogLoss knapp beste Quelle: Brier 0.438 und LogLoss 0.766 bei n=86, gegen Polymarkt 0.443/0.773 bei n=86 und Buchmacher 0.452/0.783 bei n=83. Kalshi bleibt aber beim RPS klar staerkste Marktquelle mit 0.139 und sehr gutem LogLoss 0.767, allerdings nur n=63; deshalb ist der Ensemble-Vorsprung real, aber klein. Schlechteste Quelle bleibt Whale nach RPS/LogLoss mit 0.187/1.248 bei n=81 und Spannweite 0.000-1.998; das Modell ist beim Brier mit 0.477 weiter schlechter als der Marktblock.
+
+Die neue Aufloesung Frankreich-Marokko 2:0 war ein sauberer Ensemble-Treffer: Ensemble-Brier 0.179, besser als Polymarkt 0.225 und Buchmacher 0.230; Whale war mit 0.015 extrem stark, aber genau diese Punkt-Treffer duerfen wegen der hohen historischen Varianz nicht zu hoeherem Vertrauen fuehren. Die Headline-Bilanz steigt auf 64 richtig und 22 falsch, also 74% Trefferquote ueber n=86.
+
+Die Referenz-Policy bleibt attraktiv, aber nicht freigegeben als aggressives Signal: 82 Wetten, 73% Trefferquote, ROI +23.9%, durchschnittlicher CLV +0.87% und Modell-beat-close 50% bei n=68. Der ROI ist stark, aber CLV liegt weiter unter der bisherigen +1.0%-Schwelle und die Beat-Close-Rate ist nur neutral; Value-Gates reagieren korrekt konservativ mit 0 aktuellen Bets.
+
+Die Gewichts-Empfehlung ist data-driven bei n=86 und lautet Polymarkt 0.156, Buchmacher 0.153, Kalshi 0.158, Modell 0.368, Whale 0.166. Nicht automatisch uebernehmen: Modellgewicht hoch ist durch LogLoss-Shrinkage plausibel, aber Modell-Brier 0.477 bleibt schlechter als Ensemble/Markt, und Whale darf trotz vorgeschlagenem 0.166 wegen Hochvarianz nicht erhoeht werden. Parameter-Tuning bleibt diagnostic bei n=85: ELO_PER_GOAL 180 statt 240 haette +0.0063 Walk-forward-RPS-Marge, aber ebenfalls keine Auto-Uebernahme.
