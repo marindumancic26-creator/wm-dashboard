@@ -478,6 +478,8 @@ def test_github_pages_health_classifies_clean_state():
         pages_result=pages,
         workflow_runs=runs,
         settings={"build_type": "workflow"},
+        daily_marker={"status": "success", "timestamp": "2026-07-05T10:00:00Z",
+                      "docs_generated_at": "2026-07-05T10:00:00Z"},
     )
 
     assert result["status"] == "ok"
@@ -500,6 +502,8 @@ def test_github_pages_health_flags_stale_failed_and_legacy():
         pages_result=pages,
         workflow_runs=runs,
         settings={"build_type": "workflow"},
+        daily_marker={"status": "success", "timestamp": "2026-07-05T10:00:00Z",
+                      "docs_generated_at": "2026-07-05T10:00:00Z"},
     )
 
     assert result["status"] == "error"
@@ -516,11 +520,35 @@ def test_github_pages_health_tokenless_settings_are_warning_only():
              "remote_generated_at": "2026-07-05T10:00:00Z", "note": "ok"}
     runs = [_workflow_run("pages"), _workflow_run("tests")]
 
-    result = github_pages_health.classify_health(pages, runs, settings=None)
+    result = github_pages_health.classify_health(
+        pages, runs, settings=None,
+        daily_marker={"status": "success", "timestamp": "2026-07-05T10:00:00Z",
+                      "docs_generated_at": "2026-07-05T10:00:00Z"},
+    )
 
     assert result["status"] == "warning"
     assert result["checks"]["pages_settings"]["status"] == "warning"
     assert "ohne GitHub-Token" in result["checks"]["pages_settings"]["note"]
+
+
+def test_github_pages_health_flags_success_marker_newer_than_docs():
+    from src.pipeline import github_pages_health
+
+    pages = {"status": "fresh", "local_generated_at": "2026-07-11T00:05:11",
+             "remote_generated_at": "2026-07-11T00:05:11", "note": "ok"}
+    runs = [_workflow_run("pages"), _workflow_run("tests")]
+
+    result = github_pages_health.classify_health(
+        pages_result=pages,
+        workflow_runs=runs,
+        settings={"build_type": "workflow"},
+        daily_marker={"timestamp": "2026-07-12T16:00:09+02:00"},
+    )
+
+    assert result["status"] == "error"
+    freshness = result["checks"]["daily_export_freshness"]
+    assert freshness["status"] == "error"
+    assert "neuer als docs/index.html" in freshness["note"]
 
 
 def test_daily_watchdog_runs_github_pages_health_check():
@@ -530,6 +558,9 @@ def test_daily_watchdog_runs_github_pages_health_check():
 
     assert 'run_github_pages_health.ps1' in daily_watchdog
     assert 'GitHub-Pages-Health-Check' in daily_watchdog
+    assert '$githubPagesHealthReport' in daily_watchdog
+    assert 'daily_export_freshness.status -eq "error"' in daily_watchdog
+    assert 'Move-Item -LiteralPath $marker' in daily_watchdog
     assert 'python -m src.pipeline.github_pages_health' in health_runner
     assert 'github_pages_health_last.json' in health_runner
     assert 'config.py' not in health_runner
@@ -556,14 +587,31 @@ def test_daily_runner_does_not_mark_success_after_commit_failure():
     root = Path(__file__).resolve().parent.parent
     runner = (root / "run_daily.ps1").read_text(encoding="utf-8")
 
+    assert '$env:PYTHONUTF8 = "1"' in runner
+    assert '$env:PYTHONIOENCODING = "utf-8"' in runner
+    assert 'ohne ExitCode beendet; wird als Fehler behandelt' in runner
     assert '& git diff --cached --quiet' in runner
     assert '$diffCode = $LASTEXITCODE' in runner
+    assert 'docs_generated_at = Get-DocsGeneratedAt' in runner
+    assert 'ConvertTo-Json -Compress' in runner
     assert 'Kein Commit noetig: keine gestagten Aenderungen.' in runner
     assert 'FEHLER: git commit fehlgeschlagen' in runner
     assert runner.index('FEHLER: git commit fehlgeschlagen') < \
         runner.index('$pushCode = Invoke-Logged "git" @("push")')
     assert runner.index('$pushCode = Invoke-Logged "git" @("push")') < \
-        runner.index('[IO.File]::WriteAllText($successMarker')
+        runner.index('[IO.File]::WriteAllText(')
+
+
+def test_daily_matchday_degraded_path_is_not_success_contract():
+    root = Path(__file__).resolve().parent.parent
+    daily = (root / "src" / "pipeline" / "daily_matchday_run.py").read_text(encoding="utf-8")
+
+    degraded_guard = daily.index("if not match_results:")
+    assert 'log["degraded"] = True' in daily[degraded_guard:]
+    assert "WARNUNG: Degradierter Lauf (0 Spiele) - Dashboard NICHT ueberschrieben." in daily
+    assert "snap_file.write_text(json.dumps(payload" in daily[degraded_guard:daily.index("return payload", degraded_guard)]
+    assert "raise SystemExit(2)" in daily
+    assert "⚠" not in daily[degraded_guard:daily.index("return payload", degraded_guard)]
 
 
 def test_watchdog_errors_are_visible_to_scheduler():

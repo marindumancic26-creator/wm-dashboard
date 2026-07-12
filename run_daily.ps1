@@ -45,7 +45,8 @@ function Invoke-Logged {
         Append-CommandOutput $stdout
         Append-CommandOutput $stderr
         if ($null -eq $process.ExitCode) {
-            return 0
+            Write-RunLog "FEHLER: $Command ohne ExitCode beendet; wird als Fehler behandelt."
+            return 125
         }
         return $process.ExitCode
     }
@@ -80,6 +81,19 @@ function Stop-ProcessTree {
     Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+function Get-DocsGeneratedAt {
+    $index = Join-Path $repo "docs\index.html"
+    if (-not (Test-Path -LiteralPath $index)) {
+        return $null
+    }
+    $content = Get-Content -LiteralPath $index -Raw -Encoding utf8
+    $match = [Regex]::Match($content, '"generated_at"\s*:\s*"([^"]+)"')
+    if (-not $match.Success) {
+        return $null
+    }
+    return $match.Groups[1].Value
+}
+
 try {
     try {
         $hasLock = $mutex.WaitOne(0)
@@ -95,6 +109,8 @@ try {
 
     Set-Location -LiteralPath $repo
     Write-RunLog "Automatischer Daily-Lauf gestartet."
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONIOENCODING = "utf-8"
 
     $pullCode = Invoke-Logged "git" @("pull", "--rebase", "--autostash") 180
     if ($pullCode -ne 0) {
@@ -141,8 +157,20 @@ try {
     }
 
     Write-RunLog "Automatischer Daily-Lauf erfolgreich beendet."
-    [IO.File]::WriteAllText($successMarker, (Get-Date).ToString("o"),
-                            [Text.UTF8Encoding]::new($false))
+    $headAfter = (& git rev-parse HEAD).Trim()
+    $marker = [ordered]@{
+        status = "success"
+        timestamp = (Get-Date).ToString("o")
+        pipeline_exit = $pipelineCode
+        degraded = $false
+        docs_generated_at = Get-DocsGeneratedAt
+        pushed_sha = $headAfter
+    }
+    [IO.File]::WriteAllText(
+        $successMarker,
+        ($marker | ConvertTo-Json -Compress),
+        [Text.UTF8Encoding]::new($false)
+    )
     exit 0
 }
 catch {

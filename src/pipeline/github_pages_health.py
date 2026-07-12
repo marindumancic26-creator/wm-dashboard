@@ -155,13 +155,66 @@ def _pages_settings_check(settings: dict[str, Any] | None,
     }
 
 
+def _read_success_marker(snapshots_dir: Path | None = None) -> dict[str, Any] | None:
+    root = snapshots_dir or config.DATA_SNAPSHOTS
+    markers = sorted(root.glob("daily_success_*.ok"))
+    if not markers:
+        return None
+    latest = markers[-1]
+    raw = latest.read_text(encoding="utf-8", errors="replace").strip()
+    parsed: dict[str, Any]
+    try:
+        payload = json.loads(raw)
+        parsed = payload if isinstance(payload, dict) else {"timestamp": raw}
+    except json.JSONDecodeError:
+        parsed = {"timestamp": raw}
+    parsed["marker_path"] = str(latest)
+    return parsed
+
+
+def _daily_export_freshness_check(pages_result: dict[str, Any],
+                                  marker: dict[str, Any] | None = None) -> dict[str, Any]:
+    marker = marker if marker is not None else _read_success_marker()
+    if not marker:
+        return {"status": "warning", "note": "Kein Daily-Erfolgsmarker gefunden."}
+
+    marker_time = _parse_time(marker.get("timestamp"))
+    docs_generated_at = pages_result.get("local_generated_at")
+    docs_time = _parse_time(docs_generated_at)
+    if marker.get("status") == "success" and marker.get("docs_generated_at"):
+        marker_docs_time = _parse_time(marker.get("docs_generated_at"))
+        if marker_docs_time and docs_time and marker_docs_time <= docs_time:
+            return {
+                "status": "ok",
+                "marker_timestamp": marker.get("timestamp"),
+                "docs_generated_at": docs_generated_at,
+                "note": "Daily-Erfolgsmarker und lokaler Static-Export sind konsistent.",
+            }
+
+    if marker_time and docs_time and docs_time < marker_time:
+        return {
+            "status": "error",
+            "marker_timestamp": marker.get("timestamp"),
+            "docs_generated_at": docs_generated_at,
+            "note": "Daily-Erfolgsmarker ist neuer als docs/index.html; Auto-Erfolg war nicht publizierbar.",
+        }
+    return {
+        "status": "ok",
+        "marker_timestamp": marker.get("timestamp"),
+        "docs_generated_at": docs_generated_at,
+        "note": "Daily-Erfolgsmarker und lokaler Static-Export sind plausibel.",
+    }
+
+
 def classify_health(pages_result: dict[str, Any],
                     workflow_runs: list[dict[str, Any]],
                     settings: dict[str, Any] | None = None,
                     settings_error: str | None = None,
-                    cutoff: str = LEGACY_WORKFLOW_CUTOFF) -> dict[str, Any]:
+                    cutoff: str = LEGACY_WORKFLOW_CUTOFF,
+                    daily_marker: dict[str, Any] | None = None) -> dict[str, Any]:
     checks = {
         "pages_public": _pages_public_check(pages_result),
+        "daily_export_freshness": _daily_export_freshness_check(pages_result, daily_marker),
         "workflow_pages": _workflow_check(workflow_runs, EXPECTED_PAGES_WORKFLOW),
         "workflow_tests": _workflow_check(workflow_runs, EXPECTED_TESTS_WORKFLOW),
         "legacy_branch_deploy": _legacy_workflow_check(workflow_runs, cutoff),

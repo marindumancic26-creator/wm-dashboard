@@ -7,6 +7,7 @@ $log = Join-Path $repo "data\snapshots\automation_watchdog.log"
 $runner = Join-Path $repo "run_daily.ps1"
 $pagesWatchdog = Join-Path $repo "run_pages_watchdog.ps1"
 $githubPagesHealth = Join-Path $repo "run_github_pages_health.ps1"
+$githubPagesHealthReport = Join-Path $repo "data\snapshots\github_pages_health_last.json"
 $powershell = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $dailyMutex = [Threading.Mutex]::new($false, "Local\WM-Dashboard-Daily")
 $hasDailyLock = $false
@@ -27,6 +28,7 @@ function Write-WatchdogLog {
 
 try {
     if (Test-Path -LiteralPath $marker) {
+        $invalidMarker = $false
         Write-WatchdogLog "Daily-Lauf fuer $today bereits erfolgreich; Pages-Status wird geprueft."
         & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
         $pagesCode = $LASTEXITCODE
@@ -36,15 +38,34 @@ try {
         & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $githubPagesHealth
         $healthCode = $LASTEXITCODE
         if ($healthCode -ne 0) {
-            Write-WatchdogLog "GitHub-Pages-Health-Check meldete Exit $healthCode; Daily-Recovery bleibt unberuehrt."
+            Write-WatchdogLog "GitHub-Pages-Health-Check meldete Exit $healthCode; Erfolgsmarke wird geprueft."
+            if (Test-Path -LiteralPath $githubPagesHealthReport) {
+                try {
+                    $healthReport = Get-Content -LiteralPath $githubPagesHealthReport -Raw -Encoding utf8 | ConvertFrom-Json
+                    if ($healthReport.checks.daily_export_freshness.status -eq "error") {
+                        $badMarker = "$marker.invalid"
+                        Move-Item -LiteralPath $marker -Destination $badMarker -Force
+                        Write-WatchdogLog "Inkonsistente Erfolgsmarke nach $badMarker verschoben; Recovery-Lauf wird gestartet."
+                        $invalidMarker = $true
+                    }
+                }
+                catch {
+                    Write-WatchdogLog "Health-Report konnte nicht ausgewertet werden: $($_.Exception.Message)"
+                }
+            }
         }
-        if ($pagesCode -ne 0) {
-            exit $pagesCode
+        if ($invalidMarker) {
+            Write-WatchdogLog "Daily-Erfolgsmarke fuer $today war ungueltig; Watchdog faehrt mit Recovery fort."
         }
-        if ($healthCode -ne 0) {
-            exit $healthCode
+        else {
+            if ($pagesCode -ne 0) {
+                exit $pagesCode
+            }
+            if ($healthCode -ne 0) {
+                exit $healthCode
+            }
+            exit 0
         }
-        exit 0
     }
 
     try {
