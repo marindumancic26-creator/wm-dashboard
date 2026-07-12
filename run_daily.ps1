@@ -27,8 +27,6 @@ function Invoke-Logged {
         [int]$TimeoutSeconds = 600
     )
 
-    $stdout = [Text.StringBuilder]::new()
-    $stderr = [Text.StringBuilder]::new()
     $process = [Diagnostics.Process]::new()
     try {
         $argumentLine = ($Arguments | ForEach-Object { ConvertTo-CommandArgument $_ }) -join " "
@@ -38,29 +36,17 @@ function Invoke-Logged {
         $process.StartInfo.RedirectStandardOutput = $true
         $process.StartInfo.RedirectStandardError = $true
         $process.StartInfo.CreateNoWindow = $true
-        [void]$process.add_OutputDataReceived({
-            if ($null -ne $_.Data) {
-                [void]$stdout.AppendLine($_.Data)
-            }
-        })
-        [void]$process.add_ErrorDataReceived({
-            if ($null -ne $_.Data) {
-                [void]$stderr.AppendLine($_.Data)
-            }
-        })
         [void]$process.Start()
-        $process.BeginOutputReadLine()
-        $process.BeginErrorReadLine()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-            Append-CommandOutputText $stdout.ToString()
-            Append-CommandOutputText $stderr.ToString()
             Write-RunLog "FEHLER: $Command Zeitlimit nach $TimeoutSeconds Sekunden; Prozessbaum wird beendet."
             Stop-ProcessTree $process.Id
             return 124
         }
         $process.WaitForExit()
-        Append-CommandOutputText $stdout.ToString()
-        Append-CommandOutputText $stderr.ToString()
+        Append-CommandOutputText $stdoutTask.Result
+        Append-CommandOutputText $stderrTask.Result
         if ($null -eq $process.ExitCode) {
             Write-RunLog "FEHLER: $Command ohne ExitCode beendet; wird als Fehler behandelt."
             return 125
