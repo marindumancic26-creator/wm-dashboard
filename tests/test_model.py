@@ -589,6 +589,8 @@ def test_daily_runner_does_not_mark_success_after_commit_failure():
 
     assert '$env:PYTHONUTF8 = "1"' in runner
     assert '$env:PYTHONIOENCODING = "utf-8"' in runner
+    assert '[Diagnostics.Process]::new()' in runner
+    assert '$process.StartInfo.ArgumentList.Add($arg)' in runner
     assert 'ohne ExitCode beendet; wird als Fehler behandelt' in runner
     assert '& git diff --cached --quiet' in runner
     assert '$diffCode = $LASTEXITCODE' in runner

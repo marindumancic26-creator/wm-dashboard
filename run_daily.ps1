@@ -27,23 +27,41 @@ function Invoke-Logged {
         [int]$TimeoutSeconds = 600
     )
 
-    $stdout = [IO.Path]::GetTempFileName()
-    $stderr = [IO.Path]::GetTempFileName()
+    $stdout = [Text.StringBuilder]::new()
+    $stderr = [Text.StringBuilder]::new()
+    $process = [Diagnostics.Process]::new()
     try {
-        $argumentLine = ($Arguments | ForEach-Object { ConvertTo-CommandArgument $_ }) -join " "
-        $process = Start-Process -FilePath $Command -ArgumentList $argumentLine `
-            -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        $process.StartInfo.FileName = $Command
+        foreach ($arg in $Arguments) {
+            [void]$process.StartInfo.ArgumentList.Add($arg)
+        }
+        $process.StartInfo.UseShellExecute = $false
+        $process.StartInfo.RedirectStandardOutput = $true
+        $process.StartInfo.RedirectStandardError = $true
+        $process.StartInfo.CreateNoWindow = $true
+        [void]$process.add_OutputDataReceived({
+            if ($null -ne $_.Data) {
+                [void]$stdout.AppendLine($_.Data)
+            }
+        })
+        [void]$process.add_ErrorDataReceived({
+            if ($null -ne $_.Data) {
+                [void]$stderr.AppendLine($_.Data)
+            }
+        })
+        [void]$process.Start()
+        $process.BeginOutputReadLine()
+        $process.BeginErrorReadLine()
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-            Append-CommandOutput $stdout
-            Append-CommandOutput $stderr
+            Append-CommandOutputText $stdout.ToString()
+            Append-CommandOutputText $stderr.ToString()
             Write-RunLog "FEHLER: $Command Zeitlimit nach $TimeoutSeconds Sekunden; Prozessbaum wird beendet."
             Stop-ProcessTree $process.Id
             return 124
         }
         $process.WaitForExit()
-        $process.Refresh()
-        Append-CommandOutput $stdout
-        Append-CommandOutput $stderr
+        Append-CommandOutputText $stdout.ToString()
+        Append-CommandOutputText $stderr.ToString()
         if ($null -eq $process.ExitCode) {
             Write-RunLog "FEHLER: $Command ohne ExitCode beendet; wird als Fehler behandelt."
             return 125
@@ -51,7 +69,7 @@ function Invoke-Logged {
         return $process.ExitCode
     }
     finally {
-        Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
+        $process.Dispose()
     }
 }
 
@@ -68,6 +86,13 @@ function Append-CommandOutput {
     if ((Test-Path -LiteralPath $Path) -and (Get-Item -LiteralPath $Path).Length -gt 0) {
         Get-Content -LiteralPath $Path -Raw -Encoding utf8 |
             Out-File -LiteralPath $log -Append -Encoding utf8
+    }
+}
+
+function Append-CommandOutputText {
+    param([string]$Text)
+    if (-not [string]::IsNullOrWhiteSpace($Text)) {
+        $Text | Out-File -LiteralPath $log -Append -Encoding utf8
     }
 }
 
