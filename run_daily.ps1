@@ -31,10 +31,9 @@ function Invoke-Logged {
     $stderr = [Text.StringBuilder]::new()
     $process = [Diagnostics.Process]::new()
     try {
+        $argumentLine = ($Arguments | ForEach-Object { ConvertTo-CommandArgument $_ }) -join " "
         $process.StartInfo.FileName = $Command
-        foreach ($arg in $Arguments) {
-            [void]$process.StartInfo.ArgumentList.Add($arg)
-        }
+        $process.StartInfo.Arguments = $argumentLine
         $process.StartInfo.UseShellExecute = $false
         $process.StartInfo.RedirectStandardOutput = $true
         $process.StartInfo.RedirectStandardError = $true
