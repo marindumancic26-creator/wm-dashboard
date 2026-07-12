@@ -307,18 +307,13 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     # pro Lauf eine Datei (nicht pro Tag) — mehrere Laeufe/Tag duerfen sich nicht
     # ueberschreiben, sonst verlieren wir Pre-Kickoff-Staende fuer die Kalibrierung
     snap_file = config.DATA_SNAPSHOTS / f"{started:%Y-%m-%d_%H%M%S}.json"
-    # GUARD gegen degradierte Laeufe: Wenn 0 Spiele geladen wurden (Netzwerk-/Quellen-
-    # Ausfall), das gute Dashboard NICHT ueberschreiben — sonst nukt ein Internet-Blip die
-    # Live-Ansicht und der Auto-Push verbreitet die leere Version. Snapshot bleibt zur Doku.
+    # Degradierte Laeufe werden bewusst publiziert: Das Dashboard soll immer
+    # einen aktuellen Laufzustand zeigen, auch wenn die Match-Discovery 0 Spiele liefert.
     if not match_results:
         log["degraded"] = True
-        log["warnings"].append("DEGRADIERTER LAUF: 0 Spiele geladen - dashboard_data.json/"
-                               "docs NICHT ueberschrieben (letzter guter Stand bleibt).")
-        snap_file.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-        print("  WARNUNG: Degradierter Lauf (0 Spiele) - Dashboard NICHT ueberschrieben. "
-              "Snapshot: " + snap_file.name)
-        return payload
-
+        log["warnings"].append("DEGRADIERTER LAUF: 0 Spiele geladen - Dashboard wird "
+                               "trotzdem aktualisiert, damit der Fehler sichtbar ist.")
+        print("  WARNUNG: Degradierter Lauf (0 Spiele) - Dashboard wird trotzdem aktualisiert.")
 
     # Parameter-Tuning laeuft nur als Analyse/Vorschlag. Es liest die gerade
     # persistierten Pre-Kickoff-Snapshots und darf config.py nie veraendern.
@@ -403,6 +398,4 @@ def _write_markdown(payload: dict, today) -> None:
 if __name__ == "__main__":
     skip = "--skip-whales" in sys.argv
     dates = [a for a in sys.argv[1:] if not a.startswith("--")] or None
-    result = run(dates=dates, skip_whales=skip)
-    if result.get("run_log", {}).get("degraded"):
-        raise SystemExit(2)
+    run(dates=dates, skip_whales=skip)

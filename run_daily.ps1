@@ -104,6 +104,21 @@ function Get-DocsGeneratedAt {
     return $match.Groups[1].Value
 }
 
+function Get-DashboardDegraded {
+    $dashboard = Join-Path $repo "data\processed\dashboard_data.json"
+    if (-not (Test-Path -LiteralPath $dashboard)) {
+        return $false
+    }
+    try {
+        $payload = Get-Content -LiteralPath $dashboard -Raw -Encoding utf8 | ConvertFrom-Json
+        return [bool]$payload.run_log.degraded
+    }
+    catch {
+        Write-RunLog "WARNUNG: dashboard_data.json konnte fuer Degraded-Marker nicht gelesen werden: $($_.Exception.Message)"
+        return $false
+    }
+}
+
 try {
     try {
         $hasLock = $mutex.WaitOne(0)
@@ -168,11 +183,15 @@ try {
 
     Write-RunLog "Automatischer Daily-Lauf erfolgreich beendet."
     $headAfter = (& git rev-parse HEAD).Trim()
+    $degraded = Get-DashboardDegraded
+    if ($degraded) {
+        Write-RunLog "WARNUNG: Daily-Lauf wurde als degradierter Stand publiziert."
+    }
     $marker = [ordered]@{
         status = "success"
         timestamp = (Get-Date).ToString("o")
         pipeline_exit = $pipelineCode
-        degraded = $false
+        degraded = $degraded
         docs_generated_at = Get-DocsGeneratedAt
         pushed_sha = $headAfter
     }

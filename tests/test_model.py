@@ -594,7 +594,10 @@ def test_daily_runner_does_not_mark_success_after_commit_failure():
     assert 'ohne ExitCode beendet; wird als Fehler behandelt' in runner
     assert '& git diff --cached --quiet' in runner
     assert '$diffCode = $LASTEXITCODE' in runner
+    assert 'Get-DashboardDegraded' in runner
+    assert 'Daily-Lauf wurde als degradierter Stand publiziert' in runner
     assert 'docs_generated_at = Get-DocsGeneratedAt' in runner
+    assert 'degraded = $degraded' in runner
     assert 'ConvertTo-Json -Compress' in runner
     assert 'Kein Commit noetig: keine gestagten Aenderungen.' in runner
     assert 'FEHLER: git commit fehlgeschlagen' in runner
@@ -604,16 +607,16 @@ def test_daily_runner_does_not_mark_success_after_commit_failure():
         runner.index('[IO.File]::WriteAllText(')
 
 
-def test_daily_matchday_degraded_path_is_not_success_contract():
+def test_daily_matchday_degraded_path_is_publishable_contract():
     root = Path(__file__).resolve().parent.parent
     daily = (root / "src" / "pipeline" / "daily_matchday_run.py").read_text(encoding="utf-8")
 
     degraded_guard = daily.index("if not match_results:")
     assert 'log["degraded"] = True' in daily[degraded_guard:]
-    assert "WARNUNG: Degradierter Lauf (0 Spiele) - Dashboard NICHT ueberschrieben." in daily
-    assert "snap_file.write_text(json.dumps(payload" in daily[degraded_guard:daily.index("return payload", degraded_guard)]
-    assert "raise SystemExit(2)" in daily
-    assert "⚠" not in daily[degraded_guard:daily.index("return payload", degraded_guard)]
+    assert "Dashboard wird trotzdem aktualisiert" in daily[degraded_guard:]
+    assert "raise SystemExit(2)" not in daily
+    assert "NICHT ueberschrieben" not in daily[degraded_guard:]
+    assert "⚠" not in daily[degraded_guard:daily.index("# Parameter-Tuning", degraded_guard)]
 
 
 def test_watchdog_errors_are_visible_to_scheduler():
