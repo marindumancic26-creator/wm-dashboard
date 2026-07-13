@@ -860,6 +860,142 @@ def test_replay_snapshot_selects_only_last_pre_kickoff():
     assert post.eligible_for_learning is False
 
 
+def _football_data_match(home_id=57, away_id=61):
+    return {"id": 999, "utcDate": "2026-08-15T14:00:00Z", "status": "TIMED",
+            "matchday": 1,
+            "season": {"startDate": "2026-08-01", "endDate": "2027-05-31"},
+            "homeTeam": {"id": home_id, "name": "Arsenal FC"},
+            "awayTeam": {"id": away_id, "name": "Chelsea FC"}}
+
+
+def test_fixture_adapter_keeps_unknown_clubs_visible_but_locked():
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
+    from src.domain import ClubRegistry
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"matches": [_football_data_match()]}
+
+    class Http:
+        def get(self, *args, **kwargs):
+            return Response()
+
+    result = FootballDataFixtureAdapter("token", Http()).fetch(
+        COMPETITIONS.get("premier_league"), dt.date(2026, 8, 15),
+        dt.date(2026, 8, 21), ClubRegistry(()))
+
+    assert result["status"] == "live"
+    assert result["n_fixtures"] == 1
+    assert result["n_identity_pending"] == 1
+    assert result["fixtures"][0]["identity_status"] == "pending"
+    assert result["fixtures"][0]["prediction_allowed"] is False
+    assert result["fixtures"][0]["value_allowed"] is False
+
+
+def test_fixture_adapter_builds_canonical_match_only_for_known_clubs():
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
+    from src.domain import Club, ClubRegistry, ProviderRef
+
+    clubs = ClubRegistry((
+        Club("arsenal", "Arsenal", ("Arsenal FC",),
+             (ProviderRef("football_data", "57"),)),
+        Club("chelsea", "Chelsea", ("Chelsea FC",),
+             (ProviderRef("football_data", "61"),)),
+    ))
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"matches": [_football_data_match()]}
+
+    class Http:
+        def get(self, *args, **kwargs):
+            return Response()
+
+    result = FootballDataFixtureAdapter("token", Http()).fetch(
+        COMPETITIONS.get("premier_league"), dt.date(2026, 8, 15),
+        dt.date(2026, 8, 21), clubs)
+    fixture = result["fixtures"][0]
+
+    assert fixture["identity_status"] == "canonical"
+    assert fixture["match_id"].startswith("fx-premier_league-")
+    assert fixture["identity_ready"] is True
+    assert fixture["prediction_allowed"] is False
+    assert fixture["model_status"] == "not_validated"
+    assert fixture["value_allowed"] is False
+
+
+def test_fixture_adapter_degrades_without_key_or_on_http_error():
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
+    from src.domain import ClubRegistry
+
+    competition = COMPETITIONS.get("premier_league")
+    unavailable = FootballDataFixtureAdapter(api_key="").fetch(
+        competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), ClubRegistry(()))
+    assert unavailable["status"] == "unavailable"
+
+    class BrokenHttp:
+        def get(self, *args, **kwargs):
+            raise TimeoutError("synthetischer Timeout")
+
+    degraded = FootballDataFixtureAdapter("token", BrokenHttp()).fetch(
+        competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), ClubRegistry(()))
+    assert degraded["status"] == "unavailable"
+    assert "synthetischer Timeout" in degraded["note"]
+
+
+def test_club_shadow_run_writes_only_shadow_output(monkeypatch, tmp_path):
+    import datetime as dt
+    from src.pipeline import club_shadow_run
+
+    class Adapter:
+        def fetch(self, competition, date_from, date_to, clubs):
+            return {"status": "live", "fixtures": [], "n_fixtures": 0,
+                    "n_identity_pending": 0, "source": "synthetic",
+                    "mode": "live", "auto_apply": True, "competition": "other"}
+
+    monkeypatch.setattr(club_shadow_run, "load_club_registry",
+                        lambda: __import__("src.domain", fromlist=["ClubRegistry"]).ClubRegistry(()))
+    output = tmp_path / "club_shadow.json"
+    result = club_shadow_run.run(today=dt.date(2026, 8, 15), output_path=output,
+                                 adapter=Adapter())
+
+    assert output.exists()
+    assert result["mode"] == "shadow"
+    assert result["auto_apply"] is False
+    assert result["competition"] == "premier_league"
+
+
+def test_club_shadow_run_refuses_productive_wm_outputs():
+    import pytest
+    from src import config
+    from src.pipeline import club_shadow_run
+
+    with pytest.raises(ValueError, match="produktive WM-Ausgabe"):
+        club_shadow_run.run(output_path=config.DATA_PROCESSED / "dashboard_data.json")
+
+
+def test_tracked_club_catalog_resolves_premier_league_provider_ids():
+    from src.club_registry import load_club_registry
+
+    clubs = load_club_registry()
+
+    assert clubs.resolve("irrelevant", "football_data", "57").club_id == "arsenal"
+    assert clubs.resolve("Manchester United FC").club_id == "manchester_united"
+    assert clubs.resolve("Manchester").prediction_allowed is False
+
+
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
     return {"slug": f"m{i}", "team1": "A", "team2": "B",
             "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",

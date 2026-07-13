@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "clubs": [
+    {"club_id": "afc_bournemouth", "canonical_name": "AFC Bournemouth", "aliases": [], "provider_ids": {"football_data": "1044"}},
+    {"club_id": "arsenal", "canonical_name": "Arsenal", "aliases": ["Arsenal FC"], "provider_ids": {"football_data": "57"}},
+    {"club_id": "aston_villa", "canonical_name": "Aston Villa", "aliases": ["Aston Villa FC"], "provider_ids": {"football_data": "58"}},
+    {"club_id": "brentford", "canonical_name": "Brentford", "aliases": ["Brentford FC"], "provider_ids": {"football_data": "402"}},
+    {"club_id": "brighton_hove_albion", "canonical_name": "Brighton & Hove Albion", "aliases": ["Brighton & Hove Albion FC"], "provider_ids": {"football_data": "397"}},
+    {"club_id": "chelsea", "canonical_name": "Chelsea", "aliases": ["Chelsea FC"], "provider_ids": {"football_data": "61"}},
+    {"club_id": "coventry_city", "canonical_name": "Coventry City", "aliases": ["Coventry City FC"], "provider_ids": {"football_data": "1076"}},
+    {"club_id": "crystal_palace", "canonical_name": "Crystal Palace", "aliases": ["Crystal Palace FC"], "provider_ids": {"football_data": "354"}},
+    {"club_id": "everton", "canonical_name": "Everton", "aliases": ["Everton FC"], "provider_ids": {"football_data": "62"}},
+    {"club_id": "fulham", "canonical_name": "Fulham", "aliases": ["Fulham FC"], "provider_ids": {"football_data": "63"}},
+    {"club_id": "hull_city", "canonical_name": "Hull City", "aliases": ["Hull City AFC"], "provider_ids": {"football_data": "322"}},
+    {"club_id": "ipswich_town", "canonical_name": "Ipswich Town", "aliases": ["Ipswich Town FC"], "provider_ids": {"football_data": "349"}},
+    {"club_id": "leeds_united", "canonical_name": "Leeds United", "aliases": ["Leeds United FC"], "provider_ids": {"football_data": "341"}},
+    {"club_id": "liverpool", "canonical_name": "Liverpool", "aliases": ["Liverpool FC"], "provider_ids": {"football_data": "64"}},
+    {"club_id": "manchester_city", "canonical_name": "Manchester City", "aliases": ["Manchester City FC"], "provider_ids": {"football_data": "65"}},
+    {"club_id": "manchester_united", "canonical_name": "Manchester United", "aliases": ["Manchester United FC"], "provider_ids": {"football_data": "66"}},
+    {"club_id": "newcastle_united", "canonical_name": "Newcastle United", "aliases": ["Newcastle United FC"], "provider_ids": {"football_data": "67"}},
+    {"club_id": "nottingham_forest", "canonical_name": "Nottingham Forest", "aliases": ["Nottingham Forest FC"], "provider_ids": {"football_data": "351"}},
+    {"club_id": "sunderland", "canonical_name": "Sunderland", "aliases": ["Sunderland AFC"], "provider_ids": {"football_data": "71"}},
+    {"club_id": "tottenham_hotspur", "canonical_name": "Tottenham Hotspur", "aliases": ["Tottenham Hotspur FC"], "provider_ids": {"football_data": "73"}}
+  ]
+}
