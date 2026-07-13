@@ -9,6 +9,7 @@ from pathlib import Path
 from src import config
 from src.club_registry import load_club_registry
 from src.competition_registry import COMPETITIONS
+from src.data_sources.espn_fixture_adapter import EspnFixtureAdapter
 from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
 
 
@@ -32,6 +33,12 @@ def _write(payload: dict, output_path: Path) -> None:
                            encoding="utf-8")
 
 
+def _default_adapter(competition):
+    if competition.fixture_sources and competition.fixture_sources[0] == "espn":
+        return EspnFixtureAdapter()
+    return FootballDataFixtureAdapter()
+
+
 def run(competition_key: str = "premier_league", days: int = 7,
         today: dt.date | None = None, output_path: Path = DEFAULT_OUTPUT,
         adapter: FootballDataFixtureAdapter | None = None) -> dict:
@@ -43,7 +50,7 @@ def run(competition_key: str = "premier_league", days: int = 7,
     _validate_output(output_path)
     start = today or dt.datetime.now(dt.timezone.utc).date()
     end = start + dt.timedelta(days=days - 1)
-    result = (adapter or FootballDataFixtureAdapter()).fetch(
+    result = (adapter or _default_adapter(competition)).fetch(
         competition, start, end, load_club_registry())
     payload = {**result,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -64,7 +71,6 @@ def run_all(days: int = 7, today: dt.date | None = None,
     _validate_output(output_path)
     start = today or dt.datetime.now(dt.timezone.utc).date()
     end = start + dt.timedelta(days=days - 1)
-    provider = adapter or FootballDataFixtureAdapter()
     clubs = load_club_registry()
     keys = competition_keys or tuple(competition.key for competition in COMPETITIONS.all())
     results = {}
@@ -73,6 +79,7 @@ def run_all(days: int = 7, today: dt.date | None = None,
             competition = COMPETITIONS.get(key)
             if competition.operation_mode != "shadow":
                 raise ValueError("Wettbewerb ist nicht im Shadowmodus")
+            provider = adapter or _default_adapter(competition)
             source_result = provider.fetch(competition, start, end, clubs)
         except Exception as exc:
             source_result = {"status": "unavailable", "fixtures": [],

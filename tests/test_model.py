@@ -792,7 +792,8 @@ def test_competition_registry_contains_required_shadow_competitions():
     assert set(competitions) == required
     assert all(c.operation_mode == "shadow" for c in competitions.values())
     assert COMPETITIONS.by_provider("football_data", "PL").key == "premier_league"
-    assert competitions["europa_league"].fixture_sources == ("pending_free_provider",)
+    assert competitions["europa_league"].fixture_sources == ("espn",)
+    assert COMPETITIONS.by_provider("espn", "uefa.europa").key == "europa_league"
 
 
 def test_club_registry_uses_exact_aliases_and_locks_unknown_clubs():
@@ -866,6 +867,24 @@ def _football_data_match(home_id=57, away_id=61):
             "season": {"startDate": "2026-08-01", "endDate": "2027-05-31"},
             "homeTeam": {"id": home_id, "name": "Arsenal FC"},
             "awayTeam": {"id": away_id, "name": "Chelsea FC"}}
+
+
+def _espn_event(home_id="1", away_id="2"):
+    return {
+        "id": "espn-999",
+        "date": "2026-09-17T19:00Z",
+        "season": {"year": 2026, "slug": "league-phase"},
+        "status": {"type": {"description": "Scheduled"}},
+        "competitions": [{
+            "id": "espn-999",
+            "competitors": [
+                {"homeAway": "home",
+                 "team": {"id": home_id, "displayName": "Synthetic FC"}},
+                {"homeAway": "away",
+                 "team": {"id": away_id, "displayName": "Example United"}},
+            ],
+        }],
+    }
 
 
 def test_fixture_adapter_keeps_unknown_clubs_visible_but_locked():
@@ -955,6 +974,66 @@ def test_fixture_adapter_degrades_without_key_or_on_http_error():
     assert "synthetischer Timeout" in degraded["note"]
 
 
+def test_espn_fixture_adapter_keeps_empty_scoreboard_live():
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.espn_fixture_adapter import EspnFixtureAdapter
+    from src.domain import ClubRegistry
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"leagues": [{"season": {"startDate": "2026-08-01T00:00Z",
+                                            "endDate": "2027-06-01T00:00Z"}}],
+                    "events": []}
+
+    class Http:
+        def get(self, *args, **kwargs):
+            return Response()
+
+    result = EspnFixtureAdapter(Http()).fetch(
+        COMPETITIONS.get("europa_league"), dt.date(2026, 9, 1),
+        dt.date(2026, 9, 7), ClubRegistry(()))
+
+    assert result["status"] == "live"
+    assert result["n_fixtures"] == 0
+    assert result["n_identity_pending"] == 0
+
+
+def test_espn_fixture_adapter_keeps_unknown_clubs_visible_but_locked():
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.espn_fixture_adapter import EspnFixtureAdapter
+    from src.domain import ClubRegistry
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"leagues": [{"season": {"startDate": "2026-08-01T00:00Z",
+                                            "endDate": "2027-06-01T00:00Z"}}],
+                    "events": [_espn_event()]}
+
+    class Http:
+        def get(self, *args, **kwargs):
+            return Response()
+
+    result = EspnFixtureAdapter(Http()).fetch(
+        COMPETITIONS.get("conference_league"), dt.date(2026, 9, 1),
+        dt.date(2026, 9, 7), ClubRegistry(()))
+    fixture = result["fixtures"][0]
+
+    assert result["status"] == "live"
+    assert result["n_identity_pending"] == 1
+    assert fixture["identity_status"] == "pending"
+    assert fixture["provider"] == "espn"
+    assert fixture["prediction_allowed"] is False
+    assert fixture["value_allowed"] is False
+
+
 def test_club_shadow_run_writes_only_shadow_output(monkeypatch, tmp_path):
     import datetime as dt
     from src.pipeline import club_shadow_run
@@ -1014,6 +1093,39 @@ def test_multi_competition_shadow_run_isolates_source_failure(monkeypatch, tmp_p
     assert result["competitions"]["premier_league"]["auto_apply"] is False
     assert result["competitions"]["la_liga"]["status"] == "unavailable"
     assert "synthetischer Liga-Ausfall" in result["competitions"]["la_liga"]["note"]
+
+
+def test_multi_competition_shadow_run_routes_espn_competitions(monkeypatch, tmp_path):
+    import datetime as dt
+    from src.pipeline import club_shadow_run
+
+    class FootballAdapter:
+        def fetch(self, competition, date_from, date_to, clubs):
+            return {"status": "live", "fixtures": [], "n_identity_pending": 0,
+                    "source": "football_data"}
+
+    class EspnAdapter:
+        def fetch(self, competition, date_from, date_to, clubs):
+            return {"status": "live", "fixtures": [{"provider": "espn"}],
+                    "n_identity_pending": 0, "source": "espn"}
+
+    def fake_default_adapter(competition):
+        if competition.fixture_sources == ("espn",):
+            return EspnAdapter()
+        return FootballAdapter()
+
+    monkeypatch.setattr(club_shadow_run, "_default_adapter", fake_default_adapter)
+    monkeypatch.setattr(club_shadow_run, "load_club_registry",
+                        lambda: __import__("src.domain", fromlist=["ClubRegistry"]).ClubRegistry(()))
+
+    result = club_shadow_run.run_all(
+        days=7, today=dt.date(2026, 9, 1), output_path=tmp_path / "all.json",
+        competition_keys=("premier_league", "europa_league"))
+
+    assert result["status"] == "live"
+    assert result["competitions"]["premier_league"]["source"] == "football_data"
+    assert result["competitions"]["europa_league"]["source"] == "espn"
+    assert result["competitions"]["europa_league"]["fixtures"][0]["provider"] == "espn"
 
 
 def test_tracked_club_catalog_resolves_premier_league_provider_ids():
