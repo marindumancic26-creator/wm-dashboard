@@ -80,6 +80,25 @@ def argmax_outcome(probs: dict) -> str:
     return max(OUTCOMES, key=lambda o: probs.get(o, 0.0))
 
 
+def _summarize_sources(rows: list[dict]) -> dict:
+    """Quellenmetriken fuer eine homogene Menge aufgeloester Prognosen."""
+    summary = {}
+    for src in SOURCES:
+        b = [r["brier"][src] for r in rows if src in r["brier"]]
+        if not b:
+            continue
+        ll = [r["log_loss"][src] for r in rows if src in r["log_loss"]]
+        rp = [r["rps"][src] for r in rows if src in r.get("rps", {})]
+        h = [r["hit"][src] for r in rows if src in r["hit"]]
+        hits = sum(h)
+        summary[src] = {"mean_brier": round(sum(b) / len(b), 4),
+                        "mean_log_loss": round(sum(ll) / len(ll), 4),
+                        "mean_rps": round(sum(rp) / len(rp), 4) if rp else None,
+                        "hit_rate": round(sum(h) / len(h), 4), "n": len(b),
+                        "hits": hits, "misses": len(h) - hits}
+    return summary
+
+
 def _reliability(events: list[dict], n_matches: int, min_n: int = RELIABILITY_MIN_N) -> dict:
     """Reliability-Daten fuer den Plot: p-Vorhersage gegen beobachtete Trefferquote.
 
@@ -277,20 +296,18 @@ def evaluate(results: dict) -> dict:
             row["clv"] = _clv(fc_open, fc, pick)
         rows.append(row)
 
-    # --- Quellen-Summary: Brier, LogLoss, RPS, Hit-Rate ---
-    summary = {}
-    for src in SOURCES:
-        b = [r["brier"][src] for r in rows if src in r["brier"]]
-        if b:
-            ll = [r["log_loss"][src] for r in rows if src in r["log_loss"]]
-            rp = [r["rps"][src] for r in rows if src in r.get("rps", {})]
-            h = [r["hit"][src] for r in rows if src in r["hit"]]
-            hits = sum(h)
-            summary[src] = {"mean_brier": round(sum(b) / len(b), 4),
-                            "mean_log_loss": round(sum(ll) / len(ll), 4),
-                            "mean_rps": round(sum(rp) / len(rp), 4) if rp else None,
-                            "hit_rate": round(sum(h) / len(h), 4), "n": len(b),
-                            "hits": hits, "misses": len(h) - hits}
+    # Bestehende Gesamtsicht bleibt kompatibel. Zusaetzlich werden Modellversionen
+    # strikt getrennt ausgewiesen, damit Parameterwechsel nicht verdeckt vermischt werden.
+    summary = _summarize_sources(rows)
+    versions = sorted({r.get("model_version") or "unknown" for r in rows})
+    summary_by_model_version = {}
+    for version in versions:
+        version_rows = [r for r in rows
+                        if (r.get("model_version") or "unknown") == version]
+        summary_by_model_version[version] = {
+            "n_resolved": len(version_rows),
+            "summary": _summarize_sources(version_rows),
+        }
 
     # --- Wett-Summary: ROI + CLV ---
     bets = [r["bet"] for r in rows if r.get("bet")]
@@ -336,7 +353,8 @@ def evaluate(results: dict) -> dict:
     }
 
     return {"status": "live", "n_resolved": len(rows), "matches": rows,
-            "summary": summary, "betting": betting, "record": record, "records": records,
+            "summary": summary, "summary_by_model_version": summary_by_model_version,
+            "betting": betting, "record": record, "records": records,
             "reliability": _reliability(reliability_events, len(rows)),
             "note": "Brier 0=perfekt/0.667=Zufall; LogLoss 0=perfekt/1.099=Zufall. "
                     "ROI/CLV: Referenz-Policy auf Ensemble-Favorit, letzter Pre-Kickoff-Snapshot. "

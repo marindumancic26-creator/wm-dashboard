@@ -27,8 +27,9 @@ from src.data_sources import results_client
 from src.data_sources import statsbomb_client as sb
 from src.data_sources import venue_client
 from src.model import (calibration, closing_loop, data_quality, ensemble, features,
-                       injuries, knockout, monte_carlo, parameter_tuning, tournament,
-                       value_betting, weight_optimizer, whale_scoring)
+                       injuries, knockout, market_arbitrage, monte_carlo,
+                       parameter_tuning, tournament, value_betting,
+                       weight_optimizer, whale_scoring)
 
 
 def _compact_parameter_tuning(result: dict) -> dict:
@@ -211,6 +212,9 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
                 "match_info": espn, "lineups": lineup, "venue": venue_ctx,
                 "ensemble": blend, "lambdas": lams, "monte_carlo": mc, "knockout": ko,
             }
+            # Reine Diagnose: heutige Preis-Payloads enthalten noch keine belastbare
+            # Tiefe/Kosten/Settlement-Identitaet und duerfen daher keinen Arb ausweisen.
+            entry["arbitrage"] = market_arbitrage.audit_legacy_sources(market, kalshi)
             # Echte Buchmacherquoten + EV/Value-Bewertung
             best_prices = odds_client.best_prices_for_match(market["team1"], market["team2"], all_odds)
             entry["value"] = value_betting.evaluate_match(entry, best_prices)

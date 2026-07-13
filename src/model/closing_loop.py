@@ -128,6 +128,19 @@ def generate_report(calib: dict, generated_at: str, weights_suggestion: dict | N
     lines += ["", "_RPS = Ranked Probability Score (ordinal, Fußball-Standard). "
                   "Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._", ""]
 
+    # Modellversionen getrennt zeigen, damit Parameterwechsel nicht unbemerkt
+    # in einer scheinbar homogenen Langzeitmetrik landen.
+    by_version = calib.get("summary_by_model_version", {})
+    if by_version:
+        lines += ["## Kalibrierung nach Modellversion", "",
+                  "| Modellversion | aufgelöste Spiele | Quellen |",
+                  "|---|---:|---:|"]
+        for version, block in sorted(by_version.items()):
+            lines.append(f"| `{version}` | {block.get('n_resolved', 0)} "
+                         f"| {len(block.get('summary', {}))} |")
+        lines += ["", "_Scores verschiedener Modellversionen sind nicht 1:1 vergleichbar; "
+                      "Detailmetriken stehen im Snapshot._", ""]
+
     # --- Wett-Kennzahlen: ROI + CLV -------------------------------------
     bet = calib.get("betting", {})
     if bet.get("n_bets"):

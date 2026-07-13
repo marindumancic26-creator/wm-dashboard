@@ -688,6 +688,100 @@ def test_model_version_rotates_with_elo_per_goal(monkeypatch):
     assert config._model_version() != base
 
 
+def test_calibration_separates_model_versions(monkeypatch):
+    from src.model import calibration
+
+    base = {"team1": "A", "team2": "B", "date": "2026-07-01",
+            "mc": {}, "odds_1x2": None}
+    forecasts = {
+        "old": [{**base, "snapshot_date": "old", "generated_at": "2026-07-01T10:00:00+00:00",
+                 "model_version": "m-old", "sources": {"model": {
+                     "team1_win": 0.7, "draw": 0.2, "team2_win": 0.1}}}],
+        "new": [{**base, "snapshot_date": "new", "generated_at": "2026-07-01T11:00:00+00:00",
+                 "model_version": "m-new", "sources": {"model": {
+                     "team1_win": 0.4, "draw": 0.3, "team2_win": 0.3}}}],
+    }
+    monkeypatch.setattr(calibration, "_all_forecasts", lambda: forecasts)
+    results = {"status": "live", "results": [
+        {"date": "2026-07-01", "kickoff_utc": "2026-07-01T15:00:00Z",
+         "home": "A", "away": "B", "home_goals": 1, "away_goals": 0}]}
+
+    out = calibration.evaluate(results)
+
+    assert set(out["summary_by_model_version"]) == {"m-old", "m-new"}
+    assert out["summary_by_model_version"]["m-old"]["n_resolved"] == 1
+    assert out["summary_by_model_version"]["m-new"]["summary"]["model"]["n"] == 1
+
+
+def test_arbitrage_requires_matching_executable_contracts():
+    import datetime as dt
+    from src.model.market_arbitrage import ExecutableQuote, MarketContract, scan_binary_arbitrage
+
+    now = dt.datetime(2026, 7, 13, 12, 0, tzinfo=dt.timezone.utc)
+    contract = MarketContract("fixture-1", "binary", "France gewinnt", "90m",
+                              "regulaere Spielzeit inkl. Nachspielzeit", "rules-v1")
+    yes = ExecutableQuote("polymarket", "pm-1", contract, "yes", 0.47, 100,
+                          0.005, 0.005, now.isoformat())
+    no = ExecutableQuote("kalshi", "ka-1", contract, "no", 0.48, 100,
+                         0.005, 0.005, now.isoformat())
+
+    out = scan_binary_arbitrage([yes, no], target_quantity=10, now=now)
+
+    assert out["status"] == "candidate"
+    assert out["opportunities"][0]["profit_after_costs"] == 0.3
+    assert out["opportunities"][0]["paper_only"] is True
+
+
+def test_arbitrage_requires_exact_contract_identity():
+    import datetime as dt
+    from src.model.market_arbitrage import ExecutableQuote, MarketContract, scan_binary_arbitrage
+
+    now = dt.datetime(2026, 7, 13, 12, 0, tzinfo=dt.timezone.utc)
+    c1 = MarketContract("fixture-1", "binary", "France gewinnt", "90m", "90 Minuten", "r1")
+    c2 = MarketContract("fixture-1", "binary", "France gewinnt", "advance", "inkl. ET", "r2")
+    yes = ExecutableQuote("polymarket", "pm-1", c1, "yes", 0.4, 100,
+                          0.0, 0.0, now.isoformat())
+    no = ExecutableQuote("kalshi", "ka-1", c2, "no", 0.4, 100,
+                         0.0, 0.0, now.isoformat())
+
+    out = scan_binary_arbitrage([yes, no], target_quantity=10, now=now)
+
+    assert out["status"] == "none"
+    assert out["opportunities"] == []
+    assert out["blocked_quotes"] == []
+
+
+def test_arbitrage_blocks_unknown_costs_and_depth():
+    import datetime as dt
+    from src.model.market_arbitrage import ExecutableQuote, MarketContract, scan_binary_arbitrage
+
+    now = dt.datetime(2026, 7, 13, 12, 0, tzinfo=dt.timezone.utc)
+    contract = MarketContract("fixture-1", "binary", "France gewinnt", "90m",
+                              "90 Minuten", "r1")
+    yes = ExecutableQuote("polymarket", "pm-1", contract, "yes", 0.4, 2,
+                          None, None, now.isoformat())
+    no = ExecutableQuote("kalshi", "ka-1", contract, "no", 0.4, 100,
+                         0.0, 0.0, now.isoformat())
+
+    out = scan_binary_arbitrage([yes, no], target_quantity=10, now=now)
+
+    assert out["status"] == "none"
+    assert out["opportunities"] == []
+    assert any(row["reason"] in ("unzureichende Markttiefe", "Gebuehr unbekannt")
+               for row in out["blocked_quotes"])
+
+
+def test_legacy_market_payloads_never_claim_arbitrage():
+    from src.model import market_arbitrage
+
+    out = market_arbitrage.audit_legacy_sources(
+        {"probs": {"team1_win": 0.4}}, {"probs": {"team1_win": 0.45}})
+
+    assert out["status"] == "blocked"
+    assert out["paper_only"] is True
+    assert "keine Orderbuch-Tiefe" in out["blockers"]
+
+
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
     return {"slug": f"m{i}", "team1": "A", "team2": "B",
             "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",
@@ -787,7 +881,11 @@ def test_daily_pipeline_parameter_tuning_proposal_is_prominent(monkeypatch):
                           "forecast_at": "2026-06-10T10:00:00+00:00",
                           "brier": {"model": 0.1}}],
              "summary": {"model": {"mean_brier": 0.1, "mean_rps": 0.05,
-                                    "mean_log_loss": 0.2, "n": 1}},
+                                     "mean_log_loss": 0.2, "n": 1}},
+             "summary_by_model_version": {
+                 "m-current": {"n_resolved": 1, "summary": {
+                     "model": {"mean_brier": 0.1, "mean_rps": 0.05,
+                               "mean_log_loss": 0.2, "n": 1}}}},
              "record": {"hits": 1, "misses": 0, "hit_rate": 1.0, "n": 1,
                         "source": "model"}}
     report = generate_report(calib, "2026-06-15T08:00:00", None, proposal)
@@ -795,6 +893,8 @@ def test_daily_pipeline_parameter_tuning_proposal_is_prominent(monkeypatch):
     assert "ELO_PER_GOAL-Wechsel empfohlen" in report
     assert "aktuell `240.0` -> Kandidat `220.0`" in report
     assert "Nicht automatisch angewandt" in report
+    assert "Kalibrierung nach Modellversion" in report
+    assert "| `m-current` | 1 | 1 |" in report
 
 
 def test_closing_loop_preserves_existing_hermes_section():
