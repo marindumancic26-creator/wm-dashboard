@@ -1203,6 +1203,39 @@ def test_history_download_degrades_when_one_season_fails(tmp_path):
     assert complete["status"] == "historical"
 
 
+def test_history_fetch_histories_loads_top_five_divisions(tmp_path):
+    from src.data_sources import football_data_uk_history as history
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+               "13/08/2021,Home,Away,2,0,2.0,3.2,4.0\n").encode()
+    urls = []
+
+    class Response:
+        def __init__(self, body):
+            self.content = body
+
+        def raise_for_status(self):
+            return None
+
+    class Http:
+        def get(self, url, timeout):
+            urls.append(url)
+            return Response(content)
+
+    result = history.fetch_histories(
+        competition_keys=("premier_league", "la_liga", "bundesliga",
+                          "serie_a", "ligue_1"),
+        seasons=(2021,), force=True, http=Http(), cache_dir=tmp_path)
+
+    assert result["status"] == "historical"
+    assert result["n_matches"] == 5
+    for division in ("E0.csv", "SP1.csv", "D1.csv", "I1.csv", "F1.csv"):
+        assert any(url.endswith(division) for url in urls)
+    competitions = {row["competition"] for row in result["matches"]}
+    assert competitions == {"premier_league", "la_liga", "bundesliga",
+                            "serie_a", "ligue_1"}
+
+
 def test_club_backtest_walk_forward_never_trains_on_test_or_future(monkeypatch):
     from src.model import club_backtest
 
@@ -1225,6 +1258,39 @@ def test_club_backtest_walk_forward_never_trains_on_test_or_future(monkeypatch):
 
     assert observed_train_seasons == [{2021}, {2021, 2022}]
     assert result["n_out_of_sample"] == 200
+    assert result["release_status"] == "blocked"
+    assert result["auto_apply"] is False
+
+
+def test_club_backtest_by_competition_keeps_training_separate(monkeypatch):
+    from src.model import club_backtest
+
+    histories = {"competitions": {}}
+    for competition, prefix in (("premier_league", "E"), ("la_liga", "S")):
+        rows = []
+        for season in (2021, 2022):
+            for i in range(100):
+                rows.append({"competition": competition, "season_start": season,
+                             "home_team": f"{prefix} Home", "away_team": f"{prefix} Away",
+                             "home_score": 1, "away_score": 0, "market_probs": None})
+        histories["competitions"][competition] = {"matches": rows, "status": "historical"}
+
+    observed_prefixes = []
+
+    def fake_fit(train):
+        observed_prefixes.append({row["home_team"][0] for row in train})
+        return {}
+
+    monkeypatch.setattr(club_backtest.backtest, "fit_attack_defense", fake_fit)
+    monkeypatch.setattr(club_backtest.backtest, "_predict",
+                        lambda fit, home, away, rho: (0.7, 0.2, 0.1))
+
+    result = club_backtest.walk_forward_by_competition(histories)
+
+    assert observed_prefixes == [{"E"}, {"S"}]
+    assert result["status"] == "diagnostic"
+    assert result["n_out_of_sample"] == 200
+    assert set(result["competitions"]) == {"premier_league", "la_liga"}
     assert result["release_status"] == "blocked"
     assert result["auto_apply"] is False
 

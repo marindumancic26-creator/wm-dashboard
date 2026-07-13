@@ -15,6 +15,7 @@ from src.model import backtest, calibration
 
 
 MIN_TRAIN_MATCHES = 100
+DEFAULT_COMPETITIONS = tuple(history.COMPETITION_DIVISIONS)
 
 
 def _outcome(match: dict) -> str:
@@ -98,6 +99,59 @@ def walk_forward_eval(matches: list[dict], rho: float = config.DIXON_COLES_RHO) 
             "note": "Keine Freigabe und keine Parameteruebernahme; menschliche Entscheidung erforderlich."}
 
 
+def _weighted_summary(results: list[dict], key: str) -> dict | None:
+    rows = [result.get(key) for result in results if result.get(key)]
+    total_n = sum(row["n"] for row in rows)
+    if total_n <= 0:
+        return None
+    return {"mean_rps": round(sum(row["mean_rps"] * row["n"] for row in rows) / total_n, 4),
+            "mean_log_loss": round(sum(row["mean_log_loss"] * row["n"] for row in rows) / total_n, 4),
+            "hit_rate": round(sum(row["hit_rate"] * row["n"] for row in rows) / total_n, 4),
+            "n": total_n}
+
+
+def walk_forward_by_competition(histories: dict,
+                                rho: float = config.DIXON_COLES_RHO) -> dict:
+    competition_results = {}
+    for key, loaded in histories.get("competitions", {}).items():
+        result = walk_forward_eval(loaded.get("matches", []), rho)
+        result["competition"] = key
+        result["data_source"] = {field: loaded.get(field) for field in
+                                 ("status", "source", "seasons", "errors", "note")}
+        competition_results[key] = result
+
+    diagnostics = [result for result in competition_results.values()
+                   if result.get("status") == "diagnostic"]
+    model_score = _weighted_summary(diagnostics, "model")
+    naive_score = _weighted_summary(diagnostics, "naive")
+    market_score = _weighted_summary(diagnostics, "market_benchmark")
+    market_gap = (round(model_score["mean_rps"] - market_score["mean_rps"], 4)
+                  if model_score and market_score else None)
+    gates = {
+        "minimum_history": bool(diagnostics),
+        "beats_naive_rps": bool(model_score and naive_score and
+                                model_score["mean_rps"] < naive_score["mean_rps"]),
+        "logloss_guard_vs_naive": bool(model_score and naive_score and
+                                       model_score["mean_log_loss"] <=
+                                       naive_score["mean_log_loss"]),
+        "all_competitions_diagnostic": len(diagnostics) == len(competition_results),
+        "market_benchmark_available": bool(market_score),
+        "beats_market_rps": bool(model_score and market_score and
+                                 model_score["mean_rps"] <= market_score["mean_rps"]),
+    }
+    return {"status": "diagnostic" if diagnostics else "insufficient_data",
+            "n_history": sum(result.get("n_history", 0)
+                             for result in competition_results.values()),
+            "n_out_of_sample": sum(result.get("n_out_of_sample", 0)
+                                   for result in competition_results.values()),
+            "rho_fixed": rho, "competitions": competition_results,
+            "model": model_score, "naive": naive_score,
+            "market_benchmark": market_score, "gates": gates,
+            "market_rps_gap": market_gap,
+            "release_status": "blocked", "auto_apply": False,
+            "note": "Wettbewerbe werden getrennt validiert; keine Auto-Freigabe."}
+
+
 def write_report(result: dict, path: Path) -> None:
     lines = ["# Vereinsmodell Walk-forward-Report", "",
              f"Status: **{result['status']}**  ",
@@ -106,9 +160,28 @@ def write_report(result: dict, path: Path) -> None:
              "Freigabe: **BLOCKIERT** (Report-only, keine Auto-Uebernahme)", "",
              "| Testsaison | Train n | Test n | Modell RPS | Naiv RPS | Markt RPS | Modell besser? |",
              "|---:|---:|---:|---:|---:|---:|---|"]
-    for fold in result.get("folds", []):
+    if result.get("competitions"):
+        lines += ["", "## Wettbewerbe", ""]
+        for key, comp in result["competitions"].items():
+            model = comp.get("model") or {}
+            market = comp.get("market_benchmark") or {}
+            lines.append(f"- `{key}`: Status `{comp['status']}`, Historie "
+                         f"`{comp['n_history']}`, OOS `{comp['n_out_of_sample']}`, "
+                         f"Modell-RPS `{model.get('mean_rps', 'n/a')}`, "
+                         f"Markt-RPS `{market.get('mean_rps', 'n/a')}`")
+        lines += ["", "## Folds je Wettbewerb", ""]
+
+    fold_rows = result.get("folds", [])
+    if result.get("competitions"):
+        fold_rows = []
+        for key, comp in result["competitions"].items():
+            for fold in comp.get("folds", []):
+                fold_rows.append({**fold, "competition": key})
+    for fold in fold_rows:
         market = fold.get("market_benchmark") or {}
-        lines.append(f"| {fold['test_season']} | {fold['train_n']} | {fold['test_n']} | "
+        season_label = (f"{fold.get('competition')} {fold['test_season']}"
+                        if fold.get("competition") else fold["test_season"])
+        lines.append(f"| {season_label} | {fold['train_n']} | {fold['test_n']} | "
                      f"{fold['model']['mean_rps']} | {fold['naive']['mean_rps']} | "
                      f"{market.get('mean_rps', 'n/a')} | {fold['model_beats_naive_rps']} |")
     lines += ["", "## Gesamt (Out-of-sample)", ""]
@@ -127,10 +200,10 @@ def write_report(result: dict, path: Path) -> None:
 
 
 def run(report_path: Path | None = None, force_download: bool = False) -> dict:
-    loaded = history.fetch_history(force=force_download)
-    result = walk_forward_eval(loaded.get("matches", []))
+    loaded = history.fetch_histories(DEFAULT_COMPETITIONS, force=force_download)
+    result = walk_forward_by_competition(loaded)
     result["data_source"] = {key: loaded.get(key) for key in
-                             ("status", "source", "seasons", "errors", "note")}
+                             ("status", "source", "note")}
     if report_path:
         write_report(result, report_path)
         result["report_path"] = str(report_path)

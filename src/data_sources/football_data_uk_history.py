@@ -16,7 +16,13 @@ from src import config
 
 
 BASE_URL = "https://www.football-data.co.uk/mmz4281"
-COMPETITION_DIVISIONS = {"premier_league": "E0"}
+COMPETITION_DIVISIONS = {
+    "premier_league": "E0",
+    "la_liga": "SP1",
+    "bundesliga": "D1",
+    "serie_a": "I1",
+    "ligue_1": "F1",
+}
 DEFAULT_SEASONS = (2021, 2022, 2023, 2024, 2025)
 
 
@@ -47,7 +53,8 @@ def _market_probs(row: dict) -> dict | None:
         return None
 
 
-def parse_csv(content: bytes, season_start: int) -> list[dict]:
+def parse_csv(content: bytes, season_start: int,
+              competition_key: str | None = None) -> list[dict]:
     try:
         text = content.decode("utf-8-sig")
     except UnicodeDecodeError:
@@ -64,6 +71,7 @@ def parse_csv(content: bytes, season_start: int) -> list[dict]:
             continue
         matches.append({"date": date, "season": f"{season_start}-{str(season_start + 1)[-2:]}",
                         "season_start": season_start, "home_team": home, "away_team": away,
+                        "competition": competition_key,
                         "home_score": home_score, "away_score": away_score,
                         "market_probs": _market_probs(row)})
     return matches
@@ -91,7 +99,7 @@ def fetch_history(competition_key: str = "premier_league",
                 path.write_bytes(content)
             else:
                 content = path.read_bytes()
-            rows = parse_csv(content, season)
+            rows = parse_csv(content, season, competition_key)
             if not rows:
                 raise ValueError("keine gueltigen Ergebniszeilen")
             all_matches.extend(rows)
@@ -105,3 +113,20 @@ def fetch_history(competition_key: str = "premier_league",
             "matches": all_matches, "seasons": loaded, "errors": errors,
             "n_matches": len(all_matches),
             "note": "Resultate fuer Walk-forward; Quoten nur Diagnose-Benchmark."}
+
+
+def fetch_histories(competition_keys: tuple[str, ...] | None = None,
+                    seasons: tuple[int, ...] = DEFAULT_SEASONS,
+                    force: bool = False, http=requests,
+                    cache_dir: Path | None = None) -> dict:
+    keys = competition_keys or tuple(COMPETITION_DIVISIONS)
+    competitions = {key: fetch_history(key, seasons, force, http, cache_dir)
+                    for key in keys}
+    loaded = [row for row in competitions.values() if row.get("status") != "unavailable"]
+    matches = [match for row in competitions.values() for match in row.get("matches", [])]
+    status = ("historical" if loaded and len(loaded) == len(keys)
+              else ("degraded" if loaded else "unavailable"))
+    return {"status": status, "source": "football-data.co.uk",
+            "competitions": competitions, "matches": matches,
+            "n_matches": len(matches),
+            "note": "Top-5-Resultate fuer getrennte Walk-forward-Diagnosen."}
