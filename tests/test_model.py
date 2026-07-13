@@ -985,6 +985,36 @@ def test_club_shadow_run_refuses_productive_wm_outputs():
     with pytest.raises(ValueError, match="produktive WM-Ausgabe"):
         club_shadow_run.run(output_path=config.DATA_PROCESSED / "dashboard_data.json")
 
+    with pytest.raises(ValueError, match="produktive WM-Ausgabe"):
+        club_shadow_run.run_all(output_path=config.PROJECT_ROOT / "docs" / "index.html")
+
+
+def test_multi_competition_shadow_run_isolates_source_failure(monkeypatch, tmp_path):
+    import datetime as dt
+    from src.pipeline import club_shadow_run
+
+    class Adapter:
+        def fetch(self, competition, date_from, date_to, clubs):
+            if competition.key == "la_liga":
+                raise TimeoutError("synthetischer Liga-Ausfall")
+            return {"status": "live", "fixtures": [{"match_id": "x"}],
+                    "n_identity_pending": 0, "auto_apply": True}
+
+    monkeypatch.setattr(club_shadow_run, "load_club_registry",
+                        lambda: __import__("src.domain", fromlist=["ClubRegistry"]).ClubRegistry(()))
+    output = tmp_path / "all.json"
+    result = club_shadow_run.run_all(
+        days=7, today=dt.date(2026, 8, 15), output_path=output, adapter=Adapter(),
+        competition_keys=("premier_league", "la_liga"))
+
+    assert result["status"] == "degraded"
+    assert result["n_live_competitions"] == 1
+    assert result["n_fixtures"] == 1
+    assert result["auto_apply"] is False
+    assert result["competitions"]["premier_league"]["auto_apply"] is False
+    assert result["competitions"]["la_liga"]["status"] == "unavailable"
+    assert "synthetischer Liga-Ausfall" in result["competitions"]["la_liga"]["note"]
+
 
 def test_tracked_club_catalog_resolves_premier_league_provider_ids():
     from src.club_registry import load_club_registry
