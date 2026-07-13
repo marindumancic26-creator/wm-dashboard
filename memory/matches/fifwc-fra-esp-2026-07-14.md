@@ -1,9 +1,9 @@
 # France vs. Spain
 
-Datum: 2026-07-14  |  Stand: 2026-07-13T23:00:14
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-esp-2026-07-14) (Volumen $7,555,933)
+Datum: 2026-07-14  |  Stand: 2026-07-14T00:05:25
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-fra-esp-2026-07-14) (Volumen $7,703,330)
 
-Ensemble: France 41.7% / Remis 27.8% / Spain 30.5%
+Ensemble: France 41.3% / Remis 28.0% / Spain 30.6%
 Erwartete Tore: 1.36 : 1.214
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 2:1 — 8.2%
 - 0:1 — 8.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 59.6%, draw 21.0%, team2_win 19.3%
+Whale-Signal (10 Wallets, heuristisch): team1_win 57.2%, draw 22.3%, team2_win 20.5%
