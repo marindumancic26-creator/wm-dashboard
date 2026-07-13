@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-07-13
 
-Stand: 2026-07-13T08:09:00 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-07-13T19:56:49 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: auf Anfrage.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -1055,6 +1055,16 @@ Prognose-Stand: 2026-07-10T22:05:07+00:00
 | 6 | Whale | 0.492 | 0.182 | 1.213 | 73% | 61/23 | 84 |
 
 _RPS = Ranked Probability Score (ordinal, Fußball-Standard). Brier 0.667 / RPS 0.333 / LogLoss 1.099 ≈ Zufall. Niedriger ist besser._
+
+## Kalibrierung nach Modellversion
+
+| Modellversion | aufgelöste Spiele | Quellen |
+|---|---:|---:|
+| `m-1cd2d4dc` | 77 | 6 |
+| `m-491f305c` | 11 | 6 |
+| `unknown` | 1 | 6 |
+
+_Scores verschiedener Modellversionen sind nicht 1:1 vergleichbar; Detailmetriken stehen im Snapshot._
 
 ## Wett-Kennzahlen (Referenz-Policy)
 
