@@ -996,6 +996,104 @@ def test_tracked_club_catalog_resolves_premier_league_provider_ids():
     assert clubs.resolve("Manchester").prediction_allowed is False
 
 
+def test_history_csv_parser_uses_results_and_market_only_as_benchmark():
+    from src.data_sources.football_data_uk_history import parse_csv
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+               "13/08/2021,Brentford,Arsenal,2,0,3.8,3.4,2.0\n"
+               "invalid,Chelsea,Palace,,,1.5,4.0,7.0\n").encode()
+    rows = parse_csv(content, 2021)
+
+    assert len(rows) == 1
+    assert rows[0]["home_score"] == 2
+    assert rows[0]["season_start"] == 2021
+    assert abs(sum(rows[0]["market_probs"].values()) - 1.0) < 1e-9
+
+
+def test_history_download_degrades_when_one_season_fails(tmp_path):
+    from src.data_sources import football_data_uk_history as history
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+               "13/08/2021,Brentford,Arsenal,2,0,3.8,3.4,2.0\n").encode()
+
+    class Response:
+        def __init__(self, body):
+            self.content = body
+
+        def raise_for_status(self):
+            return None
+
+    class Http:
+        def get(self, url, timeout):
+            if "2223" in url:
+                raise TimeoutError("synthetischer Ausfall")
+            return Response(content)
+
+    result = history.fetch_history(seasons=(2021, 2022), force=True,
+                                   http=Http(), cache_dir=tmp_path)
+
+    assert result["status"] == "degraded"
+    assert result["n_matches"] == 1
+    assert result["errors"][0]["season_start"] == 2022
+
+    complete = history.fetch_history(seasons=(2021,), force=True,
+                                     http=Http(), cache_dir=tmp_path)
+    assert complete["status"] == "historical"
+
+
+def test_club_backtest_walk_forward_never_trains_on_test_or_future(monkeypatch):
+    from src.model import club_backtest
+
+    matches = []
+    for season in (2021, 2022, 2023):
+        for i in range(100):
+            matches.append({"season_start": season, "home_team": "A", "away_team": "B",
+                            "home_score": 1, "away_score": 0, "market_probs": None})
+    observed_train_seasons = []
+
+    def fake_fit(train):
+        observed_train_seasons.append({row["season_start"] for row in train})
+        return {}
+
+    monkeypatch.setattr(club_backtest.backtest, "fit_attack_defense", fake_fit)
+    monkeypatch.setattr(club_backtest.backtest, "_predict",
+                        lambda fit, home, away, rho: (0.7, 0.2, 0.1))
+
+    result = club_backtest.walk_forward_eval(matches)
+
+    assert observed_train_seasons == [{2021}, {2021, 2022}]
+    assert result["n_out_of_sample"] == 200
+    assert result["release_status"] == "blocked"
+    assert result["auto_apply"] is False
+
+
+def test_club_backtest_small_sample_stays_blocked():
+    from src.model import club_backtest
+
+    rows = [{"season_start": 2021, "home_team": "A", "away_team": "B",
+             "home_score": 1, "away_score": 0, "market_probs": None} for _ in range(20)]
+    result = club_backtest.walk_forward_eval(rows)
+
+    assert result["status"] == "insufficient_data"
+    assert result["release_status"] == "blocked"
+    assert result["gates"]["minimum_history"] is False
+
+
+def test_club_backtest_report_is_report_only(tmp_path):
+    from src.model import club_backtest
+
+    result = {"status": "diagnostic", "n_history": 200, "n_out_of_sample": 100,
+              "rho_fixed": -0.1, "release_status": "blocked", "auto_apply": False,
+              "folds": [], "model": None, "naive": None, "market_benchmark": None,
+              "market_rps_gap": None, "gates": {"minimum_history": True}}
+    path = tmp_path / "report.md"
+    club_backtest.write_report(result, path)
+
+    report = path.read_text(encoding="utf-8")
+    assert "Freigabe: **BLOCKIERT**" in report
+    assert "keine Auto-Uebernahme" in report
+
+
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
     return {"slug": f"m{i}", "team1": "A", "team2": "B",
             "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",
