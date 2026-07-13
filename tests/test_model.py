@@ -1253,6 +1253,77 @@ def test_club_migration_readiness_requires_full_closing_gate():
     assert "backtest_beats_market" not in result["gates"]
 
 
+def test_world_cup_completion_requires_all_fixtures_and_final_finished():
+    from src.data_sources import results_client
+
+    incomplete = {"status": "live", "fixtures": [
+        {"status": "FINISHED", "stage": "GROUP_STAGE"} for _ in range(103)
+    ] + [{"status": "TIMED", "stage": "FINAL"}]}
+
+    assert results_client.world_cup_completion_status(incomplete)["complete"] is False
+
+    complete = {"status": "live", "fixtures": [
+        {"status": "FINISHED", "stage": "GROUP_STAGE"} for _ in range(103)
+    ] + [{"status": "FINISHED", "stage": "FINAL"}]}
+
+    assert results_client.world_cup_completion_status(complete)["complete"] is True
+
+
+def test_post_world_cup_switch_waits_until_final_is_finished(tmp_path):
+    from src.pipeline import post_world_cup_switch
+
+    fixtures = {"status": "live", "fixtures": [
+        {"status": "FINISHED", "stage": "GROUP_STAGE"} for _ in range(103)
+    ] + [{"status": "TIMED", "stage": "FINAL"}]}
+    path = tmp_path / "operation_mode.json"
+
+    result = post_world_cup_switch.check_and_switch(fixtures=fixtures, mode_path=path)
+
+    assert result["status"] == "waiting_for_world_cup_finish"
+    assert path.exists() is False
+
+
+def test_post_world_cup_switch_writes_report_only_club_mode(monkeypatch, tmp_path):
+    import datetime as dt
+    import json
+    from src.pipeline import post_world_cup_switch
+
+    fixtures = {"status": "live", "fixtures": [
+        {"status": "FINISHED", "stage": "GROUP_STAGE"} for _ in range(103)
+    ] + [{"status": "FINISHED", "stage": "FINAL"}]}
+    readiness = {"status": "blocked", "release_status": "blocked",
+                 "auto_apply": False, "gates": {"backtest_closing_market_outperformance": False}}
+    monkeypatch.setattr(post_world_cup_switch.club_migration_readiness, "run",
+                        lambda *args, **kwargs: readiness)
+    path = tmp_path / "operation_mode.json"
+
+    result = post_world_cup_switch.check_and_switch(
+        fixtures=fixtures, now=dt.datetime(2026, 7, 20, tzinfo=dt.timezone.utc),
+        mode_path=path)
+    written = json.loads(path.read_text(encoding="utf-8"))
+
+    assert result["status"] == "switched"
+    assert written["mode"] == "club_football"
+    assert written["auto_apply"] is False
+    assert written["value_allowed"] is False
+    assert written["prediction_allowed"] is False
+    assert written["readiness"]["status"] == "blocked"
+
+
+def test_daily_post_world_cup_switch_survives_exception(monkeypatch):
+    from src.pipeline import daily_matchday_run
+
+    def boom(**kwargs):
+        raise RuntimeError("synthetischer Switch-Fehler")
+
+    log = {"warnings": []}
+    monkeypatch.setattr(daily_matchday_run.post_world_cup_switch, "check_and_switch", boom)
+
+    assert daily_matchday_run._run_post_world_cup_switch(log, {"status": "live"}) is None
+    assert log["post_world_cup_switch"]["status"] == "error"
+    assert "synthetischer Switch-Fehler" in log["warnings"][0]
+
+
 def test_tracked_club_catalog_resolves_premier_league_provider_ids():
     from src.club_registry import load_club_registry
 

@@ -30,6 +30,7 @@ from src.model import (calibration, closing_loop, data_quality, ensemble, featur
                        injuries, knockout, market_arbitrage, monte_carlo,
                        parameter_tuning, tournament, value_betting,
                        weight_optimizer, whale_scoring)
+from src.pipeline import post_world_cup_switch
 
 
 def _compact_parameter_tuning(result: dict) -> dict:
@@ -70,6 +71,24 @@ def _run_parameter_tuning(log: dict) -> dict | None:
         msg = f"Parameter-Tuning fehlgeschlagen: {exc}"
         log.setdefault("warnings", []).append(msg)
         log["parameter_tuning"] = {"status": "error", "error": str(exc)}
+        return None
+
+
+def _run_post_world_cup_switch(log: dict, fixtures: dict) -> dict | None:
+    """Nach WM-Ende auf Vereinsmodus umschalten; Fehler brechen Daily nicht ab."""
+    try:
+        result = post_world_cup_switch.check_and_switch(fixtures=fixtures)
+        compact = post_world_cup_switch.compact(result)
+        log["post_world_cup_switch"] = compact
+        if result.get("status") == "switched":
+            log.setdefault("warnings", []).append(
+                "POST-WM-SWITCH: Vereinsfussball-Modus wurde automatisch aktiviert; "
+                "Value/Staking bleibt gesperrt, bis die Gates bestanden sind.")
+        return result
+    except Exception as exc:
+        msg = f"Post-WM-Switch-Pruefung fehlgeschlagen: {exc}"
+        log.setdefault("warnings", []).append(msg)
+        log["post_world_cup_switch"] = {"status": "error", "error": str(exc)}
         return None
 
 
@@ -323,6 +342,8 @@ def run(dates: list[str] | None = None, skip_whales: bool = False) -> dict:
     # persistierten Pre-Kickoff-Snapshots und darf config.py nie veraendern.
     tuning_result = _run_parameter_tuning(log)
     payload["parameter_tuning"] = tuning_result
+    switch_result = _run_post_world_cup_switch(log, fixtures)
+    payload["operation_mode"] = post_world_cup_switch.compact(switch_result or {})
     snap_file.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     (config.DATA_PROCESSED / "dashboard_data.json").write_text(
         json.dumps(payload, ensure_ascii=False), encoding="utf-8")

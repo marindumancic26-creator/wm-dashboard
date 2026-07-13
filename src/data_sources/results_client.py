@@ -17,6 +17,7 @@ _CACHE = config.DATA_RAW / "wc_results.json"
 _FIXTURES_CACHE = config.DATA_RAW / "wc_fixtures.json"
 _CACHE_TTL = 6 * 3600
 _FIXTURES_TTL = 12 * 3600
+WC_2026_MATCH_COUNT = 104
 
 
 def available() -> bool:
@@ -103,3 +104,22 @@ def fetch_results(force: bool = False) -> dict:
         return payload
     except Exception as exc:
         return {"status": "unavailable", "results": [], "note": f"football-data.org-Fehler: {exc}"}
+
+
+def world_cup_completion_status(fixtures: dict) -> dict:
+    """Objektiver WM-Ende-Check: erst alle 104 Spiele offiziell beendet."""
+    rows = fixtures.get("fixtures") or []
+    if fixtures.get("status") != "live" or not rows:
+        return {"complete": False, "status": fixtures.get("status", "unavailable"),
+                "n_fixtures": len(rows), "n_finished": 0,
+                "note": "WM-Ende nicht pruefbar: Fixture-Quelle nicht live."}
+    finished = [row for row in rows if (row.get("status") or "").upper() == "FINISHED"]
+    final_rows = [row for row in rows if (row.get("stage") or "").upper() == "FINAL"]
+    final_finished = bool(final_rows and all((row.get("status") or "").upper() == "FINISHED"
+                                             for row in final_rows))
+    complete = len(rows) >= WC_2026_MATCH_COUNT and len(finished) == len(rows) and final_finished
+    return {"complete": complete, "status": "live", "n_fixtures": len(rows),
+            "n_finished": len(finished), "final_finished": final_finished,
+            "required_fixtures": WC_2026_MATCH_COUNT,
+            "note": ("WM abgeschlossen." if complete else
+                     "WM laeuft noch oder Finale ist nicht offiziell beendet.")}
