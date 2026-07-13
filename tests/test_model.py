@@ -1026,6 +1026,26 @@ def test_tracked_club_catalog_resolves_premier_league_provider_ids():
     assert clubs.resolve("Manchester").prediction_allowed is False
 
 
+def test_tracked_club_catalog_resolves_top_five_provider_ids():
+    from src.club_registry import load_club_registry
+
+    clubs = load_club_registry()
+
+    expected = {
+        "football_data:86": "real_madrid",
+        "football_data:5": "bayern_muenchen",
+        "football_data:108": "inter_milan",
+        "football_data:524": "paris_saint_germain",
+    }
+    for ref, club_id in expected.items():
+        provider, provider_id = ref.split(":")
+        assert clubs.resolve("irrelevant", provider, provider_id).club_id == club_id
+
+    assert clubs.resolve("Club Atlético de Madrid").club_id == "atletico_madrid"
+    assert clubs.resolve("Borussia").prediction_allowed is False
+    assert clubs.resolve("Paris").prediction_allowed is False
+
+
 def test_history_csv_parser_uses_results_and_market_only_as_benchmark():
     from src.data_sources.football_data_uk_history import parse_csv
 
