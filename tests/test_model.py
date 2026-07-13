@@ -953,12 +953,15 @@ def test_fixture_adapter_builds_canonical_match_only_for_known_clubs():
     assert fixture["value_allowed"] is False
 
 
-def test_fixture_adapter_degrades_without_key_or_on_http_error():
+def test_fixture_adapter_degrades_without_key_or_on_http_error(monkeypatch, tmp_path):
     import datetime as dt
     from src.competition_registry import COMPETITIONS
     from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
     from src.domain import ClubRegistry
 
+    monkeypatch.setattr(FootballDataFixtureAdapter, "_cache_path",
+                        staticmethod(lambda competition, date_from, date_to:
+                                     tmp_path / f"{competition.key}.json"))
     competition = COMPETITIONS.get("premier_league")
     unavailable = FootballDataFixtureAdapter(api_key="").fetch(
         competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), ClubRegistry(()))
@@ -972,6 +975,51 @@ def test_fixture_adapter_degrades_without_key_or_on_http_error():
         competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), ClubRegistry(()))
     assert degraded["status"] == "unavailable"
     assert "synthetischer Timeout" in degraded["note"]
+
+
+def test_fixture_adapter_uses_cache_on_rate_limit(monkeypatch, tmp_path):
+    import datetime as dt
+    from src.competition_registry import COMPETITIONS
+    from src.data_sources.football_data_fixture_adapter import FootballDataFixtureAdapter
+    from src.domain import Club, ClubRegistry, ProviderRef
+
+    clubs = ClubRegistry((
+        Club("arsenal", "Arsenal", ("Arsenal FC",),
+             (ProviderRef("football_data", "57"),)),
+        Club("chelsea", "Chelsea", ("Chelsea FC",),
+             (ProviderRef("football_data", "61"),)),
+    ))
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"matches": [_football_data_match()]}
+
+    class FirstHttp:
+        def get(self, *args, **kwargs):
+            return Response()
+
+    class RateLimitedHttp:
+        def get(self, *args, **kwargs):
+            raise RuntimeError("429 synthetic")
+
+    monkeypatch.setattr(FootballDataFixtureAdapter, "_cache_path",
+                        staticmethod(lambda competition, date_from, date_to:
+                                     tmp_path / f"{competition.key}.json"))
+    competition = COMPETITIONS.get("premier_league")
+    live = FootballDataFixtureAdapter("token", FirstHttp()).fetch(
+        competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), clubs)
+    cached = FootballDataFixtureAdapter("token", RateLimitedHttp()).fetch(
+        competition, dt.date(2026, 8, 15), dt.date(2026, 8, 21), clubs)
+
+    assert live["status"] == "live"
+    assert cached["status"] == "cached"
+    assert cached["n_fixtures"] == 1
+    assert cached["fixtures"][0]["identity_status"] == "canonical"
+    assert cached["fixtures"][0]["value_allowed"] is False
+    assert "Cache verwendet" in cached["note"]
 
 
 def test_espn_fixture_adapter_keeps_empty_scoreboard_live():
@@ -1126,6 +1174,56 @@ def test_multi_competition_shadow_run_routes_espn_competitions(monkeypatch, tmp_
     assert result["competitions"]["premier_league"]["source"] == "football_data"
     assert result["competitions"]["europa_league"]["source"] == "espn"
     assert result["competitions"]["europa_league"]["fixtures"][0]["provider"] == "espn"
+
+
+def test_club_migration_readiness_blocks_without_human_approval():
+    from src.pipeline import club_migration_readiness as readiness
+
+    shadow = {"status": "live", "mode": "shadow", "auto_apply": False,
+              "n_competitions": 8, "n_live_competitions": 8,
+              "n_fixtures": 100, "n_identity_pending": 0,
+              "competitions": {"premier_league": {
+                  "mode": "shadow", "auto_apply": False,
+                  "fixtures": [{"prediction_allowed": False,
+                                "value_allowed": False}]}}}
+    backtest = {"status": "diagnostic", "n_history": 8000, "n_out_of_sample": 6000,
+                "model": {"mean_rps": 0.18}, "market_benchmark": {"mean_rps": 0.19},
+                "market_rps_gap": -0.01,
+                "gates": {"all_competitions_diagnostic": True,
+                          "beats_naive_rps": True,
+                          "logloss_guard_vs_naive": True,
+                          "beats_market_rps": True}}
+
+    result = readiness.evaluate(shadow, backtest)
+
+    assert result["status"] == "blocked"
+    assert result["auto_apply"] is False
+    assert result["gates"]["human_approved"] is False
+    assert result["gates"]["world_cup_finished_confirmed"] is False
+
+
+def test_club_migration_readiness_blocks_unlocked_shadow_fixture():
+    from src.pipeline import club_migration_readiness as readiness
+
+    shadow = {"status": "live", "mode": "shadow", "auto_apply": False,
+              "n_competitions": 1, "n_live_competitions": 1,
+              "n_fixtures": 1, "n_identity_pending": 0,
+              "competitions": {"x": {"mode": "shadow", "auto_apply": False,
+                                     "fixtures": [{"prediction_allowed": True,
+                                                   "value_allowed": False}]}}}
+    backtest = {"status": "diagnostic",
+                "gates": {"all_competitions_diagnostic": True,
+                          "beats_naive_rps": True,
+                          "logloss_guard_vs_naive": True,
+                          "beats_market_rps": True}}
+
+    result = readiness.evaluate(shadow, backtest,
+                                world_cup_finished_confirmed=True,
+                                human_approved=True)
+
+    assert result["status"] == "blocked"
+    assert result["gates"]["prediction_and_value_locked"] is False
+    assert result["auto_apply"] is False
 
 
 def test_tracked_club_catalog_resolves_premier_league_provider_ids():

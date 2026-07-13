@@ -7,7 +7,9 @@ und duerfen weder Prognosen noch Value freischalten.
 from __future__ import annotations
 
 import datetime as dt
+import json
 from dataclasses import asdict
+from pathlib import Path
 
 import requests
 
@@ -28,6 +30,12 @@ class FootballDataFixtureAdapter:
             if ref.provider == self.provider_name:
                 return ref.provider_id
         return None
+
+    @staticmethod
+    def _cache_path(competition: Competition, date_from: dt.date,
+                    date_to: dt.date) -> Path:
+        safe_range = f"{date_from.isoformat()}_{date_to.isoformat()}"
+        return config.DATA_RAW / "football_data_fixtures" / f"{competition.key}_{safe_range}.json"
 
     @staticmethod
     def _season_key(match: dict) -> str | None:
@@ -129,14 +137,18 @@ class FootballDataFixtureAdapter:
             return {"status": "unavailable", "fixtures": [],
                     "source": self.provider_name,
                     "note": "Kein FOOTBALL_DATA_API_KEY gesetzt."}
+        cache_path = self._cache_path(competition, date_from, date_to)
         try:
             response = self.http.get(
                 f"{config.FOOTBALL_DATA_BASE}/competitions/{competition_id}/matches",
                 params={"dateFrom": date_from.isoformat(), "dateTo": date_to.isoformat()},
                 headers={"X-Auth-Token": self.api_key}, timeout=25)
             response.raise_for_status()
+            payload = response.json()
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
             fixtures = [self._convert(match, competition, clubs)
-                        for match in response.json().get("matches", [])]
+                        for match in payload.get("matches", [])]
             pending = sum(row["identity_status"] == "pending" for row in fixtures)
             return {"status": "live", "fixtures": fixtures,
                     "source": self.provider_name,
@@ -147,6 +159,26 @@ class FootballDataFixtureAdapter:
                     "n_fixtures": len(fixtures), "n_identity_pending": pending,
                     "note": "Shadow-Pilot; Value bleibt deaktiviert."}
         except Exception as exc:
+            if cache_path.exists():
+                try:
+                    cached = json.loads(cache_path.read_text(encoding="utf-8"))
+                    fixtures = [self._convert(match, competition, clubs)
+                                for match in cached.get("matches", [])]
+                    pending = sum(row["identity_status"] == "pending" for row in fixtures)
+                    return {"status": "cached", "fixtures": fixtures,
+                            "source": self.provider_name,
+                            "competition": competition.key,
+                            "date_from": date_from.isoformat(),
+                            "date_to": date_to.isoformat(),
+                            "n_fixtures": len(fixtures),
+                            "n_identity_pending": pending,
+                            "note": f"football-data.org-Fixture-Fehler: {exc}; Cache verwendet."}
+                except Exception as cache_exc:
+                    return {"status": "unavailable", "fixtures": [],
+                            "source": self.provider_name,
+                            "competition": competition.key,
+                            "note": (f"football-data.org-Fixture-Fehler: {exc}; "
+                                     f"Cache unlesbar: {cache_exc}")}
             return {"status": "unavailable", "fixtures": [],
                     "source": self.provider_name,
                     "competition": competition.key,
