@@ -30,12 +30,12 @@ try {
     if (Test-Path -LiteralPath $marker) {
         $invalidMarker = $false
         Write-WatchdogLog "Daily-Lauf fuer $today bereits erfolgreich; Pages-Status wird geprueft."
-        & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
+        & $powershell -WindowStyle Hidden -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
         $pagesCode = $LASTEXITCODE
         if ($pagesCode -ne 0) {
             Write-WatchdogLog "Pages-Watchdog meldete Exit $pagesCode; Daily-Recovery bleibt unberuehrt."
         }
-        & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $githubPagesHealth
+        & $powershell -WindowStyle Hidden -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $githubPagesHealth
         $healthCode = $LASTEXITCODE
         if ($healthCode -ne 0) {
             Write-WatchdogLog "GitHub-Pages-Health-Check meldete Exit $healthCode; Erfolgsmarke wird geprueft."
@@ -82,7 +82,7 @@ try {
     $hasDailyLock = $false
 
     Write-WatchdogLog "Erfolgsmarke fuer $today fehlt; Recovery-Lauf wird gestartet."
-    & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $runner
+    & $powershell -WindowStyle Hidden -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $runner
     $runnerCode = $LASTEXITCODE
     if ($runnerCode -ne 0) {
         Write-WatchdogLog "Recovery-Lauf fehlgeschlagen (Exit $runnerCode)."
@@ -94,12 +94,12 @@ try {
     }
 
     Write-WatchdogLog "Recovery-Lauf erfolgreich abgeschlossen."
-    & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
+    & $powershell -WindowStyle Hidden -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $pagesWatchdog
     $pagesCode = $LASTEXITCODE
     if ($pagesCode -ne 0) {
         Write-WatchdogLog "Pages-Watchdog nach Recovery meldete Exit $pagesCode."
     }
-    & $powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $githubPagesHealth
+    & $powershell -WindowStyle Hidden -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $githubPagesHealth
     $healthCode = $LASTEXITCODE
     if ($healthCode -ne 0) {
         Write-WatchdogLog "GitHub-Pages-Health-Check nach Recovery meldete Exit $healthCode."
