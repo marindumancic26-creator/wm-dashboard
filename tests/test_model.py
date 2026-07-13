@@ -3,6 +3,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.model import features, monte_carlo, ensemble
@@ -1226,6 +1228,31 @@ def test_club_migration_readiness_blocks_unlocked_shadow_fixture():
     assert result["auto_apply"] is False
 
 
+def test_club_migration_readiness_requires_full_closing_gate():
+    from src.pipeline import club_migration_readiness as readiness
+
+    shadow = {"status": "live", "mode": "shadow", "auto_apply": False,
+              "n_competitions": 1, "n_live_competitions": 1,
+              "n_fixtures": 1, "n_identity_pending": 0,
+              "competitions": {"x": {"mode": "shadow", "auto_apply": False,
+                                     "fixtures": [{"prediction_allowed": False,
+                                                   "value_allowed": False}]}}}
+    backtest = {"status": "diagnostic",
+                "gates": {"all_competitions_diagnostic": True,
+                          "beats_naive_rps": True,
+                          "logloss_guard_vs_naive": True,
+                          "beats_market_rps": True,
+                          "closing_market_outperformance": False}}
+
+    result = readiness.evaluate(shadow, backtest,
+                                world_cup_finished_confirmed=True,
+                                human_approved=True)
+
+    assert result["status"] == "blocked"
+    assert result["gates"]["backtest_closing_market_outperformance"] is False
+    assert "backtest_beats_market" not in result["gates"]
+
+
 def test_tracked_club_catalog_resolves_premier_league_provider_ids():
     from src.club_registry import load_club_registry
 
@@ -1259,21 +1286,60 @@ def test_tracked_club_catalog_resolves_top_five_provider_ids():
 def test_history_csv_parser_uses_results_and_market_only_as_benchmark():
     from src.data_sources.football_data_uk_history import parse_csv
 
-    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
-               "13/08/2021,Brentford,Arsenal,2,0,3.8,3.4,2.0\n"
-               "invalid,Chelsea,Palace,,,1.5,4.0,7.0\n").encode()
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA,AvgCH,AvgCD,AvgCA\n"
+               "13/08/2021,Brentford,Arsenal,2,0,99.0,99.0,1.01,3.8,3.4,2.0\n"
+               "invalid,Chelsea,Palace,,,1.5,4.0,7.0,1.5,4.0,7.0\n").encode()
     rows = parse_csv(content, 2021)
 
     assert len(rows) == 1
     assert rows[0]["home_score"] == 2
     assert rows[0]["season_start"] == 2021
     assert abs(sum(rows[0]["market_probs"].values()) - 1.0) < 1e-9
+    assert rows[0]["market_meta"]["source"] == "avg_closing_fallback"
+    assert rows[0]["market_probs"]["team2_win"] > rows[0]["market_probs"]["team1_win"]
+
+
+def test_history_csv_parser_averages_bookmaker_closing_consensus():
+    from src.data_sources.football_data_uk_history import parse_csv
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,B365CH,B365CD,B365CA,"
+               "WHCH,WHCD,WHCA,AvgCH,AvgCD,AvgCA\n"
+               "13/08/2021,Home,Away,1,1,2.0,4.0,4.0,4.0,4.0,2.0,9.0,9.0,9.0\n").encode()
+    row = parse_csv(content, 2021)[0]
+
+    assert row["market_meta"]["source"] == "bookmaker_closing_consensus"
+    assert row["market_meta"]["n_books"] == 2
+    assert row["market_probs"]["team1_win"] == pytest.approx(row["market_probs"]["team2_win"])
+    assert row["market_probs"]["draw"] == pytest.approx(0.25)
+
+
+def test_history_csv_parser_excludes_stale_pinnacle_after_warning():
+    from src.data_sources.football_data_uk_history import parse_csv
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,B365CH,B365CD,B365CA,PSCH,PSCD,PSCA\n"
+               "24/07/2025,Home,Away,1,0,2.0,4.0,4.0,99.0,99.0,1.01\n").encode()
+    row = parse_csv(content, 2025)[0]
+
+    assert row["market_meta"]["books"] == ["bet365"]
+    assert row["market_meta"]["excluded"][0]["book"] == "pinnacle"
+    assert row["market_probs"]["team1_win"] == pytest.approx(0.5)
+
+
+def test_history_csv_parser_does_not_fallback_to_opening_average():
+    from src.data_sources.football_data_uk_history import parse_csv
+
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+               "13/08/2021,Home,Away,2,0,2.0,3.2,4.0\n").encode()
+    row = parse_csv(content, 2021)[0]
+
+    assert row["market_probs"] is None
+    assert row["market_meta"]["source"] == "missing_closing"
 
 
 def test_history_download_degrades_when_one_season_fails(tmp_path):
     from src.data_sources import football_data_uk_history as history
 
-    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgCH,AvgCD,AvgCA\n"
                "13/08/2021,Brentford,Arsenal,2,0,3.8,3.4,2.0\n").encode()
 
     class Response:
@@ -1304,7 +1370,7 @@ def test_history_download_degrades_when_one_season_fails(tmp_path):
 def test_history_fetch_histories_loads_top_five_divisions(tmp_path):
     from src.data_sources import football_data_uk_history as history
 
-    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgH,AvgD,AvgA\n"
+    content = ("Date,HomeTeam,AwayTeam,FTHG,FTAG,AvgCH,AvgCD,AvgCA\n"
                "13/08/2021,Home,Away,2,0,2.0,3.2,4.0\n").encode()
     urls = []
 
@@ -1418,6 +1484,122 @@ def test_club_backtest_report_is_report_only(tmp_path):
     report = path.read_text(encoding="utf-8")
     assert "Freigabe: **BLOCKIERT**" in report
     assert "keine Auto-Uebernahme" in report
+
+
+def test_club_backtest_market_scores_use_exact_same_games(monkeypatch):
+    from src.model import club_backtest
+
+    matches = []
+    for i in range(100):
+        matches.append({"season_start": 2021, "home_team": "A", "away_team": "B",
+                        "home_score": 1, "away_score": 0, "market_probs": None})
+    matches += [
+        {"season_start": 2022, "home_team": "A", "away_team": "B",
+         "home_score": 1, "away_score": 0,
+         "market_probs": {"team1_win": 0.2, "draw": 0.3, "team2_win": 0.5}},
+        {"season_start": 2022, "home_team": "A", "away_team": "B",
+         "home_score": 1, "away_score": 0, "market_probs": None},
+    ]
+
+    monkeypatch.setattr(club_backtest.backtest, "fit_attack_defense", lambda train: {})
+    monkeypatch.setattr(club_backtest.backtest, "_predict",
+                        lambda fit, home, away, rho: (0.8, 0.1, 0.1))
+
+    result = club_backtest.walk_forward_eval(matches)
+
+    assert result["model"]["n"] == 2
+    assert result["model_on_market_games"]["n"] == 1
+    assert result["market_benchmark"]["n"] == 1
+    assert result["market_rps_gap"] < 0
+
+
+def test_prequential_candidate_updates_only_after_full_block(monkeypatch):
+    from src.model import club_backtest
+
+    train = [{"date": "2021-01-01", "block_key": "2021-01-01",
+              "season_start": 2021, "home_team": "A", "away_team": "B",
+              "home_score": 1, "away_score": 0} for _ in range(100)]
+    test = [
+        {"date": "2022-01-01", "block_key": "round-1", "season_start": 2022,
+         "home_team": "A", "away_team": "B", "home_score": 1, "away_score": 0},
+        {"date": "2022-01-01", "block_key": "round-1", "season_start": 2022,
+         "home_team": "C", "away_team": "D", "home_score": 0, "away_score": 0},
+        {"date": "2022-01-08", "block_key": "round-2", "season_start": 2022,
+         "home_team": "A", "away_team": "B", "home_score": 0, "away_score": 1},
+    ]
+    revealed_sizes = []
+
+    def fake_fit(revealed, as_of, half_life_days):
+        revealed_sizes.append(len(revealed))
+        return {"attack": {}, "defense": {}, "home": 1.0, "base": 1.3}
+
+    monkeypatch.setattr(club_backtest, "_decayed_fit", fake_fit)
+
+    rows = club_backtest._prequential_rows(train, test, rho=-0.1, half_life_days=365)
+
+    assert revealed_sizes == [100, 102]
+    assert len(rows) == 3
+    assert rows[0]["block_key"] == rows[1]["block_key"] == "round-1"
+
+
+def test_closing_gate_requires_both_rps_and_logloss(monkeypatch):
+    from src.model import club_backtest
+
+    rows = [{"match": {"competition": "premier_league", "season_start": 2022},
+             "probs": {"team1_win": 0.5, "draw": 0.3, "team2_win": 0.2},
+             "market_probs": {"team1_win": 0.4, "draw": 0.3, "team2_win": 0.3},
+             "outcome": "team1_win", "block_key": "b1"}]
+    monkeypatch.setattr(club_backtest, "_score_prediction_rows",
+                        lambda rows, key="probs", market_only=False:
+                        {"mean_rps": 0.10, "mean_log_loss": 1.20, "hit_rate": 1.0, "n": 1})
+    monkeypatch.setattr(club_backtest, "_market_score",
+                        lambda rows: {"mean_rps": 0.12, "mean_log_loss": 1.00,
+                                      "hit_rate": 1.0, "n": 1})
+    monkeypatch.setattr(club_backtest, "_bootstrap_upper", lambda rows, metric: -0.01)
+    monkeypatch.setattr(club_backtest, "_league_wins",
+                        lambda rows: {"wins_both": 5, "required": 4, "leagues": {}})
+
+    gate = club_backtest._gate(rows, {"n": 1, "covered": 1, "rate": 1.0, "gate": True})
+
+    assert gate["aggregate_delta_rps_lt_0"] is True
+    assert gate["aggregate_delta_logloss_lt_0"] is False
+    assert gate["closing_market_outperformance"] is False
+
+
+def test_closing_gate_requires_four_of_five_leagues(monkeypatch):
+    from src.model import club_backtest
+
+    rows = [{"match": {"competition": "premier_league", "season_start": 2022},
+             "probs": {"team1_win": 0.6, "draw": 0.2, "team2_win": 0.2},
+             "market_probs": {"team1_win": 0.4, "draw": 0.3, "team2_win": 0.3},
+             "outcome": "team1_win", "block_key": "b1"}]
+    monkeypatch.setattr(club_backtest, "_bootstrap_upper", lambda rows, metric: -0.01)
+    monkeypatch.setattr(club_backtest, "_league_wins",
+                        lambda rows: {"wins_both": 3, "required": 4, "leagues": {}})
+
+    gate = club_backtest._gate(rows, {"n": 1, "covered": 1, "rate": 1.0, "gate": True})
+
+    assert gate["aggregate_delta_rps_lt_0"] is True
+    assert gate["aggregate_delta_logloss_lt_0"] is True
+    assert gate["league_wins_gate"] is False
+    assert gate["closing_market_outperformance"] is False
+
+
+def test_closing_gate_fails_without_coverage(monkeypatch):
+    from src.model import club_backtest
+
+    rows = [{"match": {"competition": "premier_league", "season_start": 2022},
+             "probs": {"team1_win": 0.6, "draw": 0.2, "team2_win": 0.2},
+             "market_probs": {"team1_win": 0.4, "draw": 0.3, "team2_win": 0.3},
+             "outcome": "team1_win", "block_key": "b1"}]
+    monkeypatch.setattr(club_backtest, "_bootstrap_upper", lambda rows, metric: -0.01)
+    monkeypatch.setattr(club_backtest, "_league_wins",
+                        lambda rows: {"wins_both": 5, "required": 4, "leagues": {}})
+
+    gate = club_backtest._gate(rows, {"n": 100, "covered": 97, "rate": 0.97, "gate": False})
+
+    assert gate["closing_coverage_gate"] is False
+    assert gate["closing_market_outperformance"] is False
 
 
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):

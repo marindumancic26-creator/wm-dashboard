@@ -42,7 +42,8 @@ def evaluate(shadow: dict, backtest: dict, *,
         "backtest_beats_naive": bool((backtest.get("gates") or {}).get("beats_naive_rps")),
         "backtest_logloss_guard": bool(
             (backtest.get("gates") or {}).get("logloss_guard_vs_naive")),
-        "backtest_beats_market": bool((backtest.get("gates") or {}).get("beats_market_rps")),
+        "backtest_closing_market_outperformance": bool(
+            (backtest.get("gates") or {}).get("closing_market_outperformance")),
         "world_cup_finished_confirmed": world_cup_finished_confirmed,
         "human_approved": human_approved,
     }
@@ -66,6 +67,7 @@ def evaluate(shadow: dict, backtest: dict, *,
             "model": backtest.get("model"),
             "market_benchmark": backtest.get("market_benchmark"),
             "market_rps_gap": backtest.get("market_rps_gap"),
+            "primary_candidate": backtest.get("primary_candidate"),
         },
         "note": "Keine automatische Umstellung; WM-Betrieb bleibt bis zur Freigabe aktiv.",
     }
@@ -90,6 +92,7 @@ def write_report(result: dict, path: Path) -> None:
     market = backtest.get("market_benchmark") or {}
     lines += [
         f"- Status: `{backtest.get('status')}`",
+        f"- Primaerer Kandidat: `{backtest.get('primary_candidate')}`",
         f"- Historie/OOS: `{backtest.get('n_history')}` / `{backtest.get('n_out_of_sample')}`",
         f"- Modell-RPS: `{model.get('mean_rps', 'n/a')}`",
         f"- Markt-RPS: `{market.get('mean_rps', 'n/a')}`",

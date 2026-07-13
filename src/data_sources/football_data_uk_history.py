@@ -16,6 +16,16 @@ from src import config
 
 
 BASE_URL = "https://www.football-data.co.uk/mmz4281"
+PINNACLE_STALE_FROM = dt.date(2025, 7, 23)
+OUTCOMES = ("team1_win", "draw", "team2_win")
+BOOKMAKER_CLOSING_COLUMNS = {
+    "bet365": ("B365CH", "B365CD", "B365CA"),
+    "betway": ("BWCH", "BWCD", "BWCA"),
+    "interwetten": ("IWCH", "IWCD", "IWCA"),
+    "pinnacle": ("PSCH", "PSCD", "PSCA"),
+    "william_hill": ("WHCH", "WHCD", "WHCA"),
+    "vcbet": ("VCCH", "VCCD", "VCCA"),
+}
 COMPETITION_DIVISIONS = {
     "premier_league": "E0",
     "la_liga": "SP1",
@@ -39,18 +49,63 @@ def _parse_date(value: str) -> str | None:
     return None
 
 
-def _market_probs(row: dict) -> dict | None:
-    """Durchschnittsquoten proportional entviggen; nur Diagnose, kein Target."""
+def _parse_iso_date(value: str | None) -> dt.date | None:
     try:
-        odds = {"team1_win": float(row["AvgH"]), "draw": float(row["AvgD"]),
-                "team2_win": float(row["AvgA"])}
-        inverse = {key: 1.0 / value for key, value in odds.items() if value > 1.0}
+        return dt.date.fromisoformat((value or "")[:10])
+    except ValueError:
+        return None
+
+
+def _devig_odds(row: dict, columns: tuple[str, str, str]) -> dict | None:
+    try:
+        odds = {outcome: float(row[column])
+                for outcome, column in zip(OUTCOMES, columns)}
+        inverse = {key: 1.0 / value for key, value in odds.items()
+                   if value and value > 1.0}
         total = sum(inverse.values())
         if len(inverse) != 3 or total <= 0:
             return None
         return {key: value / total for key, value in inverse.items()}
     except (KeyError, TypeError, ValueError, ZeroDivisionError):
         return None
+
+
+def _normalize_probs(probs: dict) -> dict | None:
+    total = sum(probs.get(key, 0.0) for key in OUTCOMES)
+    if total <= 0:
+        return None
+    return {key: probs.get(key, 0.0) / total for key in OUTCOMES}
+
+
+def _market_probs(row: dict, match_date: str | None = None) -> tuple[dict | None, dict]:
+    """Closing-Quoten proportional entviggen; nur Benchmark, niemals Target."""
+    parsed_date = _parse_iso_date(match_date)
+    books, excluded = [], []
+    for book, columns in BOOKMAKER_CLOSING_COLUMNS.items():
+        if book == "pinnacle" and parsed_date and parsed_date >= PINNACLE_STALE_FROM:
+            excluded.append({"book": book, "reason": "football_data_stale_after_2025_07_23"})
+            continue
+        probs = _devig_odds(row, columns)
+        if probs:
+            books.append({"book": book, "probs": probs})
+
+    meta = {"closing": True, "source": None, "n_books": len(books),
+            "fallback": False, "excluded": excluded}
+    if books:
+        avg = {key: sum(book["probs"][key] for book in books) / len(books)
+               for key in OUTCOMES}
+        meta["source"] = "bookmaker_closing_consensus"
+        meta["books"] = [book["book"] for book in books]
+        return _normalize_probs(avg), meta
+
+    fallback = _devig_odds(row, ("AvgCH", "AvgCD", "AvgCA"))
+    if fallback:
+        meta["source"] = "avg_closing_fallback"
+        meta["fallback"] = True
+        return fallback, meta
+
+    meta["source"] = "missing_closing"
+    return None, meta
 
 
 def parse_csv(content: bytes, season_start: int,
@@ -69,11 +124,14 @@ def parse_csv(content: bytes, season_start: int,
             continue
         if not (date and home and away):
             continue
+        market_probs, market_meta = _market_probs(row, date)
         matches.append({"date": date, "season": f"{season_start}-{str(season_start + 1)[-2:]}",
                         "season_start": season_start, "home_team": home, "away_team": away,
                         "competition": competition_key,
                         "home_score": home_score, "away_score": away_score,
-                        "market_probs": _market_probs(row)})
+                        "block_key": date,
+                        "market_probs": market_probs,
+                        "market_meta": market_meta})
     return matches
 
 
@@ -103,7 +161,9 @@ def fetch_history(competition_key: str = "premier_league",
             if not rows:
                 raise ValueError("keine gueltigen Ergebniszeilen")
             all_matches.extend(rows)
-            loaded.append({"season_start": season, "n": len(rows), "cache": str(path)})
+            covered = sum(1 for row in rows if row.get("market_probs"))
+            loaded.append({"season_start": season, "n": len(rows), "cache": str(path),
+                           "closing_coverage": round(covered / len(rows), 4)})
         except Exception as exc:
             errors.append({"season_start": season, "error": str(exc)})
     all_matches.sort(key=lambda row: (row["date"], row["home_team"], row["away_team"]))
