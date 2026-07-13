@@ -782,6 +782,84 @@ def test_legacy_market_payloads_never_claim_arbitrage():
     assert "keine Orderbuch-Tiefe" in out["blockers"]
 
 
+def test_competition_registry_contains_required_shadow_competitions():
+    from src.competition_registry import COMPETITIONS
+
+    required = {"premier_league", "la_liga", "bundesliga", "serie_a", "ligue_1",
+                "champions_league", "europa_league", "conference_league"}
+    competitions = {competition.key: competition for competition in COMPETITIONS.all()}
+
+    assert set(competitions) == required
+    assert all(c.operation_mode == "shadow" for c in competitions.values())
+    assert COMPETITIONS.by_provider("football_data", "PL").key == "premier_league"
+    assert competitions["europa_league"].fixture_sources == ("pending_free_provider",)
+
+
+def test_club_registry_uses_exact_aliases_and_locks_unknown_clubs():
+    from src.domain import Club, ClubRegistry, ProviderRef
+
+    registry = ClubRegistry((
+        Club("manchester_united", "Manchester United", ("Man Utd",),
+             (ProviderRef("football_data", "66"),)),
+        Club("manchester_city", "Manchester City", ("Man City",),
+             (ProviderRef("football_data", "65"),)),
+    ))
+
+    assert registry.resolve("  MAN UTD ").club_id == "manchester_united"
+    assert registry.resolve("irrelevant", "football_data", "65").club_id == "manchester_city"
+    partial = registry.resolve("Manchester")
+    assert partial.status == "unknown"
+    assert partial.prediction_allowed is False
+
+
+def test_club_registry_rejects_alias_collisions():
+    import pytest
+    from src.domain import Club, ClubRegistry
+
+    with pytest.raises(ValueError, match="Alias kollidiert"):
+        ClubRegistry((Club("club_a", "Club A", ("United",)),
+                      Club("club_b", "Club B", (" united ",))))
+
+
+def test_canonical_match_id_is_provider_and_reschedule_independent():
+    from src.domain import CanonicalFixture, ProviderRef, canonical_match_id
+
+    match_id = canonical_match_id("premier_league", "2026-27", "md-1",
+                                  "arsenal", "chelsea")
+    fixture = CanonicalFixture(match_id, "premier_league", "2026-27", "md-1",
+                               "2026-08-15T14:00:00Z", "arsenal", "chelsea",
+                               provider_ids=(ProviderRef("football_data", "123"),))
+    rescheduled = CanonicalFixture(match_id, "premier_league", "2026-27", "md-1",
+                                   "2026-08-16T16:30:00+00:00", "arsenal", "chelsea",
+                                   provider_ids=(ProviderRef("espn", "abc"),))
+
+    assert fixture.match_id == rescheduled.match_id
+    assert canonical_match_id("premier_league", "2026-27", "md-1",
+                              "arsenal", "chelsea", leg=2) != match_id
+
+
+def test_replay_snapshot_selects_only_last_pre_kickoff():
+    from src.domain import (CanonicalFixture, ReplaySnapshot, SourceTimestamp,
+                            canonical_match_id, select_last_pre_kickoff)
+
+    match_id = canonical_match_id("premier_league", "2026-27", "md-1",
+                                  "arsenal", "chelsea")
+    fixture = CanonicalFixture(match_id, "premier_league", "2026-27", "md-1",
+                               "2026-08-15T14:00:00Z", "arsenal", "chelsea")
+
+    def snapshot(at):
+        return ReplaySnapshot(fixture, at, "m-test",
+                              (SourceTimestamp("fixture", at),),
+                              {"elo": {"home": 1800, "away": 1750}})
+
+    early = snapshot("2026-08-15T12:00:00Z")
+    last_pre = snapshot("2026-08-15T13:59:59Z")
+    post = snapshot("2026-08-15T14:00:01Z")
+
+    assert select_last_pre_kickoff([post, early, last_pre]) is last_pre
+    assert post.eligible_for_learning is False
+
+
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
     return {"slug": f"m{i}", "team1": "A", "team2": "B",
             "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",
