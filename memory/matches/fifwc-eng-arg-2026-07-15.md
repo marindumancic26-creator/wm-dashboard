@@ -1,9 +1,9 @@
 # England vs. Argentina
 
-Datum: 2026-07-15  |  Stand: 2026-07-14T20:12:25
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-arg-2026-07-15) (Volumen $1,467,714)
+Datum: 2026-07-15  |  Stand: 2026-07-14T20:17:38
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-eng-arg-2026-07-15) (Volumen $1,468,602)
 
-Ensemble: England 35.2% / Remis 33.3% / Argentina 31.6%
+Ensemble: England 35.1% / Remis 33.3% / Argentina 31.7%
 Erwartete Tore: 1.12 : 1.161
 
 Top-Scorelines:
@@ -14,4 +14,4 @@ Top-Scorelines:
 - 1:0 — 10.2%
 - 1:2 — 7.5%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 42.9%, draw 46.3%, team2_win 10.8%
+Whale-Signal (10 Wallets, heuristisch): team1_win 42.3%, draw 46.4%, team2_win 11.3%
