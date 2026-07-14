@@ -1093,3 +1093,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 84 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.431 vs. 0.438).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 14.07.2026 ist fachlich abgeschlossen. Gegenüber dem Vortag kamen 0 neue Auflösungen hinzu: Ensemble-Kalibrierung unverändert bei Brier 0,431, RPS 0,148 und LogLoss 0,757 über n=89. Polymarkt erreicht 0,438/0,150/0,767; das Ensemble führt somit beim Brier um 0,007 und beim LogLoss um 0,010. Kalshi hat den besten RPS von 0,139, basiert aber nur auf n=63 und ist deshalb nicht direkt gleich belastbar.
+
+Mangels neuer Resultate existieren heute keine zusätzlichen Treffer oder Fehlprognosen. Zwei Spiele wurden ohne Fehler verarbeitet; Elo, Bücher, Kalshi und ESPN waren live. FBref war älter als 20 Stunden und StatsBomb weiterhin nur historisch. Es wurden 0 Value-Bets freigegeben und der Gesamtstake blieb bei 0,0%.
+
+Die Referenz-Policy bleibt bei 85 Wetten, 74% Trefferquote und +25,9% ROI. Der wesentlich konservativere Preisindikator beträgt jedoch nur +0,85% CLV über n=71; die Marktbewegung folgte der Modell-Lehne in 51% der Fälle. Das stützt einen kleinen Ensemble-Vorteil, aber noch keinen robusten handelbaren Edge.
+
+Die Gewichtsempfehlung hat Status `data-driven` bei n=89: Polymarkt 0,154, Buchmacher 0,152, Kalshi 0,154, Modell 0,368 und Whale 0,173. Eine Übernahme ist nicht ratsam: Whale bleibt mit Brier-Spannweite 0,000–1,998 über n=84 hochvariant, während sein vorgeschlagenes Gewicht steigen würde. Die aktuellen Gewichte 0,30/0,25/0,10/0,20/0,15 sowie ELO_PER_GOAL=240 sollten unverändert bleiben; der alternative Wert 180 besitzt lediglich Diagnose-Status bei n=88.
+
+Die vorgesehenen Anhänge konnten nicht gespeichert werden, weil der Arbeitsbereich schreibgeschützt bereitgestellt wurde. Der Schreibversuch wurde abgewiesen; dadurch wurden weder Closing-Loop-Report noch Lernprotokoll verändert und folglich auch kein Commit oder Push erzeugt.

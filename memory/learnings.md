@@ -237,3 +237,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Frankreich-Marokko 2:0 war ein neuer Ensemble-Treffer mit Brier 0.179 vs. Polymarkt 0.225 und Buchmacher 0.230; Whale traf extrem mit Brier 0.015, bleibt aber bei Spannweite 0.000-1.998/n=81 hochvariant.
 - [Hypothese] Der Ensemble-Vorsprung ist inzwischen mehr als ein Einzelspiel-Signal, aber noch kein belastbarer Pricing-Edge, weil CLV nur +0.87% bei n=68 und Beat-Close-Rate 50% erreicht.
 - [Aktion] Gewichte nur notieren: 0.156/0.153/0.158/0.368/0.166 fuer Polymarkt/Buchmacher/Kalshi/Modell/Whale; keine Auto-Uebernahme, bis CLV >1.0% und Ensemble-vs.-Markt mehrere Tage stabil positiv bleiben.
+
+## 2026-07-14
+
+- [Beobachtung] 0 neue Auflösungen; Ensemble unverändert bei Brier/RPS/LogLoss 0,431/0,148/0,757 über n=89.
+- [Beobachtung] 85 Referenzwetten liefern +25,9% ROI, aber nur +0,85% CLV über n=71 und 51% Beat-Close-Rate.
+- [Hypothese] Der Brier-Vorsprung von 0,007 gegenüber Polymarkt ist stabil, belegt bei CLV <1,0% aber noch keinen robusten Pricing-Edge.
+- [Aktion] Empfehlung 0,154/0,152/0,154/0,368/0,173 nur notieren; 0 Gewichte ändern und Whale wegen Spannweite 0,000–1,998 nicht erhöhen.
