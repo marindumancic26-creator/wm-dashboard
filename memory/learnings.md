@@ -244,3 +244,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] 85 Referenzwetten liefern +25,9% ROI, aber nur +0,85% CLV über n=71 und 51% Beat-Close-Rate.
 - [Hypothese] Der Brier-Vorsprung von 0,007 gegenüber Polymarkt ist stabil, belegt bei CLV <1,0% aber noch keinen robusten Pricing-Edge.
 - [Aktion] Empfehlung 0,154/0,152/0,154/0,368/0,173 nur notieren; 0 Gewichte ändern und Whale wegen Spannweite 0,000–1,998 nicht erhöhen.
+
+## 2026-07-15
+
+- [Beobachtung] 1 neue Auflösung erhöhte Ensemble-Brier 0,431→0,435 und RPS 0,148→0,150 bei n=89→90.
+- [Beobachtung] Referenz-ROI fiel +25,9%→+24,4% bei 85→86 Wetten; CLV fiel +0,85%→+0,72% bei n=71→72.
+- [Hypothese] Der Brier-Vorsprung von 0,007 gegenüber Polymarkt ist bei nur +0,72% CLV noch kein robuster Pricing-Edge.
+- [Aktion] Empfehlung 0,154/0,151/0,155/0,370/0,170 nur notieren; 0 Parameter ändern und Whale wegen der Brier-Spannweite 0,000–1,998 nicht erhöhen.

@@ -1104,3 +1104,13 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 85 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.435 vs. 0.442).
+
+## Hermes-Analyse
+
+Die tägliche Hermes-Analyse für den 15.07.2026 ist fachlich abgeschlossen. Neu aufgelöst wurde Frankreich–Spanien 0:2. Das Ensemble lag falsch und erreichte Brier 0,751; das Modell war mit 0,553 am besten, Whale mit 1,250 am schlechtesten. Damit verschlechterte sich das Ensemble rollierend von Brier/RPS/LogLoss 0,431/0,148/0,757 auf 0,435/0,150/0,762 bei n=89→90.
+
+Im Vollsample schlägt das Ensemble den Polymarkt weiterhin knapp: Brier 0,435 vs. 0,442, RPS 0,150 vs. 0,151 und LogLoss 0,762 vs. 0,772, jeweils n=90. Kalshi liefert den besten RPS von 0,139, basiert aber nur auf n=63. Whale bleibt mit Brier/RPS/LogLoss 0,501/0,187/1,225 und einer Brier-Spannweite von 0,000–1,998 über n=85 die schwächste und volatilste Quelle.
+
+Die Referenz-Policy fiel durch die neue Fehlwette von 74% auf 73% Trefferquote und von +25,9% auf +24,4% ROI bei 85→86 Wetten. Der durchschnittliche CLV sank von +0,85% auf +0,72% bei n=71→72; die Beat-Close-Rate blieb bei 51%. Der Ensemble-Vorteil ist messbar, aber weiterhin kein robuster handelbarer Pricing-Edge. Es wurden 0 Value-Bets und 0,0% Gesamtstake freigegeben.
+
+Die datenbasierte Gewichtsempfehlung bei n=90 lautet Polymarkt/Buchmacher/Kalshi/Modell/Whale = 0,154/0,151/0,155/0,370/0,170. Sie sollte nicht übernommen werden, weil Whale trotz hoher Varianz gegenüber seinem aktuellen defensiven Gewicht von 0,150 angehoben würde. Die aktuellen Gewichte 0,30/0,25/0,10/0,20/0,15 bleiben ebenso unverändert wie ELO_PER_GOAL=240; der Kandidat 180 besitzt bei n=89 und einer Walk-forward-RPS-Marge von 0,0069 nur Diagnose-Status. Schritte 2 und 5 sind damit vollständig ausgeführt; die Inhalte für Schritte 3 und 4 sind fertig analysiert, aber nicht in die Projektdateien geschrieben. Entsprechend waren auch Commit und Push nicht möglich.
