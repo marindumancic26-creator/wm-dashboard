@@ -1126,3 +1126,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 87 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.443 vs. 0.449).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 19.07.2026 ist fachlich abgeschlossen. Der Tageslauf war technisch sauber: 1 Spiel verarbeitet, 0 Fehler, Kalibrierung über n=92 aufgelöste Spiele. Beim neuen Abschluss Frankreich–England 4:6 erzielte das Ensemble einen schwachen Brier von 0,959; Modell 0,680, Polymarkt 0,892, Buchmacher 0,897 und Whale 1,966. Elo war live, StatsBomb nur historisch und FBref älter als 20 Stunden; diese Datenbegrenzungen sind mögliche, aber nicht bewiesene Fehlerursachen.
+
+Rollierend schlägt das Ensemble den direkt vergleichbaren Polymarkt: Brier/RPS/LogLoss 0,443/0,155/0,774 gegenüber 0,450/0,156/0,783 bei jeweils n=92. Kalshi führt bei RPS und LogLoss mit 0,139/0,767, beruht jedoch nur auf n=63. Das Ensemble liefert damit einen kleinen Diversifikationsvorteil, aber keinen dominanten Kalibrierungsvorsprung.
+
+Die Referenzstrategie erreicht bei 88 Wetten eine Trefferquote von 72 % und einen ROI von +21,6 %. Der CLV liegt dagegen nur bei +0,75 % über n=74; die Beat-Close-Rate beträgt 51 %. Damit ist die Rendite positiv, der Nachweis eines stabilen Pricing-Edges anhand der Marktbewegung aber weiterhin schwach.
+
+Die Gewichtsempfehlung hat den Status `data-driven` bei n=92: Polymarkt 0,154, Buchmacher 0,151, Kalshi 0,158, Modell 0,376 und Whale 0,161. Eine Übernahme empfehle ich derzeit nicht. Insbesondere sollte Whale wegen Brier 0,525, LogLoss 1,269 und einer Brier-Spannweite von 0,000 bis 1,998 über n=87 nicht von 0,150 auf 0,161 erhöht werden. Auch der diagnostische Vorschlag ELO_PER_GOAL 240→180 bei n=90 und einem Walk-forward-RPS-Vorteil von 0,0095 sollte separat validiert werden.
+
+Die vorgeschriebenen Anhänge an den Closing-Loop-Report und `memory/learnings.md` wurden versucht, aber vom schreibgeschützten Arbeitsbereich abgewiesen. Deshalb wurden 0 Dateien, 0 Gewichte, 0 Parameter und 0 Schutzleitplanken verändert. Der laut AGENTS.md vorgesehene claude-mem-Zugriff war ebenfalls nicht verfügbar.

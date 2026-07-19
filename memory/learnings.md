@@ -265,3 +265,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Ensemble schlägt Polymarkt mit Brier 0,438 vs. 0,445; CLV beträgt +0,71 % bei n=73 und Beat-Close 52 %.
 - [Hypothese] Der Ensemble-Vorsprung ist ein Diversifikationssignal, aber noch kein robuster Preis-Edge; Whale bleibt bei Brier 0,508 und LogLoss 1,227 über n=86 zu variant.
 - [Aktion] Gewichte 0,153/0,150/0,156/0,371/0,170 nur notieren; 0 automatische Änderungen, bis CLV klar über 1,0 % und die Mehrtagestendenz stabil bleibt.
+
+## 2026-07-19
+
+- [Beobachtung] Ensemble Brier/RPS/LogLoss 0,443/0,155/0,774 bei n=92 schlägt Polymarkt 0,450/0,156/0,783; Kalshi führt RPS/LogLoss mit 0,139/0,767 bei n=63.
+- [Beobachtung] Frankreich–England 4:6 ergab Brier 0,959 Ensemble, 0,680 Modell und 1,966 Whale; ROI +21,6 % bei 88 Wetten, CLV +0,75 % bei n=74.
+- [Hypothese] Der Ensemble-Vorsprung ist ein kleines Diversifikationssignal, aber CLV +0,75 % und Beat-Close 51 % belegen noch keinen robusten Pricing-Edge.
+- [Aktion] Gewichte 0,154/0,151/0,158/0,376/0,161 nur notieren und 0 Parameter ändern; Whale wegen LogLoss 1,269 und Spannweite 0,000–1,998 bei n=87 nicht erhöhen.
