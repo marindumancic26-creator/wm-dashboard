@@ -1,17 +1,17 @@
 # Spain vs. Argentina
 
-Datum: 2026-07-19  |  Stand: 2026-07-19T23:00:22
-Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-arg-2026-07-19) (Volumen $30,093,831)
+Datum: 2026-07-19  |  Stand: 2026-07-20T00:05:09
+Quelle: [Polymarket](https://polymarket.com/event/fifwc-esp-arg-2026-07-19) (Volumen $46,766,790)
 
-Ensemble: Spain 33.9% / Remis 50.1% / Argentina 16.0%
-Erwartete Tore: 0.775 : 0.514
+Ensemble: Spain 18.1% / Remis 69.9% / Argentina 11.9%
+Erwartete Tore: 0.53 : 0.512
 
 Top-Scorelines:
 
-- 0:0 — 28.9%
-- 1:0 — 20.1%
-- 0:1 — 12.9%
-- 1:1 — 11.7%
-- 2:0 — 8.3%
+- 0:0 — 36.9%
+- 1:0 — 17.0%
+- 0:1 — 16.8%
+- 1:1 — 10.5%
+- 2:0 — 5.0%
 
-Whale-Signal (10 Wallets, heuristisch): team1_win 27.8%, draw 71.5%, team2_win 0.8%
+Whale-Signal (10 Wallets, heuristisch): team1_win 0.0%, draw 99.9%, team2_win 0.0%
