@@ -272,3 +272,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Frankreich–England 4:6 ergab Brier 0,959 Ensemble, 0,680 Modell und 1,966 Whale; ROI +21,6 % bei 88 Wetten, CLV +0,75 % bei n=74.
 - [Hypothese] Der Ensemble-Vorsprung ist ein kleines Diversifikationssignal, aber CLV +0,75 % und Beat-Close 51 % belegen noch keinen robusten Pricing-Edge.
 - [Aktion] Gewichte 0,154/0,151/0,158/0,376/0,161 nur notieren und 0 Parameter ändern; Whale wegen LogLoss 1,269 und Spannweite 0,000–1,998 bei n=87 nicht erhöhen.
+
+## 2026-07-20
+
+- [Beobachtung] ensemble fuehrt rollierend bei n=0 mit Brier/RPS/LogLoss None/None/None; Ensemble liegt bei None/None/None.
+- [Beobachtung] Daily verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
+- [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
+- [Aktion] `weights_suggestion` nur notieren (market 0.300, books 0.250, kalshi 0.100, model 0.200, whale 0.150); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
