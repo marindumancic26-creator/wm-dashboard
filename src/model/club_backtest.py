@@ -23,6 +23,9 @@ DEFAULT_COMPETITIONS = tuple(history.COMPETITION_DIVISIONS)
 DECAYED_RHO_GRID = (0.0, -0.05, -0.10, -0.15)
 DECAYED_HALF_LIFE_GRID = (180, 365, 730)
 OUTCOMES = ("team1_win", "draw", "team2_win")
+MARKET_RESIDUAL_ALPHA_GRID = (0.0, 0.025, 0.05, 0.075, 0.10)
+MARKET_TEMPERATURE_GRID = (0.90, 0.95, 1.0, 1.05, 1.10)
+MARKET_DRAW_MULTIPLIER_GRID = (0.90, 0.95, 1.0, 1.05, 1.10)
 
 
 def _outcome(match: dict) -> str:
@@ -185,6 +188,85 @@ def _score_prediction_rows(rows: list[dict], key: str = "probs",
 def _market_score(rows: list[dict]) -> dict | None:
     return _round_score(_score_raw([(row["market_probs"], row["outcome"])
                                     for row in rows if row.get("market_probs")]))
+
+
+def _adjust_market(market: dict, temperature: float,
+                   draw_multiplier: float) -> dict:
+    power = 1.0 / max(temperature, 1e-6)
+    adjusted = {key: max(market[key], 1e-12) ** power for key in OUTCOMES}
+    adjusted["draw"] *= draw_multiplier
+    total = sum(adjusted.values())
+    return {key: adjusted[key] / total for key in OUTCOMES}
+
+
+def _blend_market_residual(market: dict, model: dict, alpha: float,
+                           temperature: float = 1.0,
+                           draw_multiplier: float = 1.0) -> dict:
+    """Kleine Modellkorrektur des Closing-Konsenses; alpha=0 ist der Markt."""
+    adjusted_market = _adjust_market(market, temperature, draw_multiplier)
+    blended = {key: (1.0 - alpha) * adjusted_market[key] + alpha * model[key]
+               for key in OUTCOMES}
+    total = sum(blended.values())
+    return {key: blended[key] / total for key in OUTCOMES}
+
+
+def _market_residual_candidate(rows: list[dict]) -> dict:
+    """Waehlt die Residualstaerke nur auf bereits abgeschlossenen Saisons."""
+    paired = [row for row in rows if row.get("market_probs")]
+    seasons = sorted({row["match"].get("season_start") for row in paired})
+    transformed, selections = [], []
+    for season in seasons:
+        prior = [row for row in paired
+                 if row["match"].get("season_start") < season]
+        current = [row for row in paired
+                   if row["match"].get("season_start") == season]
+        best = (0.0, 1.0, 1.0)
+        if prior:
+            candidates = []
+            for alpha in MARKET_RESIDUAL_ALPHA_GRID:
+                for temperature in MARKET_TEMPERATURE_GRID:
+                    for draw_multiplier in MARKET_DRAW_MULTIPLIER_GRID:
+                        scored = _score_raw([
+                            (_blend_market_residual(
+                                row["market_probs"], row["probs"], alpha,
+                                temperature, draw_multiplier), row["outcome"])
+                            for row in prior
+                        ])
+                        candidates.append((
+                            scored["mean_rps"] + 0.25 * scored["mean_log_loss"],
+                            scored["mean_rps"], scored["mean_log_loss"],
+                            alpha, temperature, draw_multiplier))
+            chosen = min(candidates)
+            best = (chosen[3], chosen[4], chosen[5])
+        best_alpha, temperature, draw_multiplier = best
+        selections.append({"season_start": season, "train_n": len(prior),
+                           "alpha": best_alpha, "temperature": temperature,
+                           "draw_multiplier": draw_multiplier})
+        for row in current:
+            transformed.append({
+                **row,
+                "base_model_probs": row["probs"],
+                "probs": _blend_market_residual(
+                    row["market_probs"], row["probs"], best_alpha,
+                    temperature, draw_multiplier),
+                "market_residual_alpha": best_alpha,
+            })
+    coverage = _coverage([row["match"] for row in transformed])
+    gates = _gate(transformed, coverage)
+    return {
+        "candidate": "closing_residual_blend",
+        "status": "diagnostic" if transformed else "insufficient_data",
+        "n_out_of_sample": len(transformed),
+        "model": _score_prediction_rows(transformed, market_only=True),
+        "market_benchmark": _market_score(transformed),
+        "gates": gates,
+        "diagnostics": _diagnostics(transformed),
+        "market_rps_gap": gates.get("delta_rps"),
+        "selections": selections,
+        "release_status": "blocked", "auto_apply": False,
+        "note": "Closing-Markt plus nur auf frueheren Saisons gewaehlte Modellkorrektur.",
+        "_rows": transformed,
+    }
 
 
 def _coverage(matches: list[dict]) -> dict:
@@ -392,11 +474,12 @@ def prequential_candidate_eval(matches: list[dict],
     return result
 
 
-def _aggregate_prequential(results: list[dict]) -> dict:
+def _aggregate_prequential(results: list[dict],
+                           candidate: str = "decayed_dixon_coles") -> dict:
     rows = [row for result in results for row in result.get("_rows", [])]
     coverage = _coverage([row["match"] for row in rows])
     gates = _gate(rows, coverage)
-    return {"candidate": "decayed_dixon_coles",
+    return {"candidate": candidate,
             "status": "diagnostic" if rows else "insufficient_data",
             "n_out_of_sample": len(rows),
             "model": _score_prediction_rows(rows, market_only=True),
@@ -482,11 +565,13 @@ def _weighted_summary(results: list[dict], key: str) -> dict | None:
 
 def walk_forward_by_competition(histories: dict,
                                 rho: float = config.DIXON_COLES_RHO) -> dict:
-    competition_results, decayed_results = {}, []
+    competition_results, decayed_results, residual_results = {}, [], []
     for key, loaded in histories.get("competitions", {}).items():
         result = walk_forward_eval(loaded.get("matches", []), rho)
         decayed = prequential_candidate_eval(loaded.get("matches", []), include_rows=True)
+        residual = _market_residual_candidate(decayed.get("_rows", []))
         decayed_public = {k: v for k, v in decayed.items() if k != "_rows"}
+        residual_public = {k: v for k, v in residual.items() if k != "_rows"}
         result["candidates"] = {
             "current_maher_poisson": {
                 "candidate": "current_maher_poisson",
@@ -499,22 +584,27 @@ def walk_forward_by_competition(histories: dict,
                 "auto_apply": False,
             },
             "decayed_dixon_coles": decayed_public,
+            "closing_residual_blend": residual_public,
         }
         result["competition"] = key
         result["data_source"] = {field: loaded.get(field) for field in
                                  ("status", "source", "seasons", "errors", "note")}
         competition_results[key] = result
         decayed_results.append(decayed)
+        residual_results.append(residual)
 
     diagnostics = [result for result in competition_results.values()
                    if result.get("status") == "diagnostic"]
     decayed_summary = _aggregate_prequential(decayed_results)
-    model_score = decayed_summary.get("model") or _weighted_summary(diagnostics, "model")
+    residual_summary = _aggregate_prequential(
+        residual_results, candidate="closing_residual_blend")
+    primary_summary = residual_summary
+    model_score = primary_summary.get("model") or _weighted_summary(diagnostics, "model")
     naive_score = decayed_summary.get("naive") or _weighted_summary(diagnostics, "naive")
-    market_score = decayed_summary.get("market_benchmark") or _weighted_summary(diagnostics, "market_benchmark")
+    market_score = primary_summary.get("market_benchmark") or _weighted_summary(diagnostics, "market_benchmark")
     market_gap = (round(model_score["mean_rps"] - market_score["mean_rps"], 4)
                   if model_score and market_score else None)
-    full_gate = (decayed_summary.get("gates") or {}).get("closing_market_outperformance")
+    full_gate = (primary_summary.get("gates") or {}).get("closing_market_outperformance")
     gates = {
         "minimum_history": bool(diagnostics),
         "beats_naive_rps": bool(model_score and naive_score and
@@ -529,7 +619,7 @@ def walk_forward_by_competition(histories: dict,
         "closing_market_outperformance": bool(full_gate),
     }
     gates.update({f"closing_gate_{key}": value for key, value
-                  in (decayed_summary.get("gates") or {}).items()
+                  in (primary_summary.get("gates") or {}).items()
                   if key != "league_breakdown"})
     return {"status": "diagnostic" if diagnostics else "insufficient_data",
             "n_history": sum(result.get("n_history", 0)
@@ -537,9 +627,10 @@ def walk_forward_by_competition(histories: dict,
             "n_out_of_sample": sum(result.get("n_out_of_sample", 0)
                                    for result in competition_results.values()),
             "rho_fixed": rho, "competitions": competition_results,
-            "primary_candidate": "decayed_dixon_coles",
-            "candidates": {"decayed_dixon_coles": decayed_summary},
-            "diagnostics": decayed_summary.get("diagnostics"),
+            "primary_candidate": "closing_residual_blend",
+            "candidates": {"decayed_dixon_coles": decayed_summary,
+                           "closing_residual_blend": residual_summary},
+            "diagnostics": primary_summary.get("diagnostics"),
             "model": model_score, "naive": naive_score,
             "market_benchmark": market_score, "gates": gates,
             "market_rps_gap": market_gap,
@@ -552,20 +643,24 @@ def write_report(result: dict, path: Path) -> None:
              f"Status: **{result['status']}**  ",
              f"Historie: {result['n_history']} Spiele; Out-of-sample: {result['n_out_of_sample']}  ",
              f"rho fixiert auf aktuelle Config: `{result['rho_fixed']}`  ",
-             f"Primaerer Kandidat: `{result.get('primary_candidate', 'current_maher_poisson')}`  ",
-             "Freigabe: **BLOCKIERT** (Report-only, keine Auto-Uebernahme)", "",
-             "| Testsaison | Train n | Test n | Modell RPS | Naiv RPS | Markt RPS | Modell besser? |",
-             "|---:|---:|---:|---:|---:|---:|---|"]
+             f"Primaerer Kandidat: `{result.get('primary_candidate', 'current_maher_poisson')}`",
+             "Freigabe: **BLOCKIERT** (Report-only, keine Auto-Uebernahme)"]
     if result.get("competitions"):
         lines += ["", "## Wettbewerbe", ""]
         for key, comp in result["competitions"].items():
-            model = comp.get("model") or {}
-            market = comp.get("market_benchmark") or {}
+            primary = (comp.get("candidates") or {}).get(
+                result.get("primary_candidate"), comp)
+            model = primary.get("model") or {}
+            market = primary.get("market_benchmark") or {}
             lines.append(f"- `{key}`: Status `{comp['status']}`, Historie "
                          f"`{comp['n_history']}`, OOS `{comp['n_out_of_sample']}`, "
                          f"Modell-RPS `{model.get('mean_rps', 'n/a')}`, "
                          f"Markt-RPS `{market.get('mean_rps', 'n/a')}`")
-        lines += ["", "## Folds je Wettbewerb", ""]
+        lines += ["", "## Tor-Modell-Folds je Wettbewerb"]
+    else:
+        lines += ["", "## Folds"]
+    lines += ["", "| Testsaison | Train n | Test n | Modell RPS | Naiv RPS | Markt RPS | Modell besser? |",
+              "|---:|---:|---:|---:|---:|---:|---|"]
 
     fold_rows = result.get("folds", [])
     if result.get("competitions"):
@@ -585,6 +680,17 @@ def write_report(result: dict, path: Path) -> None:
         lines.append(f"| {season_label} | {fold['train_n']} | {fold['test_n']} | "
                      f"{fold['model']['mean_rps']} | {fold['naive']['mean_rps']} | "
                      f"{market.get('mean_rps', 'n/a')} | {model_beats_naive} |")
+    if result.get("primary_candidate") == "closing_residual_blend":
+        lines += ["", "## Residual-Auswahl je Testsaison", "",
+                  "| Liga | Saison | Training n | Modellanteil | Markt-Temperatur | Remis-Faktor |",
+                  "|---|---:|---:|---:|---:|---:|"]
+        for key, comp in result.get("competitions", {}).items():
+            residual = (comp.get("candidates") or {}).get("closing_residual_blend", {})
+            for selection in residual.get("selections", []):
+                lines.append(
+                    f"| {key} | {selection['season_start']} | {selection['train_n']} | "
+                    f"{selection['alpha']:.3f} | {selection['temperature']:.2f} | "
+                    f"{selection['draw_multiplier']:.2f} |")
     lines += ["", "## Gesamt (Out-of-sample)", ""]
     for label, key in (("Modell", "model"), ("Naive Basisrate", "naive"),
                        ("Markt-Benchmark", "market_benchmark")):
@@ -614,7 +720,9 @@ def write_report(result: dict, path: Path) -> None:
                 lines.append(f"- `{bucket}`: n `{values['n']}`, "
                              f"Delta RPS `{values['delta_rps']}`, "
                              f"Delta LogLoss `{values['delta_logloss']}`")
-    lines += ["", "_Marktpreise wurden nicht trainiert oder optimiert; sie dienen nur als Diagnose._", ""]
+    lines += ["", "_Das Tor-Modell nutzt Marktpreise nie als Trainingsziel. Der explizit "
+              "benannte Closing-Residualkandidat verwendet den Closing-Konsens als Eingabe; "
+              "seine Korrekturparameter werden ausschliesslich auf frueheren Saisons gewaehlt._", ""]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
 

@@ -1673,6 +1673,61 @@ def test_closing_gate_fails_without_coverage(monkeypatch):
     assert gate["closing_market_outperformance"] is False
 
 
+def test_market_residual_blend_is_normalized_and_alpha_zero_is_market():
+    from src.model import club_backtest
+
+    market = {"team1_win": 0.5, "draw": 0.3, "team2_win": 0.2}
+    model = {"team1_win": 0.2, "draw": 0.2, "team2_win": 0.6}
+
+    unchanged = club_backtest._blend_market_residual(market, model, 0.0)
+    blended = club_backtest._blend_market_residual(market, model, 0.1)
+
+    assert unchanged == pytest.approx(market)
+    assert sum(blended.values()) == pytest.approx(1.0)
+    assert blended["team2_win"] > market["team2_win"]
+
+
+def test_market_residual_selection_never_uses_current_season_outcome():
+    from src.model import club_backtest
+
+    def row(season, outcome):
+        return {
+            "match": {"season_start": season, "competition": "test"},
+            "probs": {"team1_win": 0.8, "draw": 0.1, "team2_win": 0.1},
+            "market_probs": {"team1_win": 0.2, "draw": 0.2, "team2_win": 0.6},
+            "outcome": outcome, "block_key": str(season),
+            "promoted_match": False, "block_index": 1,
+            "expected_goals": 2.6, "strength_diff": 0.5,
+            "favorite_prob": 0.8, "is_draw": outcome == "draw",
+        }
+
+    first = club_backtest._market_residual_candidate([
+        row(2022, "team1_win"), row(2023, "team1_win"),
+        row(2024, "team1_win")])
+    changed_future = club_backtest._market_residual_candidate([
+        row(2022, "team1_win"), row(2023, "team1_win"),
+        row(2024, "team2_win")])
+
+    first_selection = first["selections"][0]
+    selection_2024 = first["selections"][2]
+    changed_selection_2024 = changed_future["selections"][2]
+    assert first_selection == {"season_start": 2022, "train_n": 0,
+                               "alpha": 0.0, "temperature": 1.0,
+                               "draw_multiplier": 1.0}
+    assert selection_2024 == changed_selection_2024
+    assert selection_2024["train_n"] == 2
+
+
+def test_market_residual_candidate_stays_unavailable_without_closing_prices():
+    from src.model import club_backtest
+
+    result = club_backtest._market_residual_candidate([])
+
+    assert result["status"] == "insufficient_data"
+    assert result["release_status"] == "blocked"
+    assert result["auto_apply"] is False
+
+
 def _tuning_case(i, outcome="team1_win", elo1=1950, elo2=1650):
     return {"slug": f"m{i}", "team1": "A", "team2": "B",
             "forecast_at": f"2026-06-{i + 1:02d}T10:00:00+00:00",
