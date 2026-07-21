@@ -89,6 +89,14 @@ def _now_utc() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
+def _system_utc(value: dt.datetime) -> str:
+    """Canonical lossless system-receipt timestamp at microsecond precision."""
+    if value.tzinfo is None or value.utcoffset() != dt.timedelta(0):
+        raise ValidationError("System-Receipt-Zeit muss explizit UTC sein")
+    return value.astimezone(dt.timezone.utc).isoformat(
+        timespec="microseconds").replace("+00:00", "Z")
+
+
 def _probs(value: object, field: str) -> dict[str, float]:
     if not isinstance(value, dict) or set(value) != set(OUTCOMES):
         raise ValidationError(f"{field} braucht exakt die drei 1X2-Ausgaenge")
@@ -502,7 +510,7 @@ def write_forecast(root: Path, record: dict) -> dict:
     payload = dict(record)
     payload.update({"manifest_sha256": manifest["manifest_sha256"],
                     "population_sha256": population["population_sha256"],
-                    "written_at_utc": written_at.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                    "written_at_utc": _system_utc(written_at),
                     "cutoff_utc": cutoff.isoformat().replace("+00:00", "Z"),
                     **_blocked_fields()})
     return _write(root, version, "forecasts", match_id, record["forecast_id"], payload)
@@ -565,7 +573,7 @@ def write_closing(root: Path, record: dict) -> dict:
     payload = dict(record)
     payload.update({"manifest_sha256": manifest["manifest_sha256"],
                     "population_sha256": population["population_sha256"],
-                    "written_at_utc": written_at.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                    "written_at_utc": _system_utc(written_at),
                     **_blocked_fields()})
     return _write(root, version, "closings", match_id, record["closing_id"], payload)
 
@@ -671,7 +679,7 @@ def write_result(root: Path, record: dict) -> dict:
     payload = {**record, "scheduled_kickoff_utc": fixture["scheduled_kickoff_utc"],
                "manifest_sha256": manifest["manifest_sha256"],
                "population_sha256": population["population_sha256"], **_blocked_fields()}
-    payload["written_at_utc"] = written_at.isoformat(timespec="seconds").replace("+00:00", "Z")
+    payload["written_at_utc"] = _system_utc(written_at)
     return _write(root, version, "results", match_id, record["result_id"], payload)
 
 
@@ -722,6 +730,117 @@ def _blocked(version: str, note: str) -> dict:
             **_blocked_fields(), "note": note}
 
 
+def _artifact_snapshot(root: Path, version: str, population: dict, *,
+                       artifact_cutoff: dt.datetime | None = None) -> tuple[dict, dict]:
+    digests = {kind: {} for kind in ("forecasts", "closings", "results")}
+    result_receipts = {}
+    for fixture in population["fixtures"]:
+        match_id = fixture["match_id"]
+        for kind in digests:
+            artifact = _one_record(root, version, kind, match_id)
+            if artifact is not None:
+                written_at = _utc(artifact["written_at_utc"], "written_at_utc")
+                if artifact_cutoff is not None and written_at > artifact_cutoff:
+                    raise IntegrityError("Artefakt wurde nach Reservation/Cutoff geschrieben")
+                digests[kind][match_id] = artifact["_artifact_digest"]
+                if kind == "results":
+                    result_receipts[match_id] = artifact["written_at_utc"]
+    return digests, result_receipts
+
+
+def _checkpoint_chain(root: Path, version: str, manifest: dict,
+                      selected_index: int) -> str | None:
+    """Validate every predecessor, not merely the selected receipt's backlink."""
+    population = load_population(root, version)
+    previous_digest = None
+    for scheduled in manifest["evaluation_schedule"][:selected_index]:
+        receipt, digest = _read(Path(root) / version / "evaluations" /
+                                f"{scheduled['checkpoint_id']}.json", "evaluation_receipt")
+        if (receipt.get("candidate_version") != version
+                or receipt.get("checkpoint_id") != scheduled["checkpoint_id"]
+                or receipt.get("manifest_sha256") != manifest["manifest_sha256"]
+                or receipt.get("population_sha256") != population["population_sha256"]
+                or receipt.get("checkpoint_opens_at_utc") != scheduled["opens_at_utc"]
+                or receipt.get("checkpoint_closes_at_utc") != scheduled["closes_at_utc"]
+                or receipt.get("previous_receipt_sha256") != previous_digest):
+            raise IntegrityError("Vollstaendige Checkpoint-Receipt-Chain ist ungueltig")
+        reservation, reservation_digest = _read(
+            Path(root) / version / "checkpoint_reservations" /
+            f"{scheduled['checkpoint_id']}.json", "checkpoint_reservation")
+        if (receipt.get("checkpoint_reservation_sha256") != reservation_digest
+                or reservation.get("candidate_version") != version
+                or reservation.get("lockbox_id") != manifest["lockbox_id"]
+                or reservation.get("epoch_id") != manifest["epoch_id"]
+                or reservation.get("checkpoint_id") != scheduled["checkpoint_id"]
+                or reservation.get("manifest_sha256") != manifest["manifest_sha256"]
+                or reservation.get("population_sha256") != population["population_sha256"]
+                or reservation.get("previous_receipt_sha256") != previous_digest
+                or reservation.get("artifact_digests") != receipt.get("artifact_digests")
+                or reservation.get("result_system_receipts") != receipt.get(
+                    "result_system_receipts")
+                or reservation.get("artifact_cutoff_at_utc") != receipt.get(
+                    "artifact_cutoff_at_utc")
+                or reservation.get("reserved_at_utc") != receipt.get("evaluated_at_utc")):
+            raise IntegrityError("Checkpoint-Reservation/Receipt-Bindung ist ungueltig")
+        previous_digest = digest
+    return previous_digest
+
+
+def reserve_checkpoint(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
+                       checkpoint_id: str) -> dict:
+    """Create the local append-only evidence cutoff before the first formal calculation.
+
+    This is a local tamper-evident anchor, not an external WORM guarantee.
+    """
+    version, checkpoint_id = _safe(version, "candidate_version"), _safe(
+        checkpoint_id, "checkpoint_id")
+    manifest, population = load_manifest(root, version), load_population(root, version)
+    checkpoint = next((row for row in manifest["evaluation_schedule"]
+                       if row["checkpoint_id"] == checkpoint_id), None)
+    if checkpoint is None:
+        raise ValidationError("Checkpoint ist nicht manifestiert")
+    path = Path(root) / version / "checkpoint_reservations" / f"{checkpoint_id}.json"
+    selected_index = manifest["evaluation_schedule"].index(checkpoint)
+    previous_digest = _checkpoint_chain(root, version, manifest, selected_index)
+    if path.exists():
+        payload, digest = _read(path, "checkpoint_reservation")
+        if (payload.get("candidate_version") != version
+                or payload.get("lockbox_id") != manifest["lockbox_id"]
+                or payload.get("epoch_id") != manifest["epoch_id"]
+                or payload.get("checkpoint_id") != checkpoint_id
+                or payload.get("checkpoint_opens_at_utc") != checkpoint["opens_at_utc"]
+                or payload.get("checkpoint_closes_at_utc") != checkpoint["closes_at_utc"]
+                or payload.get("manifest_sha256") != manifest["manifest_sha256"]
+                or payload.get("population_sha256") != population["population_sha256"]
+                or payload.get("previous_receipt_sha256") != previous_digest
+                or payload.get("artifact_cutoff_at_utc") != payload.get("reserved_at_utc")):
+            raise IntegrityError("Checkpoint-Reservation ist nicht vollstaendig gebunden")
+        return {**payload, "checkpoint_reservation_sha256": digest,
+                "write_status": "idempotent"}
+    reserved_at = _now_utc()
+    opened = _utc(checkpoint["opens_at_utc"], "checkpoint.opens_at_utc")
+    closed = _utc(checkpoint["closes_at_utc"], "checkpoint.closes_at_utc")
+    if not opened <= reserved_at <= closed:
+        raise ValidationError("Checkpoint-Reservation liegt ausserhalb des Fensters")
+    artifact_digests, result_receipts = _artifact_snapshot(
+        root, version, population, artifact_cutoff=reserved_at)
+    timestamp = _system_utc(reserved_at)
+    payload = {"candidate_version": version, "lockbox_id": manifest["lockbox_id"],
+               "epoch_id": manifest["epoch_id"], "checkpoint_id": checkpoint_id,
+               "checkpoint_opens_at_utc": checkpoint["opens_at_utc"],
+               "checkpoint_closes_at_utc": checkpoint["closes_at_utc"],
+               "reserved_at_utc": timestamp, "artifact_cutoff_at_utc": timestamp,
+               "manifest_sha256": manifest["manifest_sha256"],
+               "population_sha256": population["population_sha256"],
+               "artifact_digests": artifact_digests,
+               "result_system_receipts": result_receipts,
+               "previous_receipt_sha256": previous_digest, **_blocked_fields()}
+    envelope = _envelope("checkpoint_reservation", payload)
+    status = _atomic_create(path, envelope)
+    return {**payload, "checkpoint_reservation_sha256": envelope["integrity"]["digest"],
+            "write_status": status}
+
+
 def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
              evaluation_mode: str = "production", checkpoint_id: str | None = None) -> dict:
     """Evaluate one frozen epoch. Production settings come only from its manifest."""
@@ -733,6 +852,7 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
         manifest, population = load_manifest(root, version), load_population(root, version)
         checkpoint_valid = False
         checkpoint = None
+        checkpoint_reservation = None
         if not test_mode:
             requested = _safe(checkpoint_id, "checkpoint_id")
             checkpoint = next((row for row in manifest["evaluation_schedule"]
@@ -742,8 +862,14 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
             evaluated_at = _now_utc()
             opened = _utc(checkpoint["opens_at_utc"], "checkpoint.opens_at_utc")
             closed = _utc(checkpoint["closes_at_utc"], "checkpoint.closes_at_utc")
-            if not opened <= evaluated_at <= closed:
+            receipt_exists = (Path(root) / version / "evaluations" /
+                              f"{requested}.json").exists()
+            if not receipt_exists and not opened <= evaluated_at <= closed:
                 raise ValidationError("Formale Evaluation liegt ausserhalb des Checkpoint-Fensters")
+            checkpoint_reservation = reserve_checkpoint(
+                root, version, checkpoint_id=requested)
+            evaluated_at = _utc(checkpoint_reservation["reserved_at_utc"],
+                                "checkpoint.reserved_at_utc")
             checkpoint_valid = True
         fixtures = {row["match_id"]: row for row in population["fixtures"]}
         rows, missing = [], []
@@ -765,6 +891,9 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
                 seen_ids[kind].add(record_id)
                 seen_digests[kind].add(digest)
                 artifact_receipts[kind][match_id] = digest
+                if (not test_mode
+                        and _utc(artifact["written_at_utc"], "written_at_utc") > evaluated_at):
+                    raise IntegrityError("Artefakt wurde nach Checkpoint/Evaluation geschrieben")
             absent = [name for name, value in (("forecast", forecast), ("closing", closing),
                                                 ("result", result)) if value is None]
             if absent:
@@ -890,14 +1019,24 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
             "checkpoint_id": checkpoint_id if not test_mode else None,
             **_blocked_fields(), "note": "Shadow-Lockbox; reale Freigabe bleibt blockiert."}
     if not test_mode:
+        if (artifact_receipts != checkpoint_reservation["artifact_digests"]
+                or {match_id: _one_record(root, version, "results", match_id)["written_at_utc"]
+                    for match_id in artifact_receipts["results"]}
+                != checkpoint_reservation["result_system_receipts"]):
+            return _blocked(version, "Checkpoint-Receipt-Konflikt: Evidenz nach Reservation geaendert")
         receipt_payload = {"candidate_version": version, "checkpoint_id": checkpoint_id,
                            "checkpoint_opens_at_utc": checkpoint["opens_at_utc"],
                            "checkpoint_closes_at_utc": checkpoint["closes_at_utc"],
-                           "evaluated_at_utc": evaluated_at.isoformat(timespec="seconds").replace(
-                               "+00:00", "Z"),
+                           "evaluated_at_utc": checkpoint_reservation["reserved_at_utc"],
+                           "artifact_cutoff_at_utc": checkpoint_reservation[
+                               "artifact_cutoff_at_utc"],
                            "manifest_sha256": manifest["manifest_sha256"],
                            "population_sha256": population["population_sha256"],
                            "artifact_digests": artifact_receipts,
+                           "result_system_receipts": checkpoint_reservation[
+                               "result_system_receipts"],
+                           "checkpoint_reservation_sha256": checkpoint_reservation[
+                               "checkpoint_reservation_sha256"],
                            "evaluation_sha256": _sha({key: output[key] for key in
                                                       ("n_population", "n_paired", "coverage",
                                                        "comparisons", "per_league", "guardrails",
@@ -905,18 +1044,7 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
                            "previous_receipt_sha256": None, **_blocked_fields()}
         try:
             checkpoint_index = manifest["evaluation_schedule"].index(checkpoint)
-            previous_digest = None
-            for previous in manifest["evaluation_schedule"][:checkpoint_index]:
-                previous_path = (Path(root) / version / "evaluations" /
-                                 f"{previous['checkpoint_id']}.json")
-                previous_payload, previous_digest = _read(previous_path, "evaluation_receipt")
-                if (previous_payload.get("candidate_version") != version
-                        or previous_payload.get("checkpoint_id") != previous["checkpoint_id"]
-                        or previous_payload.get("previous_receipt_sha256") != (
-                            None if previous == manifest["evaluation_schedule"][0]
-                            else prior_chain_digest)):
-                    raise IntegrityError("Frueheres Checkpoint-Receipt ist ungueltig")
-                prior_chain_digest = previous_digest
+            previous_digest = _checkpoint_chain(root, version, manifest, checkpoint_index)
             receipt_payload["previous_receipt_sha256"] = previous_digest
             receipt = _envelope("evaluation_receipt", receipt_payload)
             receipt_status = _atomic_create(Path(root) / version / "evaluations" /
@@ -928,23 +1056,127 @@ def evaluate(root: Path, version: str = DEFAULT_CANDIDATE_VERSION, *,
     return output
 
 
-def evaluate_cohort(members: list[dict], *, evaluation_mode: str = "production",
-                    cohort_root: Path | None = None, cohort_id: str | None = None) -> dict:
+def _cohort_member_binding(member: dict) -> tuple[dict, dict, dict]:
+    if not isinstance(member, dict) or set(member) != {"root", "version", "checkpoint_id"}:
+        raise IntegrityError("Ungueltiger Cohort-Member")
+    root = Path(member["root"]).resolve()
+    version = _safe(member["version"], "candidate_version")
+    checkpoint_id = _safe(member["checkpoint_id"], "checkpoint_id")
+    manifest, population = load_manifest(root, version), load_population(root, version)
+    schedule_index = next((i for i, row in enumerate(manifest["evaluation_schedule"])
+                           if row["checkpoint_id"] == checkpoint_id), None)
+    if schedule_index is None:
+        raise IntegrityError("Cohort-Checkpoint ist nicht manifestiert")
+    _checkpoint_chain(root, version, manifest, schedule_index + 1)
+    receipt, receipt_digest = _read(root / version / "evaluations" /
+                                    f"{checkpoint_id}.json", "evaluation_receipt")
+    if (receipt.get("candidate_version") != version
+            or receipt.get("checkpoint_id") != checkpoint_id
+            or receipt.get("manifest_sha256") != manifest["manifest_sha256"]
+            or receipt.get("population_sha256") != population["population_sha256"]):
+        raise IntegrityError("Cohort-Checkpoint-Receipt ist nicht gebunden")
+    fingerprint_names = ("config", "model", "training", "market", "inference")
+    binding = {"root_id": str(root), "lockbox_id": manifest["lockbox_id"],
+               "epoch_id": manifest["epoch_id"], "candidate_version": version,
+               "checkpoint_id": checkpoint_id,
+               "manifest_sha256": manifest["manifest_sha256"],
+               "population_sha256": population["population_sha256"],
+               "checkpoint_receipt_sha256": receipt_digest,
+               "candidate_fingerprint": _sha({
+                   "candidate_name": manifest["candidate_name"],
+                   "candidate_version": version, "code_sha256": manifest["code_sha256"]}),
+               **{f"{name}_fingerprint": manifest["component_fingerprints"][name]
+                  for name in fingerprint_names}}
+    return binding, manifest, population
+
+
+def reserve_cohort(cohort_root: Path, cohort_id: str, hypothesis_id: str,
+                   members: list[dict]) -> dict:
+    """Reserve one exact cohort for a hypothesis before any cohort calculation."""
+    cohort_id, hypothesis_id = _safe(cohort_id, "cohort_id"), _safe(
+        hypothesis_id, "hypothesis_id")
+    if not members:
+        raise ValidationError("Cohort-Reservation braucht Mitglieder")
+    bindings = [_cohort_member_binding(member)[0] for member in members]
+    if len({_sha(binding) for binding in bindings}) != len(bindings):
+        raise ValidationError("Cohort-Reservation enthaelt doppelte Mitglieder")
+    reservation_path = Path(cohort_root) / "cohort_reservations" / f"{cohort_id}.json"
+    registry_path = Path(cohort_root) / "cohort_hypotheses" / f"{hypothesis_id}.json"
+    if reservation_path.exists():
+        existing, digest = _read(reservation_path, "cohort_reservation")
+        registry, _ = _read(registry_path, "cohort_hypothesis_registry")
+        if (existing.get("cohort_id") != cohort_id
+                or existing.get("hypothesis_id") != hypothesis_id
+                or existing.get("members") != bindings
+                or existing.get("members_sha256") != _sha({"members": bindings})
+                or registry != {"hypothesis_id": hypothesis_id, "cohort_id": cohort_id,
+                                "reservation_sha256": digest,
+                                "members_sha256": existing["members_sha256"]}):
+            raise ArtifactConflictError("Cohort-Reservation stimmt nicht mit Retry ueberein")
+        return {**existing, "cohort_reservation_sha256": digest,
+                "write_status": "idempotent", "registry_status": "idempotent"}
+    payload = {"cohort_id": cohort_id, "hypothesis_id": hypothesis_id,
+               "members": bindings, "members_sha256": _sha({"members": bindings}),
+               "reserved_at_utc": _system_utc(_now_utc()), **_blocked_fields()}
+    envelope = _envelope("cohort_reservation", payload)
+    registry = _envelope("cohort_hypothesis_registry", {
+        "hypothesis_id": hypothesis_id, "cohort_id": cohort_id,
+        "reservation_sha256": envelope["integrity"]["digest"],
+        "members_sha256": payload["members_sha256"]})
+    registry_status = _atomic_create(registry_path, registry)
+    try:
+        status = _atomic_create(reservation_path, envelope)
+    except LockboxError:
+        # The create-only registry deliberately remains as evidence of the attempted binding.
+        raise
+    return {**payload, "cohort_reservation_sha256": envelope["integrity"]["digest"],
+            "write_status": status, "registry_status": registry_status}
+
+
+def evaluate_cohort(members: list[dict] | None = None, *,
+                    evaluation_mode: str = "production",
+                    cohort_root: Path | None = None, cohort_id: str | None = None,
+                    hypothesis_id: str | None = None) -> dict:
     """Combine formally closed, fingerprint-identical and disjoint epochs read-only."""
-    if evaluation_mode not in ("production", "test") or not members:
+    if evaluation_mode not in ("production", "test"):
         raise ValidationError("Cohort braucht Mitglieder und gueltigen Modus")
     test_mode = evaluation_mode == "test"
     try:
+        reservation = None
+        if not test_mode:
+            if members is not None or cohort_root is None:
+                raise IntegrityError("Production-Cohort akzeptiert ausschliesslich Reservation")
+            safe_cohort, safe_hypothesis = _safe(cohort_id, "cohort_id"), _safe(
+                hypothesis_id, "hypothesis_id")
+            reservation, reservation_digest = _read(
+                Path(cohort_root) / "cohort_reservations" / f"{safe_cohort}.json",
+                "cohort_reservation")
+            registry, _ = _read(Path(cohort_root) / "cohort_hypotheses" /
+                                f"{safe_hypothesis}.json", "cohort_hypothesis_registry")
+            if (reservation.get("cohort_id") != safe_cohort
+                    or reservation.get("hypothesis_id") != safe_hypothesis
+                    or registry != {"hypothesis_id": safe_hypothesis,
+                                    "cohort_id": safe_cohort,
+                                    "reservation_sha256": reservation_digest,
+                                    "members_sha256": reservation.get("members_sha256")}):
+                raise IntegrityError("Cohort-Reservation/Hyphothesenbindung ist ungueltig")
+            members = [{"root": row["root_id"], "version": row["candidate_version"],
+                        "checkpoint_id": row["checkpoint_id"]}
+                       for row in reservation["members"]]
+        if not members:
+            raise ValidationError("Cohort braucht Mitglieder")
         manifests, populations, all_rows, inputs = [], [], [], []
         expected_fingerprint = None
         epoch_keys, population_hashes, match_ids = set(), set(), set()
         fingerprint_names = ("config", "model", "training", "market", "capture",
                              "benchmarks", "results", "inference", "gates", "guardrails")
-        for member in members:
-            if not isinstance(member, dict) or set(member) != {"root", "version", "checkpoint_id"}:
-                raise IntegrityError("Ungueltiger Cohort-Member")
+        for member_index, member in enumerate(members):
             root, version = Path(member["root"]), _safe(member["version"], "candidate_version")
             manifest, population = load_manifest(root, version), load_population(root, version)
+            if reservation is not None:
+                current_binding, _, _ = _cohort_member_binding(member)
+                if current_binding != reservation["members"][member_index]:
+                    raise IntegrityError("Cohort-Mitglied weicht von Reservation ab")
             receipt_path = root / version / "evaluations" / f"{member['checkpoint_id']}.json"
             receipt, receipt_digest = _read(receipt_path, "evaluation_receipt")
             if (receipt.get("candidate_version") != version
@@ -1043,10 +1275,10 @@ def evaluate_cohort(members: list[dict], *, evaluation_mode: str = "production",
               "cohort_inputs": inputs, "cohort_inputs_sha256": _sha({"inputs": inputs}),
               **_blocked_fields()}
     if not test_mode:
-        if cohort_root is None:
-            return _blocked("cohort", "Production-Cohort braucht create-only cohort_root")
         safe_cohort = _safe(cohort_id, "cohort_id")
         receipt = _envelope("cohort_receipt", {"cohort_id": safe_cohort,
+            "hypothesis_id": _safe(hypothesis_id, "hypothesis_id"),
+            "cohort_reservation_sha256": reservation_digest,
             "inputs": inputs, "inputs_sha256": output["cohort_inputs_sha256"],
             "evaluation_sha256": _sha({"gates": gates, "comparisons": comparisons,
                                        "per_league": per_league, "guardrails": guardrails}),

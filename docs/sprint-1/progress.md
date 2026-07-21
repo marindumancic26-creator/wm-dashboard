@@ -5,33 +5,32 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | 1 | Team-Consilium | Done | Sage, Vega und Ivy read-only abgeschlossen |
-| 2 | Manifest/Schemas | In progress | Erste Fassung durch QA abgelehnt; P0-Härtung läuft |
-| 3 | Append-only Store | In progress | Datei-Atomizität okay, Population-Ledger fehlt noch |
-| 4 | Evaluation/Gates | In progress | Normative Gates und Capture-Bindung werden ergänzt |
-| 5 | QA/Sign-off | Blocked | 161 Tests grün, aber P0-Negativreproduktionen offen |
+| 2 | Manifest/Schemas | Done | vollständig typisiert, versioniert und hashgebunden |
+| 3 | Append-only Store | Done | Population, Records, Reservations und Receipts create-only |
+| 4 | Evaluation/Gates | Done | raw/alpha0, Liga, Guardrails, Checkpoints und Cohorts |
+| 5 | QA/Sign-off | Done | 186 Tests grün; unabhängiger Race-/Governance-Sign-off |
 
 ## Bugs Found
 
 | # | Description | Severity | Status | Fix |
 |---|---|---|---|---|
-| 1 | Shadow-Export ist überschreibbar und nicht atomar | major | open | Sprint 1 |
-| 2 | Historische Closing-Coverage filtert Missing vor dem Nenner | major | open | Lockbox-Evaluator getrennt korrekt bauen |
-| 3 | Residual-Vorteil ist überwiegend Markt-Rekalibrierung | major | open | alpha=0-Ablation verpflichtend |
-| 4 | Forecast-Löschung kann Coverage künstlich erhöhen | blocker | fixing | unveränderliches Population-Ledger |
-| 5 | Rückdatierte Forecasts/zu frühe Resultate werden akzeptiert | blocker | fixing | strikte Typed-Schemas und Chronologie |
-| 6 | Normative Gates lassen sich zur Laufzeit abschwächen | blocker | fixing | Gates vollständig im Manifest einfrieren |
-| 7 | Forecast und Benchmark teilen nicht zwingend denselben Capture | major | fixing | capture_id-/Zeit-/Kickoff-Bindung |
-| 8 | Signierte Artefakte zwischen Match-Pfaden wiederverwendbar | blocker | fixing | Payload-/Pfad-/Digest-Bindung |
-| 9 | FINAL exakt zum Anstoß akzeptiert | blocker | fixing | manifestierte Result-Finalität und finished_at |
-| 10 | Evaluationstermine unvollständig validiert | blocker | fixing | alle Checkpoints validieren und create-only verbrauchen |
-| 11 | Bootstrap nutzt 2,5/97,5 statt einseitig 5/95 | blocker | fixing | protokollkonforme Quantile |
-| 12 | Payload-Zeitstempel beweisen keinen realen Schreibzeitpunkt | blocker | fixing | systemseitiger Receipt-Zeitpunkt vor T-5 |
-| 13 | Resultat besitzt keinen vertrauenswürdigen Writer-Receipt | blocker | fixing | written_at und Future-Result-Sperre |
-| 14 | Checkpoint kann spätere Artefakte lesen/gelöscht neu entstehen | blocker | fixing | Zeitfenster und verkettete Evaluation-Receipts |
-| 15 | Ein Saison-Epoch kann definitive Stichprobe nie erreichen | major | fixing | hashgebundene Multi-Epoch-Cohort-Auswertung |
-| 16 | Completeness dupliziert das 98%-Coverage-Gate | major | fixing | informativ statt definitiver Konjunktion |
+| 1 | Shadow-Export war überschreibbar | major | fixed | separater append-only Lockbox-Store |
+| 2 | Missing verschwand aus Coverage | major | fixed | Population-Ledger ist der Nenner |
+| 3 | Modellanteil vs. Marktkalibrierung unklar | major | fixed | raw und alpha0 Pflichtbenchmarks |
+| 4 | Forecast-Löschung erhöhte Coverage | blocker | fixed | Ledger- und Completeness-Prüfung |
+| 5 | Backfill/zu frühe Resultate | blocker | fixed | trusted Writer-Receipts und Chronologie |
+| 6 | Gates zur Laufzeit abschwächbar | blocker | fixed | normative Manifest-Gates |
+| 7 | Capture-Bindung fehlte | major | fixed | identische capture_id/Zeit/Probs |
+| 8 | Cross-match Envelope-Replay | blocker | fixed | Pfad/Payload/ID/Digest-Bindung |
+| 9 | Falsche Finalitätsgrenze | blocker | fixed | finished_at, Mindestdauer, Quelle |
+| 10 | Checkpoint-/Cohort-Peeking | blocker | fixed | Reservations, Receipt-Chain, Hypothesenregistry |
+| 11 | Falsche Bootstrap-Quantile | blocker | fixed | einseitige 5/95-Quantile |
+| 12 | Same-second Timestamp-Race | blocker | fixed | UTC-Receipts mit sechs Mikrosekundenstellen |
+| 13 | Einzelepoch erreicht Langzeitschwelle nicht | major | fixed | disjunkte Multi-Epoch-Cohort-Auswertung |
+| 14 | Completeness duplizierte Coverage | major | fixed | informativ; 98%-Gate bleibt normativ |
 
 ## Notes
 
-Die bestehenden uncommitted Änderungen am Closing-Residual-Backtest gehören zum vorherigen
-Arbeitsschritt und werden nicht überschrieben. Keine Produktivfreigabe in diesem Sprint.
+Sprint 1 ist technisch abgeschlossen. Keine Produktivfreigabe: `release`, Auto-Apply,
+Prediction, Value und Stakes bleiben false. Akzeptierte lokale Trust-Grenzen sind die nicht
+extern attestierte Systemzeit und das fehlende externe WORM-/Transparency-Log.

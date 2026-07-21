@@ -448,6 +448,52 @@ def test_production_checkpoint_writes_create_only_receipt_and_blocks_repeek(tmp_
     assert "Receipt-Konflikt" in changed["note"]
 
 
+def test_identical_checkpoint_replay_preserves_first_receipt_time_after_window(tmp_path):
+    setup_epoch(tmp_path)
+    write_complete_match(tmp_path)
+    first = lockbox.evaluate(tmp_path, checkpoint_id="cp-1")
+    receipt_path = tmp_path / VERSION / "evaluations" / "cp-1.json"
+    first_payload, _ = lockbox._read(receipt_path, "evaluation_receipt")
+    TEST_CLOCK["now"] = "2026-09-01T00:00:00Z"
+    replay = lockbox.evaluate(tmp_path, checkpoint_id="cp-1")
+    replay_payload, _ = lockbox._read(receipt_path, "evaluation_receipt")
+    assert replay["evaluation_receipt"]["status"] == "idempotent"
+    assert replay_payload["evaluated_at_utc"] == first_payload["evaluated_at_utc"]
+    assert replay_payload["artifact_cutoff_at_utc"] == first_payload["evaluated_at_utc"]
+    assert replay_payload["result_system_receipts"][MATCH1].endswith("Z")
+
+
+def test_checkpoint_reservation_anchors_evidence_before_evaluation(tmp_path):
+    setup_epoch(tmp_path)
+    write_complete_match(tmp_path)
+    evaluated = lockbox.evaluate(tmp_path, checkpoint_id="cp-1")
+    anchor_path = tmp_path / VERSION / "checkpoint_reservations" / "cp-1.json"
+    anchor, anchor_digest = lockbox._read(anchor_path, "checkpoint_reservation")
+    receipt, _ = lockbox._read(tmp_path / VERSION / "evaluations" / "cp-1.json",
+                               "evaluation_receipt")
+    assert evaluated["evaluation_receipt"]["status"] == "created"
+    assert receipt["checkpoint_reservation_sha256"] == anchor_digest
+    assert receipt["artifact_digests"] == anchor["artifact_digests"]
+    assert receipt["result_system_receipts"] == anchor["result_system_receipts"]
+
+
+def test_result_receipt_after_subsecond_artifact_cutoff_is_blocked(tmp_path):
+    setup_epoch(tmp_path)
+    lockbox.write_forecast(tmp_path, forecast())
+    lockbox.write_closing(tmp_path, closing())
+    TEST_CLOCK["now"] = "2026-08-15T16:01:00.100000Z"
+    reserved = lockbox.reserve_checkpoint(tmp_path, checkpoint_id="cp-1")
+    assert reserved["reserved_at_utc"] == "2026-08-15T16:01:00.100000Z"
+    result_record = result()
+    TEST_CLOCK["now"] = "2026-08-15T16:01:00.900000Z"
+    lockbox.write_result(tmp_path, result_record)
+    stored_result = lockbox._one_record(tmp_path, VERSION, "results", MATCH1)
+    assert stored_result["written_at_utc"] == "2026-08-15T16:01:00.900000Z"
+    evaluated = lockbox.evaluate(tmp_path, checkpoint_id="cp-1")
+    assert evaluated["status"] == "blocked"
+    assert "nach Checkpoint/Evaluation" in evaluated["note"]
+
+
 def test_production_requires_manifested_checkpoint(tmp_path):
     setup_epoch(tmp_path)
     assert lockbox.evaluate(tmp_path)["status"] == "blocked"
@@ -465,6 +511,18 @@ def test_closed_deleted_checkpoint_cannot_be_recreated_or_advanced(tmp_path):
     assert lockbox.evaluate(tmp_path, checkpoint_id="cp-1")["status"] == "blocked"
     advanced = lockbox.evaluate(tmp_path, checkpoint_id="cp-2")
     assert advanced["status"] == "blocked"
+
+
+def test_cohort_validates_complete_chain_to_selected_receipt(tmp_path):
+    _formal_epoch(tmp_path, MATCH1, "epoch-chain")
+    TEST_CLOCK["now"] = "2026-08-16T16:01:00Z"
+    assert lockbox.evaluate(tmp_path, checkpoint_id="cp-2")["evaluation_receipt"][
+        "status"] == "created"
+    (tmp_path / VERSION / "evaluations" / "cp-1.json").unlink()
+    cohort_root = tmp_path / "cohort-store"
+    with pytest.raises(lockbox.IntegrityError, match="Artefakt unlesbar"):
+        lockbox.reserve_cohort(cohort_root, "cohort-chain", "hyp-chain", [{
+            "root": tmp_path, "version": VERSION, "checkpoint_id": "cp-2"}])
 
 
 def _formal_epoch(root, match_id, epoch_id, *, config_extra=None):
@@ -510,6 +568,28 @@ def test_cohort_blocks_config_mismatch_duplicate_match_and_missing_receipt(tmp_p
     duplicate_members = [members[0],
         {"root": duplicate_root, "version": VERSION, "checkpoint_id": "cp-1"}]
     assert lockbox.evaluate_cohort(duplicate_members, evaluation_mode="test")["status"] == "blocked"
+
+
+def test_production_cohort_requires_exact_create_only_hypothesis_reservation(tmp_path):
+    root1, root2 = tmp_path / "e1", tmp_path / "e2"
+    _formal_epoch(root1, MATCH1, "epoch-1")
+    _formal_epoch(root2, MATCH2, "epoch-2")
+    members = [{"root": root1, "version": VERSION, "checkpoint_id": "cp-1"},
+               {"root": root2, "version": VERSION, "checkpoint_id": "cp-1"}]
+    cohort_root = tmp_path / "cohort-store"
+    reserved = lockbox.reserve_cohort(cohort_root, "cohort-1", "hypothesis-1", members)
+    assert reserved["write_status"] == "created"
+    assert lockbox.evaluate_cohort(members, cohort_root=cohort_root,
+                                   cohort_id="cohort-1",
+                                   hypothesis_id="hypothesis-1")["status"] == "blocked"
+    evaluated = lockbox.evaluate_cohort(None, cohort_root=cohort_root,
+                                        cohort_id="cohort-1",
+                                        hypothesis_id="hypothesis-1")
+    assert evaluated["n_epochs"] == 2
+    assert evaluated["cohort_receipt"]["status"] == "created"
+    with pytest.raises(lockbox.ArtifactConflictError):
+        lockbox.reserve_cohort(cohort_root, "cohort-alternative", "hypothesis-1",
+                               members[:1])
 
 
 def test_production_evaluation_has_no_runtime_gate_or_bootstrap_override(tmp_path):

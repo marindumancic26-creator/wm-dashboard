@@ -1,6 +1,6 @@
 # PROJECT_BRIEF.md — Fußball-Wahrscheinlichkeit
 
-> Last updated: 2026-07-20 | Sprint 1 | Status: In Progress
+> Last updated: 2026-07-21 | Sprint 1 | Status: Complete
 
 ## 1. Project Overview
 
@@ -66,19 +66,20 @@ Ergebnisquelle -----------------------------+
 
 | Sprint | Name | Status | Scope |
 |---|---|---|---|
-| 1 | Prospektive Club-Lockbox | In Progress | unveränderliche Records, Evaluation, Tests |
+| 1 | Prospektive Club-Lockbox | Complete | unveränderliche Records, Evaluation, Tests |
 
 ## 8. Current State
 
-**What works:** kanonische Club-Fixtures, Shadow-Quellen, historischer Walk-forward,
-Closing-Gates und ein aggregiert knapp besserer Residualkandidat.
+**What works:** kanonische Club-Fixtures, historischer Walk-forward, ein append-only
+Lockbox-Core mit Population-, Forecast-, Closing-, Result-, Checkpoint- und Cohort-
+Artefakten, ehrlicher Coverage sowie vorab eingefrorenen Quant-Gates. 186 Tests sind grün.
 
-**What doesn't work yet:** Der bisherige Shadow-Export ist überschreibbar und enthält
-keine eingefrorenen Prognosen/Quoten/Resultate. Eine Live-Club-Modell- und Quotenpipeline
-ist noch nicht vollständig vorhanden.
+**What doesn't work yet:** Eine Live-Club-Modell-, Odds- und Resultpipeline ist noch nicht
+angebunden. Der lokale Dateistore besitzt keinen externen WORM-/Signaturanker und die
+Systemzeit ist nicht extern attestiert.
 
-**What's next:** Lockbox-Core abschließen, danach liga-spezifische Odds-Captures und echte
-Shadow-Prognosen anbinden, ohne den Produktionspfad zu verändern.
+**What's next:** liga-spezifische Odds-Captures und echte Shadow-Prognosen anbinden sowie
+Lockbox-Hashes extern verankern, ohne den produktiven WM-Pfad zu verändern.
 
 ## 9. Security Rules
 
@@ -123,4 +124,3 @@ seriell und rollenbasiert vergeben: Sage schreibt Core/Tests, Ivy prüft read-on
 koordiniert Dokumentation. Es wird weder rebased noch force-pushed oder direkt gepusht.
 Für eine spätere externe Teamarbeit gelten getrennte Klone, reguläre Merge-PRs und keine
 Squash-/Rebase-Merges.
-
