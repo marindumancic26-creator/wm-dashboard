@@ -293,3 +293,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Daily verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
 - [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
 - [Aktion] `weights_suggestion` nur notieren (market 0.153, books 0.150, kalshi 0.158, model 0.376, whale 0.162); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
+
+## 2026-07-23
+
+- [Beobachtung] ensemble fuehrt rollierend bei n=93 mit Brier/RPS/LogLoss 0.4441/0.1563/0.7752; Ensemble liegt bei 0.4441/0.1563/0.7752.
+- [Beobachtung] Daily verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
+- [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
+- [Aktion] `weights_suggestion` nur notieren (market 0.153, books 0.150, kalshi 0.158, model 0.376, whale 0.162); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
