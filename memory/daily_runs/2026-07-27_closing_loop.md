@@ -1137,3 +1137,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Schritte 2 und 5 sind vollständig ausgewertet. Der heutige Lauf endete nach 19,7 Sekunden degradiert: 0 Spiele geladen, 0 Fehler, 0 neue Auflösungen und veralteter FBref-Cache. Deshalb bleibt die Kalibrierungsbasis unverändert bei n=93; neue Tagesprognosen oder Fehlprognosen gibt es nicht zu analysieren.
+
+Kalshi ist bei RPS 0,139 und LogLoss 0,767 nominal am besten, allerdings nur bei n=63. Beim Brier führt das Ensemble mit 0,444 knapp vor Kalshi mit 0,446. Whale ist mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 klar am schlechtesten und weist eine extreme Brier-Spannweite von 0,000 bis 1,998 auf.
+
+Das Ensemble schlägt Polymarkt bei n=93 knapp: Brier 0,444 gegenüber 0,450, RPS 0,156 gegenüber 0,157 und LogLoss 0,775 gegenüber 0,784. Der Vorteil beträgt damit nur 0,006 Brier-, 0,001 RPS- und 0,009 LogLoss-Punkte. Zudem sind Markt, Buchmacher und Kalshi korreliert und keine unabhängigen Bestätigungen.
+
+Der ROI liegt bei +22,9 % über 89 Referenzwetten. Der CLV von +0,74 % bei n=75 und 52 % Beat-Close liefert jedoch noch keinen robusten Preisvorteil. Seit dem Vortag kamen keine neuen Ergebnisse hinzu, sodass sich die Mehrtagestendenz heute nicht verändert hat.
+
+Die datenbasierte Gewichtsempfehlung bei n=93 lautet Markt/Bücher/Kalshi/Modell/Whale = 0,153/0,150/0,158/0,376/0,162 statt aktuell 0,300/0,250/0,100/0,200/0,150. Es wurden korrekt 0 Konfigurationswerte geändert. Auch ELO_PER_GOAL 180 statt 240 bleibt trotz Walk-forward-RPS-Vorteil 0,0088 bei n=92 rein diagnostisch, da `adoption_ready=false` ist.
+
+Die Inhalte für Schritte 3 und 4 sind unten festgehalten, konnten aber nicht an die vorgesehenen Dateien angehängt werden: Der Arbeitsbereich ist schreibgeschützt und die Schreiboperation wurde ausdrücklich abgewiesen. Für den vollständigen Hermes-Abschluss muss der Workspace mit Schreibzugriff erneut geöffnet werden.
