@@ -349,3 +349,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Daily verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
 - [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
 - [Aktion] `weights_suggestion` nur notieren (market 0.153, books 0.150, kalshi 0.158, model 0.376, whale 0.162); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
+
+## 2026-07-31
+
+- [Beobachtung] Ensemble erreicht Brier/RPS/LogLoss 0,444/0,156/0,775 bei n=93; Kalshi erreicht 0,446/0,139/0,767 bei n=63.
+- [Beobachtung] Der Tageslauf verarbeitete 0 Spiele in 8,8 s bei 0 Matchfehlern; FBref ist stale und der Lauf degradiert.
+- [Hypothese] Der Brier-Vorsprung von 0,006 gegenüber Polymarkt ist klein; ROI +22,9 % bei 89 Wetten wird durch CLV +0,74 % bei n=75 und 52 % Beat-Close nicht stark bestätigt.
+- [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, 0 Konfigurationswerte ändern und Whale bei Brier 0,527 sowie Spannweite 0,000–1,998 defensiv halten.

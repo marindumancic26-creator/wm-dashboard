@@ -1137,3 +1137,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 31.07.2026 ist inhaltlich abgeschlossen, konnte wegen der schreibgeschützten Umgebung jedoch nicht an die beiden vorgesehenen Dateien angehängt werden. Es wurden keine Dateien verändert und keine Gewichte oder Parameter übernommen. Das vorgeschriebene claude-mem-Tool `mcp-search` war in dieser Sitzung ebenfalls nicht verfügbar; ausgewertet wurden deshalb die kanonischen Tagesartefakte.
+
+Der Lauf von 09:00:04 dauerte 8,8 Sekunden, lud 0 Spiele und meldete 0 Matchfehler. Wegen der fehlenden Spiele und des veralteten FBref-Caches ist er dennoch degradiert. Es gab keine neuen Auflösungen oder Tagesprognosen; die rollierende Stichprobe bleibt bei n=93. Daher sind heute keine einzelnen Treffer oder Fehlprognosen Elo, StatsBomb oder einer Markt-Modell-Diskrepanz zurechenbar.
+
+Beim Brier liegt das Ensemble mit 0,444 bei n=93 knapp vor Kalshi mit 0,446 bei n=63 und Polymarkt mit 0,450 bei n=93. Kalshi führt jedoch bei RPS und LogLoss mit 0,139 beziehungsweise 0,767; das Ensemble erreicht 0,156 und 0,775. Das reine Modell ist mit Brier/RPS/LogLoss 0,472/0,166/0,815 schwächer, Whale mit 0,527/0,202/1,265 am schwächsten und zudem hochvariant.
+
+Das Ensemble schlägt Polymarkt nur geringfügig: Brier 0,444 gegen 0,450, RPS 0,156 gegen 0,157 und LogLoss 0,775 gegen 0,784. Der ROI von +22,9 % über 89 Referenzwetten ist positiv, wird durch CLV +0,74 % bei n=75 und lediglich 52 % Beat-Close aber nur schwach bestätigt. Eine aggressivere Skalierung ist daraus nicht abzuleiten.
+
+`weights_suggestion` hat den Status `data-driven` bei n=93 und empfiehlt Polymarkt/Buchmacher/Kalshi/Modell/Whale mit 0,153/0,150/0,158/0,376/0,162 statt 0,300/0,250/0,100/0,200/0,150. Trotz ausreichendem n empfehle ich heute keine Übernahme: Seit mehreren Tagen fehlen neue Auflösungen, der aktuelle Lauf ist degradiert und Whale schwankt beim Brier zwischen 0,000 und 1,998. Sobald Schreibzugriff besteht, gehören dieses Narrativ in den Closing-Loop und die vier folgenden Punkte als Eintrag `2026-07-31` in die Learnings.
