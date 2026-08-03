@@ -356,3 +356,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Der Tageslauf verarbeitete 0 Spiele in 8,8 s bei 0 Matchfehlern; FBref ist stale und der Lauf degradiert.
 - [Hypothese] Der Brier-Vorsprung von 0,006 gegenüber Polymarkt ist klein; ROI +22,9 % bei 89 Wetten wird durch CLV +0,74 % bei n=75 und 52 % Beat-Close nicht stark bestätigt.
 - [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, 0 Konfigurationswerte ändern und Whale bei Brier 0,527 sowie Spannweite 0,000–1,998 defensiv halten.
+
+## 2026-08-03
+
+- [Beobachtung] Ensemble-Brier 0,444 schlägt Polymarkt 0,450 um 0,006 bei jeweils n=93.
+- [Beobachtung] Kalshi führt RPS/LogLoss mit 0,139/0,767 bei n=63; Whale liegt bei 0,202/1,265 bei n=88.
+- [Hypothese] ROI +22,9 % bei 89 Wetten ist mit CLV +0,74 % bei n=75 und 52 % Beat-Close noch kein robuster Pricing-Edge.
+- [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, aber 0 Konfigurationswerte ändern und Whale defensiv halten.
