@@ -360,6 +360,6 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 ## 2026-08-03
 
 - [Beobachtung] Ensemble-Brier 0,444 schlägt Polymarkt 0,450 um 0,006 bei jeweils n=93.
-- [Beobachtung] Kalshi führt RPS/LogLoss mit 0,139/0,767 bei n=63; Whale liegt bei 0,202/1,265 bei n=88.
-- [Hypothese] ROI +22,9 % bei 89 Wetten ist mit CLV +0,74 % bei n=75 und 52 % Beat-Close noch kein robuster Pricing-Edge.
-- [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, aber 0 Konfigurationswerte ändern und Whale defensiv halten.
+- [Beobachtung] Kalshi führt RPS/LogLoss mit 0,139/0,767 bei n=63; Whale liegt bei 0,202/1,265 und einer Brier-Spannweite von 0,000–1,998 bei n=88.
+- [Hypothese] ROI +22,9 % über 89 Wetten ist bei CLV +0,74 % über n=75 und 52 % Beat-Close noch kein robuster Pricing-Edge.
+- [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, aber 0 Konfigurationswerte ändern; zunächst neue Auflösungen und eine stabilere CLV-Mehrtagestendenz abwarten.

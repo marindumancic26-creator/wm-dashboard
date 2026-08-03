@@ -1140,12 +1140,12 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 ## Hermes-Analyse
 
-Schritte 2 bis 5 wurden analytisch ausgeführt. Der Lauf vom 2026-08-03 dauerte 2,7 s, verarbeitete 0 Spiele, erzeugte 0 Matchfehler und keine neuen Auflösungen. Die Kalibrierung bleibt deshalb unverändert bei n=93. FBref ist stale und ohne xG; Elo ist live und umfasst 244 Teams.
+Die Hermes-Analyse für den 03.08.2026 ist bereits in den Projektartefakten vorhanden; ebenso der datierte Lerneintrag. Der Tageslauf war degradiert: 0 Spiele verarbeitet, 0 Matchfehler und 0 neue Auflösungen. Daher bleibt die Kalibrierungsbasis unverändert bei n=93. FBref ist stale und ohne xG, während Elo live 244 Teams umfasst.
 
-Das Ensemble erzielt Brier/RPS/LogLoss von 0,444/0,156/0,775 bei n=93. Beim Brier schlägt es Polymarkt mit 0,450 um 0,006. Kalshi kalibriert nach RPS und LogLoss mit 0,139/0,767 am besten, basiert aber nur auf n=63. Whale ist mit 0,527/0,202/1,265 bei n=88 am schwächsten und zeigt eine extreme Brier-Spannweite von 0,000 bis 1,998.
+Das Ensemble erreicht Brier/RPS/LogLoss 0,444/0,156/0,775 bei n=93. Es schlägt Polymarkt beim Brier knapp um 0,006 (0,444 gegenüber 0,450). Kalshi liefert mit RPS 0,139 und LogLoss 0,767 die besten Werte, allerdings nur über n=63. Whale ist mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 die schwächste und volatilste Quelle; die Brier-Spannweite beträgt 0,000–1,998.
 
-Die Referenzstrategie erreicht +22,9 % ROI über 89 Wetten. Der Preisvorteil wird durch lediglich +0,74 % CLV bei n=75 und 52 % Beat-Close jedoch nur schwach bestätigt. Da keine neuen Spiele aufgelöst wurden, existieren heute keine neuen Treffer oder Fehlprognosen, deren Ursachen gesondert untersucht werden könnten.
+Die Referenzstrategie weist +22,9 % ROI über 89 Wetten aus. Der ökonomische Vorteil ist dennoch nicht robust bestätigt: Der durchschnittliche CLV beträgt nur +0,74 % bei n=75, die Beat-Close-Rate 52 %. Weil heute keine Ergebnisse hinzukamen, gibt es keine neuen Treffer oder Fehlprognosen zu erklären.
 
-Die Gewichtsempfehlung hat den Status „data-driven“ bei n=93: Markt 0,153, Books 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Empfohlen wird, 0 Konfigurationswerte zu ändern: Die Daten sind gegenüber dem vorherigen Lauf unverändert, der Marktblock ist korreliert und Whale bleibt hochvariant.
+Die Gewichtsempfehlung ist data-driven bei n=93: Polymarkt 0,153, Buchmacher 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Trotz n≥15 ist keine Übernahme angezeigt, weil die Daten gegenüber dem letzten Lauf unverändert sind, der Marktblock korreliert ist und Whale hochvariant bleibt. Es wurden 0 Konfigurationswerte geändert; Stake-, Liquiditäts- und Korrelationsgrenzen bleiben unberührt.
 
-Das vorgesehene Anhängen der Hermes-Analyse und des datierten Lerneintrags wurde vom schreibgeschützten Arbeitsbereich blockiert. Inhaltlich sind beide Einträge fertig, aber nicht persistent gespeichert; Ensemble-Gewichte, Stake-Caps, Liquiditäts- und Korrelationsgrenzen blieben unverändert.
+Bei der Prüfung fiel eine Inkonsistenz im vorhandenen Narrativ auf: Dort werden 2,7 Sekunden Laufzeit genannt, während der Tagesreport und das Dashboard 6,8 Sekunden ausweisen. Außerdem behauptet der letzte Absatz, Analyse und Learning seien nicht persistent gespeichert, obwohl beide tatsächlich vorhanden sind. Diese beiden Textstellen sollten beim nächsten schreibbaren Lauf korrigiert werden.
