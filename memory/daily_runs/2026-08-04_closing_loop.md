@@ -1137,3 +1137,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Der Tageslauf vom 4. August war degradiert: 0 Spiele geladen, 0 Fehler und 0 neue Auflösungen. Der FBref-Cache war älter als 20 Stunden; daher wurden stale Formdaten verwendet. Die kumulative Kalibrierung bleibt gegenüber dem 3. August unverändert.
+
+Beim Brier führt das Ensemble mit 0,4441 über n=93 knapp vor Kalshi mit 0,4458 über n=63 und Polymarkt mit 0,4501 über n=93. Bei RPS und LogLoss ist Kalshi mit 0,139 beziehungsweise 0,767 am besten, allerdings auf einem kleineren Sample. Whale bleibt mit Brier 0,5275, RPS 0,202 und LogLoss 1,265 über n=88 die schwächste Quelle.
+
+Das Ensemble schlägt den direkt vergleichbaren Polymarkt bei Brier/RPS/LogLoss mit 0,444/0,156/0,775 gegen 0,450/0,157/0,784. Der Vorsprung ist klein, aber über dasselbe Sample von n=93 konsistent. Mangels neuer Auflösungen gibt es heute keinen zusätzlichen Treffer oder Fehlgriff, aus dem eine belastbare neue Modellursache abzuleiten wäre.
+
+Die Referenz-Policy erreicht über 89 Wetten 72 % Trefferquote und +22,9 % ROI. Dem stehen nur +0,74 % durchschnittliche CLV über n=75 und 52 % Beat-Close gegenüber. Der hohe ROI ist deshalb weiterhin kein ausreichend bestätigter Pricing-Edge.
+
+Die data-driven Empfehlung bei n=93 lautet 0,153 Polymarkt, 0,150 Buchmacher, 0,158 Kalshi, 0,376 Modell und 0,162 Whale. Trotz ausreichender Stichprobengröße werden 0 Gewichte übernommen: Es fehlen neue Daten, die CLV liegt unter 1 %, und Whale bleibt mit einer Brier-Spannweite von 0,000 bis 1,998 hochvariant. Auch ELO_PER_GOAL 180 statt 240 bleibt bei Status diagnostic ohne Übernahme.
+
+Die Hermes-Inhalte konnten aufgrund des schreibgeschützten Workspace nicht an die Tages- und Learning-Dateien angehängt werden; Modell- und Konfigurationswerte blieben unverändert.
