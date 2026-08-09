@@ -1137,3 +1137,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 9. August 2026 ist inhaltlich abgeschlossen. Der heutige Pipeline-Lauf war erfolgreich; der Bericht stammt von 09:00:16. Es gab 0 neue Auflösungen, weshalb keine neue Treffer- oder Fehlprognose zu erklären ist und die Kalibrierung unverändert bleibt.
+
+Kalshi führt bei RPS und LogLoss mit 0,139 beziehungsweise 0,767 bei n=63. Das Ensemble erzielt bei vollständiger Abdeckung den besten Brier von 0,444 bei n=93. Whale bleibt mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 und einer Brier-Spannweite von 0,000–1,998 die schwächste und volatilste Quelle.
+
+Das Ensemble schlägt Polymarkt knapp: Brier/RPS/LogLoss 0,444/0,156/0,775 gegenüber 0,450/0,157/0,784, jeweils bei n=93. Der Brier-Vorsprung beträgt nur 0,006; außerdem dürfen Markt, Buchmacher und Kalshi wegen ihrer Korrelation nicht als unabhängige Bestätigungen gewertet werden.
+
+Die Referenz-Policy erreicht über 89 Wetten 72 % Trefferquote und +22,9 % ROI. Dem steht ein durchschnittlicher CLV von lediglich +0,74 % bei n=75 und eine Beat-Close-Rate von 52 % gegenüber. Ein stabiler Pricing-Edge ist damit noch nicht hinreichend bestätigt.
+
+Die datengetriebene Gewichtsempfehlung lautet Polymarkt 0,153, Buchmacher 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Es sollten 0 Konfigurationswerte geändert werden: Heute kamen keine neuen Ergebnisse hinzu, CLV bleibt unter 1,0 %, und der Whale-Flag spricht gegen eine Erhöhung über das defensive aktuelle Gewicht von 0,150. ELO_PER_GOAL bleibt ebenfalls bei Status diagnostic und n=92 unverändert.
+
+Die beiden vorgeschriebenen Anhänge konnten nicht gespeichert werden, weil der Workspace in dieser Sitzung ausschließlich lesbar ist und der Schreibversuch abgewiesen wurde. Die Schritte 2 und 5 sind damit ausgeführt; die Inhalte für Schritte 3 und 4 sind vollständig vorbereitet, aber nicht persistent eingetragen.
