@@ -398,3 +398,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Kalshi führt RPS/LogLoss mit 0,139/0,767 bei n=63; Whale ist mit 0,527/0,202/1,265 bei n=88 und Brier-Spannweite 0,000–1,998 am schwächsten.
 - [Hypothese] ROI +22,9 % bei 89 Wetten ist angesichts CLV +0,74 % bei n=75 und 52 % Beat-Close noch kein robuster Pricing-Edge.
 - [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 nur dokumentieren, 0 Konfigurationswerte ändern und Whale bei höchstens 0,150 halten.
+
+## 2026-08-11
+
+- [Beobachtung] ensemble fuehrt rollierend bei n=93 mit Brier/RPS/LogLoss 0.4441/0.1563/0.7752; Ensemble liegt bei 0.4441/0.1563/0.7752.
+- [Beobachtung] Daily verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets 0, Gesamtstake 0.0%, FBref-Status stale.
+- [Hypothese] ROI +0.00% und CLV +0.00% sind noch kein stabiler Preis-Edge, solange Modell und Whale schlechter kalibriert sind als der Marktblock.
+- [Aktion] `weights_suggestion` nur notieren (market 0.153, books 0.150, kalshi 0.158, model 0.376, whale 0.162); keine Auto-Uebernahme von Modell-, Gewichts- oder Staking-Parametern.
