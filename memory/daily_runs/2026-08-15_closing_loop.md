@@ -1137,3 +1137,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den Tageslauf 2026-08-15 ist inhaltlich abgeschlossen. Der degradierte Lauf dauerte 15,7 s und verarbeitete 0 Spiele bei 0 Fehlern und 0 neuen Auflösungen. FBref war über 20 Stunden alt; Elo war mit 244 Teams live, StatsBomb blieb historisch. Deshalb gibt es heute keine neuen Treffer oder Fehlprognosen zu erklären.
+
+Nach Brier führt das Ensemble mit 0,444 bei n=93 knapp vor Kalshi mit 0,446 bei n=63 und Polymarkt mit 0,450 bei n=93. Nach RPS und LogLoss ist Kalshi mit 0,139 beziehungsweise 0,767 am besten, allerdings auf kleinerer Stichprobe. Whale bleibt mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 und einer Brier-Spannweite von 0,000–1,998 die schwächste und volatilste Quelle.
+
+Das Ensemble schlägt den Polymarkt um 0,006 Brier, 0,001 RPS und 0,009 LogLoss. Das ist ein positives, aber kleines Diversifikationssignal. Der ROI von +22,9 % über 89 Referenzwetten wird durch nur +0,74 % durchschnittlichen CLV bei n=75 und 52 % Beat-Close nicht ausreichend bestätigt; ein robuster Preisvorteil ist daraus noch nicht abzuleiten.
+
+Die Gewichtsempfehlung ist `data-driven` bei n=93: Polymarkt 0,153, Bücher 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Ich empfehle keine Übernahme: Das Modellgewicht würde trotz Modell-Brier 0,472 nahezu verdoppelt, und Whale sollte wegen seiner hohen Varianz defensiv bleiben. Auch ELO_PER_GOAL bleibt trotz diagnostischem Kandidaten 180 statt aktuell 240 unverändert.
+
+Die verlangten Einträge für den Closing-Loop-Report und `memory/learnings. Es wurden daher 0 Projektdateien verändert.
