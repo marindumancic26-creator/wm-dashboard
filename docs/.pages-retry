@@ -1,6 +1,6 @@
-retry_at=2026-08-17T00:05:20.1942517+02:00
-source_head=bdf8610
+retry_at=2026-08-17T00:15:03.9545094+02:00
+source_head=5351996
 status=stale
 local_generated_at=2026-08-17T00:05:06
 remote_generated_at=2026-08-04T09:00:43
-attempt=1
+attempt=2
