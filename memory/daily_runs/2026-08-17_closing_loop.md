@@ -1137,3 +1137,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 17.08.2026 ist fachlich abgeschlossen. Der Tageslauf war jedoch degradiert: 0 Spiele geladen, 0 Fehler, 0 neue Auflösungen und 32,1 Sekunden Laufzeit. Der FBref-Cache war älter als 20 Stunden; gleichzeitig waren Elo live, Kalshi mit 104 Events verfügbar und die Buchmacherquelle zwar live, aber ohne Events. Da alle 104 WM-Partien bereits beendet sind und der Betriebsmodus auf Club-Fußball steht, entstanden heute keine neuen Einzelspielprognosen oder Value-Bets.
+
+Rollierend liefert das Ensemble den besten Brier Score: 0,444 bei n=93, knapp vor Kalshi mit 0,446 bei n=63 und Polymarkt mit 0,450 bei n=93. Nach RPS und LogLoss liegt dagegen Kalshi mit 0,139 beziehungsweise 0,767 vorn; das Ensemble erreicht 0,156 und 0,775. Whale ist mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 die schwächste und hochvarianteste Quelle; die Brier-Spannweite von 0,000 bis 1,998 rechtfertigt weiterhin eine defensive Behandlung.
+
+Das Ensemble schlägt den reinen Polymarkt beim Brier um 0,006 beziehungsweise rund 1,3 %, beim RPS um 0,001 und beim LogLoss um 0,009. Dieser kleine, über mehrere Tage unveränderte Vorsprung spricht für einen Diversifikationseffekt, aber nicht für einen neu hinzugekommenen Erkenntnisgewinn. Auffällige Treffer oder Fehlprognosen des Tages existieren nicht; wegen 0 neuer Auflösungen lässt sich auch kein heutiger Effekt des veralteten FBref-Caches messen.
+
+Die Referenzstrategie weist über 89 Wetten einen ROI von +22,9 % aus. Der ökonomisch wichtigere Bestätigungstest ist deutlich schwächer: durchschnittlicher CLV +0,74 % bei n=75 und nur 52 % Beat-Close. Deshalb ist der positive ROI noch nicht als robuster Pricing-Edge zu behandeln; neue, zeitlich getrennte Pre-Kickoff- und Closing-Snapshots bleiben erforderlich.
+
+Die Gewichtsempfehlung hat Status `data-driven` bei n=93 und lautet Polymarkt 0,153, Buchmacher 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Trotz ausreichendem n empfehle ich keine Übernahme: Seit mehreren Tagen kamen 0 neue Auflösungen hinzu, die Quelle Whale soll wegen ihrer Varianz nicht über das aktuelle Gewicht 0,150 steigen, und Markt, Bücher sowie Kalshi bilden einen korrelierten Block. Entsprechend bleiben alle fünf konfigurierten Gewichte unverändert.
+
+Die vorgesehenen Anhänge unter `## Hermes-Analyse` und in `memory/learnings.md` konnte ich nicht speichern, weil diese Sitzung ausschließlich Lesezugriff auf das Projekt besitzt. Schritte 2 und 5 sind vollständig ausgeführt; die Inhalte für Schritte 3 und 4 sind oben beziehungsweise im Lernblock vollständig formuliert, aber es wurden 0 Dateien verändert.
