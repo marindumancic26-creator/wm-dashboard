@@ -1140,7 +1140,7 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 ## Hermes-Analyse
 
-Der heutige Fallback-Hermes nutzt den deterministischen Snapshot 2026-08-24T08:32:17. Der Daily-Lauf verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets stehen bei 0 und Gesamtstake 0.0%. FBref-Form steht auf stale; alle Modell- und Staking-Parameter bleiben unveraendert.
+Der heutige Fallback-Hermes nutzt den deterministischen Snapshot 2026-08-24T09:00:11. Der Daily-Lauf verarbeitete 0 Spiele mit 0 Fehlern; Value-Bets stehen bei 0 und Gesamtstake 0.0%. FBref-Form steht auf stale; alle Modell- und Staking-Parameter bleiben unveraendert.
 
 Rollierend sind 93 Spiele aufgeloest. Beste Quelle nach Brier ist ensemble mit Brier/RPS/LogLoss 0.4441/0.1563/0.7752. Das Ensemble liegt bei 0.4441/0.1563/0.7752 und 73.1% Trefferquote. Markt und Kalshi liegen bei Brier 0.4501 bzw. 0.4458.
 
