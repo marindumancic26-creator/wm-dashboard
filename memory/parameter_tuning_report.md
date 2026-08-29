@@ -11,8 +11,7 @@ n=0 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## rho-Anker
 
-- rho: `-0.1` (config fallback, fallback)
-- Hinweis: Keine StatsBomb-WM-Daten geladen.
+- rho: `0.0` (backtest.py StatsBomb WM 2018/22, ok)
 
 ## Headline: Walk-forward ELO_PER_GOAL
 
@@ -35,7 +34,7 @@ n=0 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## Input-Audit
 
-- snapshots: `283`
+- snapshots: `284`
 - resolved: `0`
 - entries: `0`
 - missing_model_inputs: `0`
