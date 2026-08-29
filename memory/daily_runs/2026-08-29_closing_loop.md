@@ -1137,3 +1137,15 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Auswertung für den 29.08.2026 ist fachlich abgeschlossen, die beiden erforderlichen Einträge konnten wegen der schreibgeschützten Umgebung jedoch nicht gespeichert werden. Der Tageslauf war degradiert: 0 Spiele geladen, 0 Fehler, 0 neue Auflösungen und 19,5 Sekunden Laufzeit. FBref war stale; Elo war live und StatsBomb historisch. Die Kalibrierungsbasis bleibt unverändert bei n=93.
+
+Beim Brier führt das Ensemble mit 0,444 vor Kalshi mit 0,446 bei n=63, Polymarkt mit 0,450, Buchmachern mit 0,458 und Modell mit 0,472. Kalshi erzielt die besten RPS-/LogLoss-Werte mit 0,139/0,767, allerdings auf dem kleineren Sample. Whale ist mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 am schwächsten und mit einer Brier-Spannweite von 0,000 bis 1,998 hochvariant.
+
+Das Ensemble schlägt den Polymarkt kumulativ um 0,006 Brier-Punkte, 0,001 RPS-Punkte und 0,009 LogLoss-Punkte. Dieser Vorsprung ist klein und wurde heute mangels neuer Ergebnisse nicht zusätzlich bestätigt. Markt, Bücher und Kalshi sind zudem korreliert und dürfen nicht als drei unabhängige Bestätigungen interpretiert werden.
+
+Die Referenz-Policy steht weiterhin bei +22,9 % ROI über 89 Wetten. Der durchschnittliche CLV beträgt dagegen nur +0,74 % bei n=75; Beat-Close liegt bei 52 %. Das bestätigt einen Pricing-Edge bislang nur schwach. Heute entstand wegen 0 neuer Wetten keine Richtungsänderung.
+
+Die Gewichtsempfehlung ist bei n=93 „data-driven“: Markt 0,153, Bücher 0,150, Kalshi 0,158, Modell 0,376 und Whale 0,162. Eine Übernahme ist nicht angezeigt: Es fehlt neue Evidenz, Whale darf laut Auto-Flag nicht erhöht werden, und die Marktquellen sind korreliert. Auch ELO_PER_GOAL 180 statt 240 bleibt trotz eines Walk-forward-RPS-Vorteils von 0,0088 reine Diagnose, weil adoption_ready=false. Empfehlung: 0 Konfigurationswerte ändern.
