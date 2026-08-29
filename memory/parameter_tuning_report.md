@@ -11,31 +11,32 @@ n=92 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 
 ## rho-Anker
 
-- rho: `0.0` (backtest.py StatsBomb WM 2018/22, ok)
+- rho: `-0.1` (config fallback, fallback)
+- Hinweis: Keine StatsBomb-WM-Daten geladen.
 
 ## Headline: Walk-forward ELO_PER_GOAL
 
 | ELO_PER_GOAL | RPS | LogLoss | Marge RPS vs. aktuell | n |
 |---:|---:|---:|---:|---:|
-| 180 | 0.1495 | 0.708 | 0.0088 | 46 |
-| 200 | 0.1524 | 0.7214 | 0.0059 | 46 |
-| 220 | 0.1554 | 0.7346 | 0.003 | 46 |
-| 240 | 0.1583 | 0.747 | 0.0 | 46 |
-| 260 | 0.1613 | 0.7588 | -0.0029 | 46 |
-| 280 | 0.1641 | 0.7694 | -0.0058 | 46 |
-| 320 | 0.1693 | 0.7882 | -0.011 | 46 |
+| 180 | 0.1504 | 0.717 | 0.009 | 46 |
+| 200 | 0.1533 | 0.7308 | 0.0061 | 46 |
+| 220 | 0.1564 | 0.7446 | 0.003 | 46 |
+| 240 | 0.1594 | 0.7573 | 0.0 | 46 |
+| 260 | 0.1624 | 0.7694 | -0.003 | 46 |
+| 280 | 0.1653 | 0.7805 | -0.0059 | 46 |
+| 320 | 0.1706 | 0.7998 | -0.0112 | 46 |
 
 ## Diagnose: In-sample Score-Flaeche
 
 | ELO_PER_GOAL | RPS | LogLoss | Brier | Hit | Marge RPS vs. aktuell | n |
 |---:|---:|---:|---:|---:|---:|---:|
-| 180 | 0.1581 | 0.7841 | 0.4539 | 0.6957 | 0.0045 | 92 |
-| 200 | 0.1594 | 0.7907 | 0.4572 | 0.6957 | 0.0032 | 92 |
-| 220 | 0.161 | 0.7983 | 0.4611 | 0.6957 | 0.0016 | 92 |
-| 240 | 0.1626 | 0.8041 | 0.4644 | 0.6957 | 0.0 | 92 |
-| 260 | 0.1643 | 0.8104 | 0.4679 | 0.7065 | -0.0017 | 92 |
-| 280 | 0.166 | 0.8169 | 0.4715 | 0.7065 | -0.0034 | 92 |
-| 320 | 0.1696 | 0.8297 | 0.479 | 0.7065 | -0.007 | 92 |
+| 180 | 0.1585 | 0.7882 | 0.4565 | 0.6957 | 0.0047 | 92 |
+| 200 | 0.1599 | 0.795 | 0.4603 | 0.6957 | 0.0033 | 92 |
+| 220 | 0.1616 | 0.8028 | 0.4647 | 0.6957 | 0.0016 | 92 |
+| 240 | 0.1632 | 0.8087 | 0.4682 | 0.6957 | 0.0 | 92 |
+| 260 | 0.165 | 0.8152 | 0.472 | 0.7065 | -0.0018 | 92 |
+| 280 | 0.1667 | 0.8219 | 0.4759 | 0.7065 | -0.0035 | 92 |
+| 320 | 0.1704 | 0.8351 | 0.4838 | 0.7065 | -0.0072 | 92 |
 
 ## Sanity: Live-rho-Grid (kein Treiber der Empfehlung)
 
@@ -50,20 +51,20 @@ n=92 | Diagnose ab n>=20 | Uebernahme erst ab n>=50
 ## Kandidat
 
 - ELO_PER_GOAL: `180.0`
-- rho: `0.0`
-- Walk-forward RPS: `0.1495`
-- Marge gegen aktuelle Config: `0.0088`
+- rho: `-0.1`
+- Walk-forward RPS: `0.1504`
+- Marge gegen aktuelle Config: `0.009`
 - stabil ueber Folds: `True`
 - LogLoss-Guard OK: `True`
 - Uebernahme-reif: `False`
 
 ## Input-Audit
 
-- snapshots: `279`
+- snapshots: `281`
 - resolved: `93`
 - entries: `530`
 - missing_model_inputs: `126`
-- missing_baseline_total_goals: `40`
+- missing_baseline_total_goals: `41`
 - cases: `92`
 
 _Keine automatische Aenderung an config.py. Parameter-Aenderungen bleiben Menschenentscheidung._
