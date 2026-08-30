@@ -489,3 +489,10 @@ erst nach Zustimmung), korrelationsbewusstes Staking.
 - [Beobachtung] Ensemble 0,444/0,156/0,775 schlägt Polymarkt 0,450/0,157/0,784; ROI +22,9 % bei 89 Wetten, CLV +0,74 % bei n=75.
 - [Hypothese] Der Brier-Vorsprung von 0,006 ist ein bestehendes Diversifikationssignal, aber 0 neue Auflösungen liefern keine zusätzliche Evidenz; Whale bleibt bei Brier 0,527 und Spannweite 0,000–1,998 zu variant.
 - [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 sowie ELO_PER_GOAL 180 nur dokumentieren, 0 Konfigurationswerte ändern und Whale nicht über aktuell 0,150 erhöhen.
+
+## 2026-08-30
+
+- [Beobachtung] 0 Spiele, 0 Match-Fehler und 0 neue Auflösungen; n_resolved=93 und Laufdauer 17,6 s.
+- [Beobachtung] Ensemble-Brier 0,444 schlägt Polymarkt 0,450 um 0,006; Kalshi-RPS 0,139 basiert auf n=63.
+- [Hypothese] ROI +22,9 % bei 89 Wetten ist mit CLV +0,74 % und 52 % Beat-Close bei n=75 noch kein robuster Preisvorteil.
+- [Aktion] Gewichte 0,153/0,150/0,158/0,376/0,162 dokumentieren, 0 Konfigurationswerte ändern und Whale höchstens bei 0,150 halten.

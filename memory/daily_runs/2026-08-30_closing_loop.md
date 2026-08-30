@@ -1137,3 +1137,17 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 - ⚠️ **Whale hochvariant** (Spannweite 0.000–1.998 über 88 Spiele) → defensive Gewichtung beibehalten, NICHT erhöhen.
 - ✅ Ensemble schlägt/erreicht Markt (Ø 0.444 vs. 0.450).
+
+## Hermes-Analyse
+
+Die Hermes-Analyse für den 30.08.2026 ist fachlich abgeschlossen. Der Lauf um 14:32 Uhr war degradiert: 0 Spiele geladen, 0 Match-Fehler und 0 neue Auflösungen; die rollierende Stichprobe blieb bei n=93. Elo war live mit 244 Teams, StatsBomb nur historisch für 2018/2022 und FBref stale ohne xG.
+
+Beim Brier liegt das Ensemble mit 0,444 vor Kalshi mit 0,446 bei n=63 und Polymarkt mit 0,450 bei n=93. Kalshi erzielt die besten RPS-/LogLoss-Werte von 0,139/0,767, hat aber geringere Abdeckung. Whale bleibt mit Brier/RPS/LogLoss 0,527/0,202/1,265 bei n=88 und einer Brier-Spannweite von 0,000–1,998 die schwächste und volatilste Quelle.
+
+Das Ensemble schlägt Polymarkt beim Brier um 0,006 und beim RPS um 0,001. Dieser bestehende Vorsprung wurde heute wegen 0 neuer Auflösungen nicht zusätzlich bestätigt. Neue auffällige Treffer oder Fehlprognosen gab es entsprechend nicht.
+
+Die Referenz-Policy steht bei ROI +22,9 % über 89 Wetten, CLV +0,74 % und 52 % Beat-Close bei n=75. Das ist ein positives Signal, aber noch keine belastbare Grundlage für eine aggressivere Einsatz- oder Gewichtspolitik.
+
+Der datengetriebene Vorschlag bei n=93 lautet für Polymarkt/Buchmacher/Kalshi/Modell/Whale 0,153/0,150/0,158/0,376/0,162. Ich empfehle keine Übernahme: Heute fehlt neue Evidenz, die Modellversionen beruhen auf 81/11/1 aufgelösten Spielen und Whale bleibt hochvariant. Insbesondere sollte Whale nicht über aktuell 0,150 erhöht werden.
+
+Die beiden vorgeschriebenen Anhänge konnte ich nicht speichern, weil der bereitgestellte Workspace schreibgeschützt ist und Schreibfreigaben ausgeschlossen sind. Es wurden daher 0 Dateien und 0 Konfigurationswerte verändert; die Analyse ist „mit Vorbehalt teilbar“, bis sie in die vorgesehenen Tages- und Lernartefakte übernommen wurde.
