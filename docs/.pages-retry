@@ -1,6 +1,6 @@
-retry_at=2026-09-02T00:09:35.3347809+02:00
-source_head=a0a35b1
+retry_at=2026-09-02T00:15:02.2656203+02:00
+source_head=5deeeef
 status=stale
 local_generated_at=2026-09-02T00:05:10
 remote_generated_at=2026-08-04T09:00:43
-attempt=2
+attempt=3
