@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-10-01
 
-Stand: 2026-10-01T16:00:19 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-10-01T23:00:13 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: siehe Abschnitt unten.
 
 > Kalibrierung nicht verfügbar: football-data.org-Fehler: 500 Server Error:  for url: https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED
