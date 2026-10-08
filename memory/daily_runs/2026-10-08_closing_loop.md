@@ -1,6 +1,6 @@
 # Closing-Loop-Report — 2026-10-08
 
-Stand: 2026-10-08T16:00:48 · automatisch erzeugt (deterministisch, ohne Claude).
+Stand: 2026-10-08T23:00:27 · automatisch erzeugt (deterministisch, ohne Claude).
 Narrative Hermes-Analyse: siehe Abschnitt unten.
 
 ## Trefferbilanz (Headline-Prognose)
@@ -1131,7 +1131,7 @@ _Inverse-LogLoss-Empfehlung, geshrunken (alpha=0.86). Markt/Books/Kalshi korreli
 
 ## Parameter-Tuning (ELO_PER_GOAL)
 
-- Status `prior` (n=0): n=0 < 20: kein Live-Tuning, nur aktuelle Config berichten.
+- Status `diagnostic` (n=92): Vorschlag, keine Auto-Uebernahme. Headline ist Walk-forward-RPS; In-sample und Live-rho-Grid sind nur Diagnose.
 
 ## Automatische Flags
 
