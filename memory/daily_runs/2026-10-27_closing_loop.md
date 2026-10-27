@@ -1,7 +1,7 @@
 # Closing-Loop-Report — 2026-10-27
 
-Stand: 2026-10-27T08:53:38 · automatisch erzeugt (deterministisch, ohne Claude).
-Narrative Hermes-Analyse: auf Anfrage.
+Stand: 2026-10-27T15:00:26 · automatisch erzeugt (deterministisch, ohne Claude).
+Narrative Hermes-Analyse: siehe Abschnitt unten.
 
 ## Trefferbilanz (Headline-Prognose)
 
