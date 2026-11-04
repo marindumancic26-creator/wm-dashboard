@@ -22,6 +22,8 @@ D1 speichert Runs, Budget und Claims; R2 archiviert die Originalantworten. Das i
 
 Lokale Pending-Runs werden beim nächsten lokalen Lauf erneut hochgeladen, ohne Provider nochmals abzurufen. In einem vollständig ausgefallenen kurzlebigen Runner kann ein noch nicht hochgeladener Capture verloren gehen; der reservierte Verbrauch bleibt in D1 erhalten.
 
+Es gibt genau einen laufenden Datenproduzenten. Manuelle Bootstraps nur bei pausiertem Cloud-Zeitplan ausführen. Verschiedene gleichzeitige Imports sind für die Zusammenführung alter Quoten nicht atomar; GitHub `concurrency` serialisiert den vorgesehenen Betrieb. Rohcaptures bleiben unabhängig davon archiviert.
+
 ## Prüfungen
 Python: `python -m pytest -q`.
 Site: `node --experimental-strip-types --test tests/domain.test.ts`, `npx tsc --noEmit`, offizieller Sites-Build.

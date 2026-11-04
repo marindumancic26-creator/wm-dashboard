@@ -47,10 +47,20 @@ def eligible_competitions(fixtures: list[dict], now: dt.datetime) -> list[str]:
         except (ValueError, KeyError, TypeError):
             continue
         key = fixture.get("competition")
-        if (key in COMPETITIONS and kickoff > now and
+        if (key in COMPETITIONS and is_pre_match(fixture, now) and
                 kickoff.astimezone(BERLIN).date() == now.astimezone(BERLIN).date()):
             nearest[key] = min(nearest.get(key, kickoff), kickoff)
     return sorted(nearest, key=lambda key: (nearest[key], key))
+
+
+def is_pre_match(fixture: dict, now: dt.datetime) -> bool:
+    status = str(fixture.get("fixture_status") or fixture.get("status") or "SCHEDULED").upper()
+    if status not in ("SCHEDULED", "TIMED", "NOT_STARTED", "NOTSTARTED"):
+        return False
+    try:
+        return parse_time(fixture["kickoff_utc"]) > now
+    except (ValueError, KeyError, TypeError):
+        return False
 
 
 def budget_capacity(remaining: int | None, now: dt.datetime, cost: int = 2) -> int:

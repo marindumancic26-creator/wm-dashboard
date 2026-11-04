@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       bootstrap:
-        description: 'Initial fixture-only bootstrap outside the regular slot'
+        description: 'Initial data bootstrap outside the regular slot'
         type: boolean
         default: false
 

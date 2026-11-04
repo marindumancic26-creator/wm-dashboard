@@ -170,3 +170,46 @@ def test_club_diagnostics_reject_future_training_and_unknown_teams():
     assert known["prediction_allowed"] is False
     assert known["value_allowed"] is False
     assert abs(sum(known["diagnostic_probs"].values()) - 1) < 1e-9
+
+
+def test_collector_never_attaches_live_odds_to_already_started_game():
+    from src.pipeline.club_sites_run import collect
+    payload = fixture_payload()
+    later = payload["competitions"]["premier_league"]["fixtures"][0]
+    started = {**later, "match_id": "already-started", "provider_match_id": "old",
+               "kickoff_utc": "2026-11-04T12:00:00Z", "status": "IN_PLAY"}
+    payload["competitions"]["premier_league"]["fixtures"].append(started)
+    class LiveOdds(FakeOdds):
+        def fetch(self, key):
+            result = super().fetch(key)
+            result["events"].append({**event(), "id": "live-odds", "commence_time": "2026-11-04T12:00:00Z"})
+            return result
+    run = collect(payload, utc("2026-11-04T13:17:00Z"), LiveOdds(), FakeStore())
+    old = next(m for m in run["matches"] if m["id"] == "already-started")
+    assert old["quotes"] == []
+    assert old["market_probs"] is None
+
+
+def test_fixture_cache_without_capture_time_stays_unknown_and_stale():
+    from src.pipeline.club_sites_run import collect
+    payload = fixture_payload()
+    payload["competitions"]["premier_league"]["status"] = "cached"
+    result = collect(payload, utc("2026-11-04T13:17:00Z"), FakeOdds(quota=False), FakeStore())
+    assert result["matches"][0]["fixture_fetched_at"] is None
+    assert result["sources"]["premier_league"]["status"] == "stale"
+    assert "fetched_at" not in result["sources"]["premier_league"]
+
+
+def test_kickoff_during_provider_request_uses_actual_response_time():
+    from src.pipeline.club_sites_run import collect
+    payload = fixture_payload()
+    payload["competitions"]["premier_league"]["fixtures"][0]["kickoff_utc"] = "2026-11-04T14:00:00Z"
+    clock = {"now": utc("2026-11-04T13:59:50Z")}
+    class SlowOdds(FakeOdds):
+        def fetch(self, key):
+            result = super().fetch(key)
+            result["events"][0]["commence_time"] = "2026-11-04T14:00:00Z"
+            clock["now"] = utc("2026-11-04T14:00:05Z")
+            return result
+    run = collect(payload, clock["now"], SlowOdds(), FakeStore(), clock=lambda: clock["now"])
+    assert run["matches"][0]["quotes"] == []

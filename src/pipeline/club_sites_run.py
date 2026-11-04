@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 import requests
 
 from src.pipeline.club_sites_policy import (
-    BERLIN, COMPETITIONS, budget_capacity, eligible_competitions, next_update, scheduled_slot,
+    BERLIN, COMPETITIONS, budget_capacity, eligible_competitions, is_pre_match, next_update, parse_time, scheduled_slot,
 )
 
 
@@ -64,7 +64,7 @@ class SiteStore:
 
 
 def collect(fixture_payload: dict, now: dt.datetime, odds, store,
-            slot_override: str | None = None) -> dict | None:
+            slot_override: str | None = None, clock=None) -> dict | None:
     from src.competition_registry import COMPETITIONS as registry
     from src.data_sources.club_odds_client import find_event, normalize_event
 
@@ -72,12 +72,16 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
     if not slot or not store.claim(slot):
         return None
     captured = now.astimezone(dt.timezone.utc).isoformat(timespec="seconds")
+    current_time = clock or (lambda: now)
     sources, raw_fixtures, matches = {}, [], []
     for key in COMPETITIONS:
         source = fixture_payload.get("competitions", {}).get(key) or {}
         status = source.get("status", "unavailable")
-        sources[key] = {"status": status if status in ("live", "stale", "degraded") else "unavailable",
-                        "source": source.get("source") or "football_data", "fetched_at": captured}
+        source_capture = source.get("source_captured_at") or (captured if status == "live" else None)
+        sources[key] = {"status": ("stale" if status == "cached" else status) if status in ("live", "stale", "degraded", "cached") else "unavailable",
+                        "source": source.get("source") or "football_data"}
+        if source_capture:
+            sources[key]["fetched_at"] = source_capture
         if source.get("status") != "live":
             sources[key]["note"] = "Spielplanquelle derzeit nicht vollständig verfügbar."
         for f in source.get("fixtures", []):
@@ -90,7 +94,7 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
                 "home": f.get("home", {}).get("name") or "", "away": f.get("away", {}).get("name") or "",
                 "fixture_status": f.get("status") or "scheduled",
                 "identity_status": f.get("identity_status", "pending"),
-                "fixture_fetched_at": source.get("source_captured_at") or captured,
+                "fixture_fetched_at": source_capture,
                 "quotes": [], "market_probs": None, "model": None,
                 "prediction_allowed": False, "value_allowed": False,
                 "odds_status": "not_due", "blockers": f.get("blockers", []),
@@ -103,11 +107,13 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
         state = store.observe(observed)
         remaining = state["quota"]["remaining"]
         quota = {"status": "verified", "remaining": remaining, "used": state["quota"]["used"]}
-    eligible = eligible_competitions(raw_fixtures, now)
-    capacity = budget_capacity(remaining, now)
+    eligible = eligible_competitions(raw_fixtures, current_time())
+    capacity = budget_capacity(remaining, current_time())
     raw_odds = {}
     for index, key in enumerate(eligible):
         these = [m for m in matches if m["competition"] == key]
+        if not any(is_pre_match(m, current_time()) for m in these):
+            continue
         if index >= capacity:
             for m in these:
                 m["odds_status"] = "budget_limited"
@@ -118,6 +124,7 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
                 m["odds_status"] = "budget_limited"
             continue
         response = odds.fetch(registry.get(key).odds_keys[0])
+        fetched_at = current_time()
         raw_odds[key] = response.get("events", [])
         # Ohne gültige Header stoppt jeder weitere kostenpflichtige Abruf.
         if response.get("quota"):
@@ -128,17 +135,22 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
             quota = {"status": "unknown", "remaining": None, "used": None}
             capacity = index + 1
         for m in these:
+            if not is_pre_match(m, fetched_at):
+                continue
             original = next(f for f in raw_fixtures if
                             (f.get("match_id") or f"provider:{key}:{f['provider_match_id']}") == m["id"])
             event = find_event(original, response.get("events", []))
+            if event and parse_time(event["commence_time"]) <= fetched_at:
+                event = None
             m["odds_status"] = "unavailable" if response["status"] != "live" else "missing"
             if event:
-                m.update(normalize_event(event, captured))
+                m.update(normalize_event(event, fetched_at.isoformat(timespec="seconds")))
                 m["odds_status"] = "live" if m["quotes"] else "missing"
     if quota["remaining"] == 0:
         quota["status"] = "exhausted"
+    finished = current_time()
     return {"schema_version": 1, "run_id": f"club-{slot}", "slot": slot,
-            "generated_at": captured, "next_update_at": next_update(now),
+            "generated_at": finished.isoformat(timespec="seconds"), "next_update_at": next_update(finished),
             "matches": matches, "sources": sources, "quota": quota,
             "gates": {"prediction_allowed": False, "value_allowed": False},
             "raw": {"fixtures": fixture_payload, "odds": raw_odds}}
@@ -147,9 +159,15 @@ def collect(fixture_payload: dict, now: dt.datetime, odds, store,
 def main():
     parser = argparse.ArgumentParser(description="Private Sites-Club-Pipeline")
     parser.add_argument("--stdin-config", action="store_true")
+    parser.add_argument("--key-file", type=Path, help="Vorhandene lokale Key-Datei nur lesen")
     parser.add_argument("--bootstrap", action="store_true", help="Einmaliger initialer Datenstand")
     parser.add_argument("--dry-run", action="store_true", help="Nur Spielpläne; keine Quoten oder Uploads")
     args = parser.parse_args()
+    if args.key_file:
+        keys = json.loads(args.key_file.read_text(encoding="utf-8-sig"))
+        for env_name, name in (("ODDS_API_KEY", "odds_api"), ("FOOTBALL_DATA_API_KEY", "football_data")):
+            if keys.get(name) and not os.environ.get(env_name):
+                os.environ[env_name] = keys[name]
     if args.stdin_config:
         supplied = json.loads(sys.stdin.readline())
         for key in ("ODDS_API_KEY", "FOOTBALL_DATA_API_KEY", "FOOTBALL_SITE_URL", "FOOTBALL_IMPORT_SECRET", "FOOTBALL_SITE_BYPASS"):
@@ -178,7 +196,8 @@ def main():
         print(json.dumps({"status": payload["status"], "fixtures": payload["n_fixtures"],
                           "competitions": {k: v["status"] for k, v in payload["competitions"].items()}}))
         return
-    run = collect(payload, now, ClubOddsClient(os.environ.get("ODDS_API_KEY", "")), store, slot)
+    run = collect(payload, now, ClubOddsClient(os.environ.get("ODDS_API_KEY", "")), store, slot,
+                  clock=lambda: dt.datetime.now(dt.timezone.utc))
     if run is None:
         print(json.dumps({"status": "slot_already_claimed"}))
         return
