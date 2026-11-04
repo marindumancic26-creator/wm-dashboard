@@ -17,4 +17,13 @@
 - Final: minor (deferred): two independently authenticated, different simultaneous importers could race while merging fallback data. Normal operation has exactly one producer, serialized by GitHub concurrency. Manual bootstrap must run only with the schedule paused; immutable raw captures remain archived.
 - Final: Ruling: mobile/keyboard browser verification remains unavailable because the browser infrastructure failed; do not describe it as tested. HTTP, type and build checks proceed; hosted privacy/Cloud execution will be checked through their APIs.
 - Full Python suite after review fixes: 198 passed; Node domain tests: 5 passed; TypeScript passed.
-- Status: packaging/private publication and real Cloud readback pending.
+- Task 5: complete. Pipeline integrated into main and pushed; all required Secrets configured, public standard Actions execution verified and explicit activation variable enabled after Site readback.
+- Deployment succeeded: appgdep_6aebb90309488191a6014556b97d3b33, saved version appgprj_6aebaddeca5c8191ac55299e3cb06ae6~appgver_f5cf04dd56b48191ae62c90820f0b984, Site source e36db493f63a8de4ec6d9b65cbad606c8a6fe4ee, runtime env revision 1.
+- Ruling: official local packaging failed in the Windows preparer despite a successful build. Used the documented server-build fallback with the same pushed source and successful private deployment; no handcrafted archive or shared-tool modification.
+- Local HTTP integration rerun after rebuild: passed including offset chronology, claims, quota reservation, auth, replay and locked-model cases.
+- Hosted initial import: club-bootstrap-20261104T230245, 39 fixtures; quota verified at 500 remaining / 0 used. D1 run ID, digest and R2 archive pointer read back through native Sites database tools.
+- Actual GitHub Cloud run: https://github.com/marindumancic26-creator/wm-dashboard/actions/runs/41930764072, update job and Collect and publish data step both successful. Second hosted run club-bootstrap-20261104T230506 independently read back from D1 with archive pointer.
+- Hosted private access verified: custom policy with exactly one owner and zero external visitors; anonymous API returns 401 with no private run data.
+- Original local Daily Run on 05.11.2026 confirmed books.status=managed_by_cloud after the ignored local handover marker was created.
+- Verification on integrated main: full Python suite 198 passed. Site domain tests 5 passed, TypeScript and official local/server builds passed. Mobile visual/keyboard browser checks remain unverified due infrastructure failure; simultaneous distinct import producers remain a documented minor limitation.
+- Status: first private version live, genuine data imported, scheduled Cloud operation activated and tested. Models/EV deliberately remain locked as approved.
