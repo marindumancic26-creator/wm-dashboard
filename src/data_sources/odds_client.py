@@ -29,6 +29,10 @@ def available() -> bool:
 
 def fetch_all_odds(force: bool = False) -> dict:
     """Alle offenen WM-H2H-Quoten. {"status", "events": [...], "as_of"}"""
+    # Ein expliziter Handover verhindert konkurrierenden Verbrauch desselben Keys.
+    if (config.DATA_PROCESSED / "club_sites_odds_owner.json").exists():
+        return {"status": "managed_by_cloud", "events": [],
+                "note": "Quotenabrufe werden zentral von der privaten Club-Site verwaltet."}
     if not available():
         return {"status": "unavailable", "events": [],
                 "note": "Kein ODDS_API_KEY gesetzt (kostenlos: the-odds-api.com)."}

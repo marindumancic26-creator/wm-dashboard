@@ -1,0 +1,56 @@
+name: Private football Sites data
+
+on:
+  schedule:
+    # Both UTC offsets; Python resolves Europe/Berlin and D1 deduplicates each slot.
+    - cron: '17 7,8,12,13,16,17 * * *'
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: 'Initial fixture-only bootstrap outside the regular slot'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-football-sites-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: vars.FOOTBALL_SITES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install pipeline dependencies
+        run: python -m pip install 'requests>=2.31,<3' 'numpy>=1.26,<3' 'pandas>=2,<4'
+      - name: Check required private connections
+        env:
+          FOOTBALL_SITE_URL: ${{ secrets.FOOTBALL_SITE_URL }}
+          FOOTBALL_SITE_BYPASS: ${{ secrets.FOOTBALL_SITE_BYPASS }}
+          FOOTBALL_IMPORT_SECRET: ${{ secrets.FOOTBALL_IMPORT_SECRET }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+        run: |
+          python -c "import os; names=('FOOTBALL_SITE_URL','FOOTBALL_SITE_BYPASS','FOOTBALL_IMPORT_SECRET','ODDS_API_KEY','FOOTBALL_DATA_API_KEY'); missing=[n for n in names if not os.environ.get(n)]; print('Missing secret names:',missing); raise SystemExit(bool(missing))"
+      - name: Collect and publish data
+        env:
+          FOOTBALL_SITE_URL: ${{ secrets.FOOTBALL_SITE_URL }}
+          FOOTBALL_SITE_BYPASS: ${{ secrets.FOOTBALL_SITE_BYPASS }}
+          FOOTBALL_IMPORT_SECRET: ${{ secrets.FOOTBALL_IMPORT_SECRET }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          BOOTSTRAP: ${{ inputs.bootstrap }}
+        run: |
+          if [ "$BOOTSTRAP" = "true" ]; then
+            python -m src.pipeline.club_sites_run --bootstrap
+          else
+            python -m src.pipeline.club_sites_run
+          fi
