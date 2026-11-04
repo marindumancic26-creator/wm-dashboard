@@ -33,7 +33,7 @@ def github_token():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("inspect", "configure", "activate"))
+    parser.add_argument("mode", choices=("inspect", "configure", "activate", "pause"))
     parser.add_argument("--key-file", type=Path)
     args = parser.parse_args()
     token = github_token()
@@ -53,14 +53,14 @@ def main():
     if args.mode == "inspect":
         return
     env = {**os.environ, "GH_TOKEN": token}
-    if args.mode == "activate":
+    if args.mode in ("activate", "pause"):
         # Public standard Linux runners are included; private billing must be checked separately.
-        if repo["private"] or permission.status_code != 200 or not permission.json().get("enabled"):
+        if args.mode == "activate" and (repo["private"] or permission.status_code != 200 or not permission.json().get("enabled")):
             print(json.dumps({"activated": False, "reason": "Kostenlose Actions-Ausführung nicht bestätigt"}))
             return
-        result = subprocess.run(["gh", "variable", "set", "FOOTBALL_SITES_ENABLED", "--repo", REPO, "--body", "true"],
+        result = subprocess.run(["gh", "variable", "set", "FOOTBALL_SITES_ENABLED", "--repo", REPO, "--body", "true" if args.mode == "activate" else "false"],
             capture_output=True, text=True, env=env, timeout=30)
-        print(json.dumps({"activated": result.returncode == 0}))
+        print(json.dumps({"updated": result.returncode == 0, "enabled": args.mode == "activate"}))
         return
     supplied = json.loads(sys.stdin.readline())
     keys = json.loads(args.key_file.read_text(encoding="utf-8-sig")) if args.key_file else {}
