@@ -28,3 +28,12 @@ Es gibt genau einen laufenden Datenproduzenten. Manuelle Bootstraps nur bei paus
 Python: `python -m pytest -q`.
 Site: `node --experimental-strip-types --test tests/domain.test.ts`, `npx tsc --noEmit`, offizieller Sites-Build.
 Die endgültigen Prüfergebnisse, Deployment- und Actions-IDs stehen im Umsetzungsprotokoll.
+
+## Verifizierter Stand am 05.11.2026
+- Privat veröffentlicht: https://marin-fussballanalyse.sunnymelon11.chatgpt.site ; eine berechtigte Person, keine externen Besucher.
+- Erstimport: 39 echte Fixtures; kostenloses Quotenbudget 500 verbleibend / 0 verbraucht. Die Anzahl gilt für diesen initialen Datenstand, nicht als feste Spielanzahl.
+- Echte Cloud-Ausführung und Speicherung erfolgreich: https://github.com/marindumancic26-creator/wm-dashboard/actions/runs/41930764072 . Zeitplan aktiviert.
+- Anonymer API-Zugriff verweigert (401). D1-Runs und Archivverweise administrativ zurückgelesen.
+- 198 Python-Tests, 5 Site-Domänentests, TypeScript, Build und lokale HTTP-Integration erfolgreich.
+- Visuelle Handy-/Tastaturprüfung konnte wegen Browser-Infrastrukturfehlern nicht durchgeführt werden.
+- Modellwahrscheinlichkeiten, faire Modellquoten, EV und Einsatzempfehlungen bleiben bis zur bestehenden fachlichen Freigabe gesperrt.
