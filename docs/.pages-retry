@@ -1,6 +1,6 @@
-retry_at=2026-11-27T00:05:42.5271643+01:00
-source_head=f45be5d
+retry_at=2026-11-28T00:05:44.7265524+01:00
+source_head=d0f4ba4
 status=stale
-local_generated_at=2026-11-27T00:05:23
-remote_generated_at=2026-11-26T22:00:36
+local_generated_at=2026-11-28T00:05:19
+remote_generated_at=2026-11-27T22:00:36
 attempt=1
